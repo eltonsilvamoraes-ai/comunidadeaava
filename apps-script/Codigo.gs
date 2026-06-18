@@ -43,7 +43,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 1 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 2 });
 }
 
 /* ------------------------------------------------------------------ */

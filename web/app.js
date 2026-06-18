@@ -70,8 +70,10 @@
       await espera(500);
       const v = DEMO[codigo];
       if (!v) return { ok: false, erro: 'Código não encontrado (modo demonstração).' };
-      const hora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      return { ok: true, nome: v.nome, departamento: v.departamento, hora, jaRegistrado: false };
+      const agora = new Date();
+      const data = agora.toLocaleDateString('pt-BR');
+      const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return { ok: true, nome: v.nome, departamento: v.departamento, data, hora, jaRegistrado: false };
     }
     const resp = await fetch(cfg.APPS_SCRIPT_URL, {
       method: 'POST',
@@ -87,7 +89,8 @@
     okNome.textContent   = r.nome;
     const partes = [];
     if (r.departamento) partes.push(r.departamento);
-    if (r.hora) partes.push('Chegada às ' + r.hora);
+    const dataHora = [r.data, r.hora].filter(Boolean).join(' às ');
+    if (dataHora) partes.push('Chegada: ' + dataHora);
     okDetalhe.textContent = partes.join(' · ');
     telaCodigo.classList.remove('is-active');
     telaOk.classList.add('is-active');

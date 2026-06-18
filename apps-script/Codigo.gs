@@ -67,16 +67,18 @@ function registrarPresenca(codigo) {
   const dataStr = Utilities.formatDate(agora, FUSO, 'dd/MM/yyyy');
   const horaStr = Utilities.formatDate(agora, FUSO, 'HH:mm');
 
-  const sh    = getSheet(ABA_REGISTROS);
+  const sh = getSheet(ABA_REGISTROS);
+  // Grava Data e Hora como TEXTO (evita o Sheets converter "18:37" em data serial 30/12/1899).
+  sh.getRange('A:B').setNumberFormat('@');
   const dados = sh.getDataRange().getValues();
 
   // Evita registrar a mesma pessoa duas vezes no mesmo dia.
   for (let i = 1; i < dados.length; i++) {
-    if (String(dados[i][2]).trim() === codigo && formatCell(dados[i][0]) === dataStr) {
+    if (String(dados[i][2]).trim() === codigo && formatData(dados[i][0]) === dataStr) {
       return {
         ok: true, jaRegistrado: true,
         nome: vol.nome, departamento: vol.departamento,
-        hora: formatCell(dados[i][1])
+        data: formatData(dados[i][0]), hora: formatHora(dados[i][1])
       };
     }
   }
@@ -86,7 +88,8 @@ function registrarPresenca(codigo) {
 
   return {
     ok: true, jaRegistrado: false,
-    nome: vol.nome, departamento: vol.departamento, hora: horaStr
+    nome: vol.nome, departamento: vol.departamento,
+    data: dataStr, hora: horaStr
   };
 }
 
@@ -123,8 +126,13 @@ function getSheet(nome) {
   return sh;
 }
 
-function formatCell(v) {
+function formatData(v) {
   if (v instanceof Date) return Utilities.formatDate(v, FUSO, 'dd/MM/yyyy');
+  return String(v).trim();
+}
+
+function formatHora(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, FUSO, 'HH:mm');
   return String(v).trim();
 }
 

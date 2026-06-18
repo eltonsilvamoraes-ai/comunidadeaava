@@ -28,8 +28,9 @@ O app preenche esta aba automaticamente. Você só cria o cabeçalho:
 - **Data / Hora chegada**: preenchidas no momento do registro (fuso de São Paulo).
 - **Estava escalado?**: fica `—` nesta etapa. Será preenchido automaticamente
   quando criarmos a aba **ESCALA** (próxima fase).
-- O sistema **não duplica**: se a mesma pessoa registrar de novo no mesmo dia,
-  o app apenas confirma o registro existente.
+- Funciona como um **log**: cada presença gera uma **nova linha**. Se a mesma
+  pessoa servir em dois cultos no mesmo dia (manhã e noite), aparecem **dois
+  registros**. A única proteção é contra toque-duplo (mesmo código no mesmo minuto).
 
 ---
 

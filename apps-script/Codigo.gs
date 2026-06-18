@@ -43,7 +43,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 2 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 3 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -72,18 +72,21 @@ function registrarPresenca(codigo) {
   sh.getRange('A:B').setNumberFormat('@');
   const dados = sh.getDataRange().getValues();
 
-  // Evita registrar a mesma pessoa duas vezes no mesmo dia.
+  // Anti-toque-duplo: ignora apenas se o MESMO código já registrou neste MESMO minuto.
+  // Múltiplos registros no dia são permitidos (ex.: culto da manhã e culto da noite).
   for (let i = 1; i < dados.length; i++) {
-    if (String(dados[i][2]).trim() === codigo && formatData(dados[i][0]) === dataStr) {
+    if (String(dados[i][2]).trim() === codigo &&
+        formatData(dados[i][0]) === dataStr &&
+        formatHora(dados[i][1]) === horaStr) {
       return {
         ok: true, jaRegistrado: true,
         nome: vol.nome, departamento: vol.departamento,
-        data: formatData(dados[i][0]), hora: formatHora(dados[i][1])
+        data: dataStr, hora: horaStr
       };
     }
   }
 
-  // Coluna F (Estava escalado?) fica "—" até a aba ESCALA existir (próxima etapa).
+  // Cada presença é uma NOVA linha (log). Coluna F (Estava escalado?) fica "—" até a aba ESCALA existir.
   sh.appendRow([dataStr, horaStr, codigo, vol.nome, vol.departamento, '—']);
 
   return {

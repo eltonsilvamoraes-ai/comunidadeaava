@@ -43,7 +43,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 3 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 4 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -68,25 +68,10 @@ function registrarPresenca(codigo) {
   const horaStr = Utilities.formatDate(agora, FUSO, 'HH:mm');
 
   const sh = getSheet(ABA_REGISTROS);
-  // Grava Data e Hora como TEXTO (evita o Sheets converter "18:37" em data serial 30/12/1899).
-  sh.getRange('A:B').setNumberFormat('@');
-  const dados = sh.getDataRange().getValues();
+  sh.getRange('A:B').setNumberFormat('@'); // Data e Hora como TEXTO (evita virar data serial 30/12/1899).
 
-  // Anti-toque-duplo: ignora apenas se o MESMO código já registrou neste MESMO minuto.
-  // Múltiplos registros no dia são permitidos (ex.: culto da manhã e culto da noite).
-  for (let i = 1; i < dados.length; i++) {
-    if (String(dados[i][2]).trim() === codigo &&
-        formatData(dados[i][0]) === dataStr &&
-        formatHora(dados[i][1]) === horaStr) {
-      return {
-        ok: true, jaRegistrado: true,
-        nome: vol.nome, departamento: vol.departamento,
-        data: dataStr, hora: horaStr
-      };
-    }
-  }
-
-  // Cada presença é uma NOVA linha (log). Coluna F (Estava escalado?) fica "—" até a aba ESCALA existir.
+  // SEMPRE insere uma NOVA linha (log puro). Sem verificação de duplicidade.
+  // Coluna F (Estava escalado?) fica "—" até a aba ESCALA existir (próxima etapa).
   sh.appendRow([dataStr, horaStr, codigo, vol.nome, vol.departamento, '—']);
 
   return {
@@ -143,4 +128,54 @@ function json(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ------------------------------------------------------------------ */
+/* Utilitários — RODE pelo editor (botão ▶ Executar).                 */
+/* NÃO precisam de implantação/nova versão; só de salvar e executar.  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Formata as abas VOLUNTARIOS e REGISTROS com as cores do logo da AAVA.
+ * Como usar: no editor do Apps Script, selecione "formatarPlanilha"
+ * na lista de funções e clique em ▶ Executar. (Autorize na 1ª vez.)
+ */
+function formatarPlanilha() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const AZUL       = '#2D9CDB'; // azul do logo
+  const AZUL_CLARO = '#EAF5FC'; // zebra clara
+
+  [ABA_VOLUNTARIOS, ABA_REGISTROS].forEach(function (nome) {
+    const sh = ss.getSheetByName(nome);
+    if (!sh) return;
+
+    const nCols = Math.max(sh.getLastColumn(), 1);
+
+    // Limpa faixas (bandas) anteriores para reaplicar sem erro.
+    sh.getBandings().forEach(function (b) { b.remove(); });
+
+    // Cabeçalho na cor do logo.
+    sh.getRange(1, 1, 1, nCols)
+      .setBackground(AZUL)
+      .setFontColor('#FFFFFF')
+      .setFontWeight('bold')
+      .setHorizontalAlignment('center')
+      .setVerticalAlignment('middle')
+      .setFontSize(11);
+    sh.setRowHeight(1, 36);
+    sh.setFrozenRows(1);
+
+    // Linhas alternadas (zebra) em azul bem claro.
+    const totalRows = Math.max(sh.getMaxRows(), 2);
+    const banding = sh.getRange(1, 1, totalRows, nCols)
+      .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, true, false);
+    banding.setHeaderRowColor(AZUL)
+           .setFirstRowColor('#FFFFFF')
+           .setSecondRowColor(AZUL_CLARO);
+
+    // Ajusta largura das colunas ao conteúdo.
+    for (var c = 1; c <= nCols; c++) sh.autoResizeColumn(c);
+  });
+
+  ss.toast('Planilha formatada com as cores da AAVA!', 'AAVA', 5);
 }

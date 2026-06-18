@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 110" role="img" aria-label="AAVA — Um lugar de recomeço">
+  <g fill="none" stroke="#1a1a1a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- A -->
+    <polyline points="20,78 48,22 76,78"/>
+    <!-- A -->
+    <polyline points="86,78 114,22 142,78"/>
+    <!-- V -->
+    <polyline points="152,22 180,78 208,22"/>
+    <!-- A -->
+    <polyline points="218,78 246,22 274,78"/>
+  </g>
+  <!-- acento azul -->
+  <polyline points="20,78 30,58" fill="none" stroke="#2D9CDB" stroke-width="5" stroke-linecap="round"/>
+  <text x="160" y="100" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="11"
+        letter-spacing="3" fill="#6b6b6b">UM LUGAR DE RECOMEÇO</text>
+</svg>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>AAVA — Registro de Presença</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="card" role="main">
+
+    <!-- Logo -->
+    <header class="brand">
+      <img src="assets/logo.svg" alt="AAVA — Um lugar de recomeço" class="brand__logo" />
+    </header>
+
+    <!-- TELA 1: Inserir código -->
+    <section id="tela-codigo" class="screen is-active">
+      <label for="campo-codigo" class="label">INSIRA SEU CÓDIGO</label>
+      <input
+        id="campo-codigo"
+        class="input"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        autofocus
+        aria-describedby="msg-erro"
+      />
+      <p id="msg-erro" class="erro" role="alert"></p>
+      <button id="btn-confirmar" class="btn" type="button">Confirmar</button>
+      <p id="aviso-demo" class="aviso-demo" hidden>Modo demonstração — não está gravando na planilha.</p>
+    </section>
+
+    <!-- TELA 2: Confirmação -->
+    <section id="tela-ok" class="screen screen--ok">
+      <div class="check" aria-hidden="true">
+        <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" fill="none"/><path fill="none" d="M14 27 l8 8 l16 -18"/></svg>
+      </div>
+      <h1 id="ok-titulo" class="ok__titulo">Presença registrada!</h1>
+      <p id="ok-nome" class="ok__nome"></p>
+      <p id="ok-detalhe" class="ok__detalhe"></p>
+      <button id="btn-novo" class="btn btn--ghost" type="button">Registrar outro</button>
+    </section>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -34,7 +34,7 @@ function doPost(e) {
         resultado = registrarPresenca(req.codigo);
         break;
       case 'buscarVoluntario':
-        resultado = buscarVoluntario(req.codigo);
+        resultado = buscarVoluntario(req);
         break;
       case 'listarDepartamentos':
         resultado = listarDepartamentos(req);
@@ -59,13 +59,14 @@ function doPost(e) {
     }
     return json(resultado);
   } catch (err) {
-    return json({ ok: false, erro: 'Erro no servidor: ' + err.message });
+    Logger.log('Erro: ' + err);                 // detalhe fica só no log do servidor
+    return json({ ok: false, erro: 'Erro no servidor. Tente novamente.' });
   }
 }
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 8 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 9 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -106,9 +107,10 @@ function registrarPresenca(codigo) {
   };
 }
 
-/** Retorna os dados públicos de um voluntário (para o modo QR Code). */
-function buscarVoluntario(codigo) {
-  const vol = buscarVoluntarioRaw(String(codigo || '').trim());
+/** Retorna os dados de um voluntário por código. (restrito por PIN) */
+function buscarVoluntario(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const vol = buscarVoluntarioRaw(String((req && req.codigo) || '').trim());
   if (!vol) return { ok: false, erro: 'Código não encontrado.' };
   return { ok: true, nome: vol.nome, departamento: vol.departamento };
 }
@@ -370,4 +372,37 @@ function formatarPlanilha() {
 function criarAbaEscala() {
   getEscalaSheet();
   SpreadsheetApp.getActiveSpreadsheet().toast('Aba ESCALA pronta!', 'AAVA', 4);
+}
+
+/**
+ * SEGURANÇA: gera um código ALEATÓRIO único (4 dígitos) para cada voluntário
+ * que ainda está SEM código. Não altera códigos já existentes — é seguro rodar
+ * sempre que cadastrar gente nova. Rode pelo editor (▶ Executar).
+ *
+ * Por que: códigos sequenciais (1001, 1002...) são fáceis de adivinhar. Códigos
+ * aleatórios dificultam que alguém consulte a escala de terceiros por tentativa.
+ */
+function gerarCodigosFaltantes() {
+  const sh = getSheet(ABA_VOLUNTARIOS);
+  const dados = sh.getDataRange().getValues();
+
+  const usados = {};
+  for (let i = 1; i < dados.length; i++) {
+    const c = String(dados[i][0] || '').trim();
+    if (c) usados[c] = true;
+  }
+
+  let gerados = 0;
+  for (let i = 1; i < dados.length; i++) {
+    const codigo = String(dados[i][0] || '').trim();
+    const nome   = String(dados[i][1] || '').trim();
+    if (!codigo && nome) {
+      let novo;
+      do { novo = String(Math.floor(1000 + Math.random() * 9000)); } while (usados[novo]);
+      usados[novo] = true;
+      sh.getRange(i + 1, 1).setNumberFormat('@').setValue(novo);
+      gerados++;
+    }
+  }
+  SpreadsheetApp.getActiveSpreadsheet().toast(gerados + ' código(s) aleatório(s) gerado(s).', 'AAVA', 5);
 }

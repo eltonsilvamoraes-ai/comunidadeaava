@@ -136,14 +136,14 @@ function json(obj) {
 /* ------------------------------------------------------------------ */
 
 /**
- * Formata as abas VOLUNTARIOS e REGISTROS com as cores do logo da AAVA.
- * Como usar: no editor do Apps Script, selecione "formatarPlanilha"
- * na lista de funções e clique em ▶ Executar. (Autorize na 1ª vez.)
+ * Formata as abas VOLUNTARIOS e REGISTROS de forma discreta:
+ * cabeçalho cinza-claro em negrito, sem zebra. (Roda pelo editor, sem implantar.)
  */
 function formatarPlanilha() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const AZUL       = '#2D9CDB'; // azul do logo
-  const AZUL_CLARO = '#EAF5FC'; // zebra clara
+  const CINZA_CABECALHO = '#F1F3F4'; // cinza bem claro
+  const TEXTO           = '#3C4043'; // cinza-escuro
+  const BORDA           = '#DADCE0';
 
   [ABA_VOLUNTARIOS, ABA_REGISTROS].forEach(function (nome) {
     const sh = ss.getSheetByName(nome);
@@ -151,31 +151,25 @@ function formatarPlanilha() {
 
     const nCols = Math.max(sh.getLastColumn(), 1);
 
-    // Limpa faixas (bandas) anteriores para reaplicar sem erro.
+    // Remove zebra/bandas e cores antigas (deixa neutro antes de aplicar).
     sh.getBandings().forEach(function (b) { b.remove(); });
+    sh.getRange(1, 1, sh.getMaxRows(), nCols).setBackground(null).setFontColor(null);
 
-    // Cabeçalho na cor do logo.
+    // Cabeçalho discreto.
     sh.getRange(1, 1, 1, nCols)
-      .setBackground(AZUL)
-      .setFontColor('#FFFFFF')
+      .setBackground(CINZA_CABECALHO)
+      .setFontColor(TEXTO)
       .setFontWeight('bold')
-      .setHorizontalAlignment('center')
+      .setHorizontalAlignment('left')
       .setVerticalAlignment('middle')
-      .setFontSize(11);
-    sh.setRowHeight(1, 36);
+      .setFontSize(10)
+      .setBorder(false, false, true, false, false, false, BORDA, SpreadsheetApp.BorderStyle.SOLID);
+    sh.setRowHeight(1, 30);
     sh.setFrozenRows(1);
-
-    // Linhas alternadas (zebra) em azul bem claro.
-    const totalRows = Math.max(sh.getMaxRows(), 2);
-    const banding = sh.getRange(1, 1, totalRows, nCols)
-      .applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, true, false);
-    banding.setHeaderRowColor(AZUL)
-           .setFirstRowColor('#FFFFFF')
-           .setSecondRowColor(AZUL_CLARO);
 
     // Ajusta largura das colunas ao conteúdo.
     for (var c = 1; c <= nCols; c++) sh.autoResizeColumn(c);
   });
 
-  ss.toast('Planilha formatada com as cores da AAVA!', 'AAVA', 5);
+  ss.toast('Planilha formatada (estilo discreto).', 'AAVA', 5);
 }

@@ -47,7 +47,7 @@
   // QR Code: ?codigo=123 abre direto na presença e confirma.
   const params = new URLSearchParams(location.search);
   if (params.get('codigo')) {
-    irPara('tela-codigo');
+    irPara('tela-inicio');
     campo.value = params.get('codigo').trim();
     confirmarPresenca();
   }
@@ -56,7 +56,7 @@
   campo.addEventListener('keydown', function (e) { if (e.key === 'Enter') confirmarPresenca(); });
   campo.addEventListener('input', function () { erro.textContent = ''; });
   document.getElementById('btn-novo').addEventListener('click', function () {
-    campo.value = ''; erro.textContent = ''; irPara('tela-codigo');
+    campo.value = ''; erro.textContent = ''; irPara('tela-inicio');
   });
 
   async function confirmarPresenca() {
@@ -207,29 +207,46 @@
   /* ============================================================= */
   const campoMinhas = document.getElementById('campo-minhas');
   const minhasErro  = document.getElementById('minhas-erro');
+  const minhasNome  = document.getElementById('minhas-nome');
   const minhasLista = document.getElementById('minhas-lista');
   document.getElementById('btn-minhas').addEventListener('click', verMinhas);
   campoMinhas.addEventListener('keydown', function (e) { if (e.key === 'Enter') verMinhas(); });
 
   async function verMinhas() {
     const codigo = campoMinhas.value.trim();
-    minhasErro.textContent = ''; minhasLista.innerHTML = '';
+    minhasErro.textContent = ''; minhasLista.innerHTML = ''; minhasNome.textContent = '';
     if (!codigo) { minhasErro.textContent = 'Digite seu código.'; return; }
     try {
       const r = await api({ action: 'minhasEscalas', codigo: codigo });
       if (!r.ok) { minhasErro.textContent = r.erro || 'Não encontrado.'; return; }
+      if (r.nome) minhasNome.textContent = 'Olá, ' + r.nome;
       if (!r.escalas.length) {
         minhasLista.innerHTML = '<p class="lista-vazia">Você não tem escalas cadastradas.</p>';
         return;
       }
-      minhasLista.innerHTML = r.escalas.map(function (e) {
-        const meta = [e.horario, e.departamento].filter(Boolean).join(' · ');
-        return '<div class="escala-item"><span class="data">' + escapeHtml(e.data) + '</span>' +
-               '<span class="meta">' + escapeHtml(meta) + '</span></div>';
+      const linhas = r.escalas.map(function (e) {
+        return '<tr>' +
+                 '<td class="td-data">' + escapeHtml(e.data) +
+                   '<span class="td-dia">' + diaSemana(e.data) + '</span></td>' +
+                 '<td>' + escapeHtml(e.horario || '–') + '</td>' +
+                 '<td>' + escapeHtml(e.departamento || '–') + '</td>' +
+               '</tr>';
       }).join('');
+      minhasLista.innerHTML =
+        '<table class="tabela"><thead><tr><th>Data</th><th>Horário</th><th>Departamento</th></tr></thead>' +
+        '<tbody>' + linhas + '</tbody></table>';
     } catch (e) {
       minhasErro.textContent = 'Falha de conexão. Tente de novo.';
     }
+  }
+
+  /** 'dd/MM/yyyy' -> 'Domingo', 'Quarta-feira'... */
+  function diaSemana(dataBR) {
+    const m = String(dataBR || '').match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!m) return '';
+    const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    const dia = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+    return dia.charAt(0).toUpperCase() + dia.slice(1);
   }
 
   /* ----- Utilidades ----- */

@@ -207,3 +207,61 @@ body {
 }
 .escala-item .data { font-weight: 700; font-size: 16px; }
 .escala-item .meta { color: var(--cinza-rotulo); font-size: 13px; }
+
+/* Menu abaixo da presença (Início) */
+.menu {
+  margin-top: 40px;
+  border-top: 1px solid var(--cinza-campo);
+  padding-top: 8px;
+}
+.menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--cinza-campo);
+  color: var(--texto);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.menu-link:last-child { border-bottom: none; }
+.menu-link:hover { color: var(--azul); }
+.menu-seta { color: var(--azul); font-size: 22px; font-weight: 400; }
+
+/* Tabela (Minhas Escalas — estilo planilha) */
+.minhas-nome { text-align: center; font-weight: 600; margin: 6px 0 14px; }
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 6px;
+}
+.tabela th {
+  background: var(--azul);
+  color: #fff;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  letter-spacing: .3px;
+}
+.tabela th:first-child { border-radius: 8px 0 0 0; }
+.tabela th:last-child  { border-radius: 0 8px 0 0; }
+.tabela td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--cinza-campo);
+  vertical-align: top;
+}
+.tabela tr:last-child td { border-bottom: none; }
+.tabela tbody tr:nth-child(even) { background: #f7f9fb; }
+.td-data { font-weight: 700; white-space: nowrap; }
+.td-dia {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--cinza-rotulo);
+  margin-top: 2px;
+}

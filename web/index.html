@@ -14,20 +14,22 @@
       <img src="assets/logo.svg" alt="AAVA — Um lugar de recomeço" class="brand__logo" />
     </header>
 
-    <!-- TELA: Início -->
+    <!-- TELA: Início = Registrar Presença + menu -->
     <section id="tela-inicio" class="screen is-active">
-      <button class="menu-btn menu-btn--primary" data-ir="tela-codigo">Registrar Presença</button>
-      <button class="menu-btn" data-ir="tela-minhas">Minhas Escalas</button>
-      <button class="menu-btn menu-btn--ghost" data-ir="tela-pin">Área do Líder</button>
-    </section>
-
-    <!-- TELA: Inserir código (presença) -->
-    <section id="tela-codigo" class="screen">
       <label for="campo-codigo" class="label">INSIRA SEU CÓDIGO</label>
       <input id="campo-codigo" class="input" type="text" inputmode="numeric" autocomplete="off" />
       <p id="msg-erro" class="erro" role="alert"></p>
       <button id="btn-confirmar" class="btn" type="button">Confirmar</button>
-      <a class="voltar" data-ir="tela-inicio">‹ Início</a>
+
+      <nav class="menu">
+        <a class="menu-link" data-ir="tela-pin">
+          <span>ÁREA DO LÍDER</span><span class="menu-seta">›</span>
+        </a>
+        <a class="menu-link" data-ir="tela-minhas">
+          <span>CONSULTE SUA ESCALA</span><span class="menu-seta">›</span>
+        </a>
+      </nav>
+
       <p id="aviso-demo" class="aviso-demo" hidden>Modo demonstração — não está gravando na planilha.</p>
     </section>
 
@@ -93,7 +95,8 @@
       <input id="campo-minhas" class="input" type="text" inputmode="numeric" autocomplete="off" />
       <p id="minhas-erro" class="erro" role="alert"></p>
       <button id="btn-minhas" class="btn" type="button">Ver escalas</button>
-      <div id="minhas-lista" class="lista"></div>
+      <p id="minhas-nome" class="minhas-nome"></p>
+      <div id="minhas-lista"></div>
       <a class="voltar" data-ir="tela-inicio">‹ Início</a>
     </section>
 

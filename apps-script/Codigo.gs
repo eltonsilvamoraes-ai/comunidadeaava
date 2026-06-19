@@ -62,7 +62,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 5 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 6 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -157,7 +157,7 @@ function salvarEscala(req) {
   if (!departamento)  return { ok: false, erro: 'Informe o departamento.' };
 
   const sh = getEscalaSheet();
-  sh.getRange('A:A').setNumberFormat('@'); // Data como texto.
+  sh.getRange('A:B').setNumberFormat('@'); // Data e Horário como texto.
 
   // Remove linhas antigas dessa data + departamento (de baixo p/ cima).
   const dados = sh.getDataRange().getValues();
@@ -190,7 +190,7 @@ function listarEscala(req) {
   for (let i = 1; i < dados.length; i++) {
     if (formatData(dados[i][0]) === dataBR && String(dados[i][4] || '').trim() === departamento) {
       codigos.push(String(dados[i][2]).trim());
-      if (!horario) horario = String(dados[i][1] || '').trim();
+      if (!horario) horario = formatHora(dados[i][1]);
     }
   }
   return { ok: true, codigos: codigos, horario: horario };
@@ -209,7 +209,7 @@ function minhasEscalas(codigo) {
     if (String(dados[i][2]).trim() === codigo) {
       escalas.push({
         data: formatData(dados[i][0]),
-        horario: String(dados[i][1] || '').trim(),
+        horario: formatHora(dados[i][1]),
         departamento: String(dados[i][4] || '').trim()
       });
     }

@@ -97,23 +97,26 @@ body {
 }
 .btn--ghost:hover { background: rgba(45,156,219,.08); }
 
-/* Linha que divide a tela inicial em duas partes */
+/* Tela inicial: reduz o espaço entre o campo de código e o Confirmar (metade) */
+#btn-confirmar { margin-top: 18px; }
+
+/* Linha que divide a tela inicial em duas partes (logo abaixo do Confirmar) */
 .divisor {
   width: 100%;
   border: none;
-  border-top: 1px solid var(--cinza-campo);
-  margin: 30px 0;
+  border-top: 1px solid #d8dbdf;
+  margin: 22px 0;
 }
 
 /* Botões pretos das áreas (mesmo tamanho do Confirmar) */
-.btn--escuro {
-  background: #1a1a1a;
+.btn.btn--escuro {
+  background: #111;
   color: #fff;
   margin-top: 0;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
-.btn--escuro:last-of-type { margin-bottom: 0; }
-.btn--escuro:hover { background: #333; }
+.btn.btn--escuro:last-of-type { margin-bottom: 0; }
+.btn.btn--escuro:hover { background: #333; }
 
 .aviso-demo {
   margin-top: 18px;

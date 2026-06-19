@@ -286,3 +286,40 @@ body {
   color: var(--cinza-rotulo);
   margin-top: 2px;
 }
+
+/* Minhas Escalas — saudação, índice e legenda */
+#minhas-resultado:empty { display: none; }
+.saudacao {
+  margin: 24px 0 4px;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: center;
+}
+.indice {
+  text-align: center;
+  font-size: 14px;
+  color: var(--cinza-rotulo);
+  margin: 0 0 16px;
+}
+.legenda {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--cinza-campo);
+}
+.legenda-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--cinza-rotulo);
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.legenda-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--texto);
+}
+.legenda-lista strong { display: inline-block; min-width: 120px; }

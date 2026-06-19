@@ -62,7 +62,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 6 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 7 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -159,10 +159,13 @@ function salvarEscala(req) {
   const sh = getEscalaSheet();
   sh.getRange('A:B').setNumberFormat('@'); // Data e Horário como texto.
 
-  // Remove linhas antigas dessa data + departamento (de baixo p/ cima).
+  // Remove linhas antigas dessa data + horário + departamento (permite reeditar
+  // sem apagar outra escala do MESMO dia em horário diferente — ex.: manhã x noite).
   const dados = sh.getDataRange().getValues();
   for (let i = dados.length - 1; i >= 1; i--) {
-    if (formatData(dados[i][0]) === dataBR && String(dados[i][4] || '').trim() === departamento) {
+    if (formatData(dados[i][0]) === dataBR &&
+        formatHora(dados[i][1]) === horario &&
+        String(dados[i][4] || '').trim() === departamento) {
       sh.deleteRow(i + 1);
     }
   }
@@ -215,7 +218,7 @@ function minhasEscalas(codigo) {
     }
   }
   escalas.sort(function (a, b) { return brParaOrdenavel(a.data) - brParaOrdenavel(b.data); });
-  return { ok: true, nome: vol.nome, escalas: escalas };
+  return { ok: true, nome: vol.nome, departamento: vol.departamento, escalas: escalas };
 }
 
 /** true se o código está escalado na data informada (dd/MM/yyyy). */

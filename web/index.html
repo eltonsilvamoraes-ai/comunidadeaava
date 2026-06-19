@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <main class="card" role="main">
@@ -91,14 +91,24 @@
       <input id="campo-minhas" class="input" type="text" inputmode="numeric" autocomplete="off" />
       <p id="minhas-erro" class="erro" role="alert"></p>
       <button id="btn-minhas" class="btn" type="button">Ver escalas</button>
-      <p id="minhas-nome" class="minhas-nome"></p>
-      <div id="minhas-lista"></div>
+
+      <div id="minhas-resultado"></div>
+
+      <div class="legenda">
+        <p class="legenda-titulo">Dias de culto</p>
+        <ul class="legenda-lista">
+          <li><strong>Quarta-feira</strong> · Culto de Ensino</li>
+          <li><strong>Sexta-feira</strong> · Encontro de Jovens</li>
+          <li><strong>Domingo</strong> · Culto Família</li>
+        </ul>
+      </div>
+
       <a class="voltar" data-ir="tela-inicio">‹ Início</a>
     </section>
 
   </main>
 
   <script src="config.js"></script>
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

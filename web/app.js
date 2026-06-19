@@ -205,48 +205,58 @@
   /* ============================================================= */
   /* MINHAS ESCALAS                                                */
   /* ============================================================= */
-  const campoMinhas = document.getElementById('campo-minhas');
-  const minhasErro  = document.getElementById('minhas-erro');
-  const minhasNome  = document.getElementById('minhas-nome');
-  const minhasLista = document.getElementById('minhas-lista');
+  const campoMinhas  = document.getElementById('campo-minhas');
+  const minhasErro   = document.getElementById('minhas-erro');
+  const minhasResult = document.getElementById('minhas-resultado');
   document.getElementById('btn-minhas').addEventListener('click', verMinhas);
   campoMinhas.addEventListener('keydown', function (e) { if (e.key === 'Enter') verMinhas(); });
 
   async function verMinhas() {
     const codigo = campoMinhas.value.trim();
-    minhasErro.textContent = ''; minhasLista.innerHTML = ''; minhasNome.textContent = '';
+    minhasErro.textContent = ''; minhasResult.innerHTML = '';
     if (!codigo) { minhasErro.textContent = 'Digite seu código.'; return; }
     try {
       const r = await api({ action: 'minhasEscalas', codigo: codigo });
       if (!r.ok) { minhasErro.textContent = r.erro || 'Não encontrado.'; return; }
-      if (r.nome) minhasNome.textContent = 'Olá, ' + r.nome;
+
+      const saudacao =
+        '<p class="saudacao">Graça e Paz, <strong>' + escapeHtml(r.nome) + '</strong>! 🙏<br>' +
+        'Veja abaixo todos os dias em que você irá servir.</p>' +
+        (r.departamento ? '<p class="indice">Departamento: <strong>' + escapeHtml(r.departamento) + '</strong></p>' : '');
+
       if (!r.escalas.length) {
-        minhasLista.innerHTML = '<p class="lista-vazia">Você não tem escalas cadastradas.</p>';
+        minhasResult.innerHTML = saudacao + '<p class="lista-vazia">Você ainda não tem escalas cadastradas.</p>';
         return;
       }
       const linhas = r.escalas.map(function (e) {
         return '<tr>' +
-                 '<td class="td-data">' + escapeHtml(e.data) +
-                   '<span class="td-dia">' + diaSemana(e.data) + '</span></td>' +
-                 '<td>' + escapeHtml(e.horario || '–') + '</td>' +
+                 '<td class="td-data">' + escapeHtml(e.data) + '</td>' +
+                 '<td>' + escapeHtml(cultoDoDia(e.data)) + '</td>' +
                  '<td>' + escapeHtml(e.departamento || '–') + '</td>' +
                '</tr>';
       }).join('');
-      minhasLista.innerHTML =
-        '<table class="tabela"><thead><tr><th>Data</th><th>Horário</th><th>Departamento</th></tr></thead>' +
+      minhasResult.innerHTML = saudacao +
+        '<table class="tabela"><thead><tr><th>Data</th><th>Dia de Culto</th><th>Departamento</th></tr></thead>' +
         '<tbody>' + linhas + '</tbody></table>';
     } catch (e) {
       minhasErro.textContent = 'Falha de conexão. Tente de novo.';
     }
   }
 
-  /** 'dd/MM/yyyy' -> 'Domingo', 'Quarta-feira'... */
-  function diaSemana(dataBR) {
+  /** Nome do culto a partir do dia da semana da data (dd/MM/yyyy). */
+  function cultoDoDia(dataBR) {
     const m = String(dataBR || '').match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    if (!m) return '';
+    if (!m) return '—';
     const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-    const dia = d.toLocaleDateString('pt-BR', { weekday: 'long' });
-    return dia.charAt(0).toUpperCase() + dia.slice(1);
+    switch (d.getDay()) {
+      case 3: return 'Culto de Ensino';     // quarta
+      case 5: return 'Encontro de Jovens';  // sexta
+      case 0: return 'Culto Família';       // domingo
+      default: {                            // encontro esporádico
+        const dia = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+        return dia.charAt(0).toUpperCase() + dia.slice(1);
+      }
+    }
   }
 
   /* ----- Utilidades ----- */
@@ -279,8 +289,9 @@
       case 'listarEscala':  return { ok: true, codigos: ['1001'], horario: '09:00' };
       case 'salvarEscala':  return { ok: true, data: '21/06/2026', total: (p.codigos || []).length };
       case 'minhasEscalas':
-        return { ok: true, nome: 'Maria Oliveira', escalas: [
-          { data: '21/06/2026', horario: '09:00', departamento: 'Louvor' }
+        return { ok: true, nome: 'Maria Oliveira', departamento: 'Louvor', escalas: [
+          { data: '21/06/2026', horario: '09:00', departamento: 'Louvor' },
+          { data: '24/06/2026', horario: '19:30', departamento: 'Louvor' }
         ] };
       default: return { ok: false, erro: 'Ação demo desconhecida.' };
     }

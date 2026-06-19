@@ -106,14 +106,25 @@
   document.getElementById('btn-pin').addEventListener('click', entrarLider);
   campoPin.addEventListener('keydown', function (e) { if (e.key === 'Enter') entrarLider(); });
 
-  function entrarLider() {
+  async function entrarLider() {
     const pin = campoPin.value.trim();
-    if (!pin) { pinErro.textContent = 'Digite o PIN.'; return; }
-    pinLider = pin;
     pinErro.textContent = '';
-    campoPin.value = '';
-    irPara('tela-menu');
-    carregarDepartamentos();
+    if (!pin) { pinErro.textContent = 'Digite o PIN.'; return; }
+
+    const btnP = document.getElementById('btn-pin');
+    btnP.disabled = true; btnP.textContent = 'Entrando...';
+    try {
+      const r = await api({ action: 'verificarPin', pin: pin });
+      if (!r.ok) { pinErro.textContent = r.erro || 'PIN incorreto.'; return; }
+      pinLider = pin;          // guardado só após validação no servidor
+      campoPin.value = '';
+      irPara('tela-menu');
+      carregarDepartamentos();
+    } catch (e) {
+      pinErro.textContent = 'Falha de conexão. Tente de novo.';
+    } finally {
+      btnP.disabled = false; btnP.textContent = 'Entrar';
+    }
   }
 
   /* ============================================================= */
@@ -129,7 +140,7 @@
   async function carregarDepartamentos() {
     if (depsCarregados) return;
     try {
-      const r = await api({ action: 'listarDepartamentos' });
+      const r = await api({ action: 'listarDepartamentos', pin: pinLider });
       if (r.ok) {
         selDep.innerHTML = '<option value="">Selecione...</option>' +
           r.departamentos.map(function (d) { return '<option>' + escapeHtml(d) + '</option>'; }).join('');
@@ -148,7 +159,7 @@
 
     divLista.innerHTML = '<p class="lista-vazia">Carregando...</p>';
     try {
-      const r = await api({ action: 'listarVoluntarios', departamento: dep });
+      const r = await api({ action: 'listarVoluntarios', departamento: dep, pin: pinLider });
       if (!r.ok || !r.voluntarios.length) {
         divLista.innerHTML = '<p class="lista-vazia">Nenhum voluntário neste departamento.</p>';
         return;
@@ -279,6 +290,8 @@
                  hora: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                  escalado: p.codigo === '1001' };
       }
+      case 'verificarPin':
+        return p.pin === '2024' ? { ok: true } : { ok: false, erro: 'PIN incorreto.' };
       case 'listarDepartamentos':
         return { ok: true, departamentos: ['Infantil', 'Louvor', 'Recepção'] };
       case 'listarVoluntarios':

@@ -37,10 +37,13 @@ function doPost(e) {
         resultado = buscarVoluntario(req.codigo);
         break;
       case 'listarDepartamentos':
-        resultado = listarDepartamentos();
+        resultado = listarDepartamentos(req);
         break;
       case 'listarVoluntarios':
-        resultado = listarVoluntarios(req.departamento);
+        resultado = listarVoluntarios(req);
+        break;
+      case 'verificarPin':
+        resultado = verificarPin(req);
         break;
       case 'salvarEscala':
         resultado = salvarEscala(req);
@@ -62,7 +65,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 7 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 8 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -114,8 +117,20 @@ function buscarVoluntario(codigo) {
 /* ESCALA                                                             */
 /* ------------------------------------------------------------------ */
 
-/** Lista os departamentos distintos a partir da aba VOLUNTARIOS. */
-function listarDepartamentos() {
+/** Confere se o PIN enviado é o do líder. Usado por todas as ações restritas. */
+function pinValido(req) {
+  return String((req && req.pin) || '') === PIN_LIDER;
+}
+
+/** Verifica o PIN (a tela do líder chama antes de abrir a área). */
+function verificarPin(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'PIN incorreto.' };
+  return { ok: true };
+}
+
+/** Lista os departamentos distintos a partir da aba VOLUNTARIOS. (restrito) */
+function listarDepartamentos(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
   const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
   const set = {};
   for (let i = 1; i < dados.length; i++) {
@@ -125,9 +140,10 @@ function listarDepartamentos() {
   return { ok: true, departamentos: Object.keys(set).sort() };
 }
 
-/** Lista os voluntários ATIVOS de um departamento (para montar a escala). */
-function listarVoluntarios(departamento) {
-  departamento = String(departamento || '').trim();
+/** Lista os voluntários ATIVOS de um departamento (para montar a escala). (restrito) */
+function listarVoluntarios(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const departamento = String((req && req.departamento) || '').trim();
   const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
   const lista = [];
   for (let i = 1; i < dados.length; i++) {

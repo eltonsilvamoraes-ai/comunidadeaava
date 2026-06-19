@@ -18,7 +18,11 @@
 
 const ABA_VOLUNTARIOS = 'VOLUNTARIOS';
 const ABA_REGISTROS   = 'REGISTROS';
+const ABA_ESCALA      = 'ESCALA';
 const FUSO            = 'America/Sao_Paulo';
+
+// PIN genérico da Área do Líder. Troque aqui quando quiser (e republique).
+const PIN_LIDER = '2024';
 
 /** Recebe as chamadas POST do app (corpo em texto/JSON). */
 function doPost(e) {
@@ -32,6 +36,21 @@ function doPost(e) {
       case 'buscarVoluntario':
         resultado = buscarVoluntario(req.codigo);
         break;
+      case 'listarDepartamentos':
+        resultado = listarDepartamentos();
+        break;
+      case 'listarVoluntarios':
+        resultado = listarVoluntarios(req.departamento);
+        break;
+      case 'salvarEscala':
+        resultado = salvarEscala(req);
+        break;
+      case 'listarEscala':
+        resultado = listarEscala(req);
+        break;
+      case 'minhasEscalas':
+        resultado = minhasEscalas(req.codigo);
+        break;
       default:
         resultado = { ok: false, erro: 'Ação desconhecida: ' + req.action };
     }
@@ -43,7 +62,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 4 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 5 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -67,17 +86,20 @@ function registrarPresenca(codigo) {
   const dataStr = Utilities.formatDate(agora, FUSO, 'dd/MM/yyyy');
   const horaStr = Utilities.formatDate(agora, FUSO, 'HH:mm');
 
+  // Validação automática: o voluntário estava na ESCALA de hoje?
+  const escalado = estaEscalado(codigo, dataStr);   // true / false
+  const escaladoTxt = escalado ? 'Sim' : 'Não';
+
   const sh = getSheet(ABA_REGISTROS);
   sh.getRange('A:B').setNumberFormat('@'); // Data e Hora como TEXTO (evita virar data serial 30/12/1899).
 
-  // SEMPRE insere uma NOVA linha (log puro). Sem verificação de duplicidade.
-  // Coluna F (Estava escalado?) fica "—" até a aba ESCALA existir (próxima etapa).
-  sh.appendRow([dataStr, horaStr, codigo, vol.nome, vol.departamento, '—']);
+  // SEMPRE insere uma NOVA linha (log puro). Coluna F = Sim/Não conforme a escala.
+  sh.appendRow([dataStr, horaStr, codigo, vol.nome, vol.departamento, escaladoTxt]);
 
   return {
     ok: true, jaRegistrado: false,
     nome: vol.nome, departamento: vol.departamento,
-    data: dataStr, hora: horaStr
+    data: dataStr, hora: horaStr, escalado: escalado
   };
 }
 
@@ -86,6 +108,127 @@ function buscarVoluntario(codigo) {
   const vol = buscarVoluntarioRaw(String(codigo || '').trim());
   if (!vol) return { ok: false, erro: 'Código não encontrado.' };
   return { ok: true, nome: vol.nome, departamento: vol.departamento };
+}
+
+/* ------------------------------------------------------------------ */
+/* ESCALA                                                             */
+/* ------------------------------------------------------------------ */
+
+/** Lista os departamentos distintos a partir da aba VOLUNTARIOS. */
+function listarDepartamentos() {
+  const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
+  const set = {};
+  for (let i = 1; i < dados.length; i++) {
+    const d = String(dados[i][2] || '').trim();
+    if (d) set[d] = true;
+  }
+  return { ok: true, departamentos: Object.keys(set).sort() };
+}
+
+/** Lista os voluntários ATIVOS de um departamento (para montar a escala). */
+function listarVoluntarios(departamento) {
+  departamento = String(departamento || '').trim();
+  const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
+  const lista = [];
+  for (let i = 1; i < dados.length; i++) {
+    const dep = String(dados[i][2] || '').trim();
+    const status = String(dados[i][3] || '').trim().toLowerCase();
+    if (dep === departamento && status !== 'inativo') {
+      lista.push({ codigo: String(dados[i][0]).trim(), nome: String(dados[i][1] || '').trim() });
+    }
+  }
+  lista.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  return { ok: true, voluntarios: lista };
+}
+
+/**
+ * Salva a escala de uma data/departamento. Substitui o que já existia para
+ * essa mesma data+departamento (permite reabrir e editar). req:
+ *   { pin, data (yyyy-mm-dd), horario, departamento, codigos: [..] }
+ */
+function salvarEscala(req) {
+  if (String(req.pin || '') !== PIN_LIDER) return { ok: false, erro: 'PIN incorreto.' };
+
+  const dataBR = isoParaBR(req.data);
+  const horario = String(req.horario || '').trim();
+  const departamento = String(req.departamento || '').trim();
+  const codigos = Array.isArray(req.codigos) ? req.codigos.map(function (c) { return String(c).trim(); }) : [];
+  if (!dataBR)        return { ok: false, erro: 'Data inválida.' };
+  if (!departamento)  return { ok: false, erro: 'Informe o departamento.' };
+
+  const sh = getEscalaSheet();
+  sh.getRange('A:A').setNumberFormat('@'); // Data como texto.
+
+  // Remove linhas antigas dessa data + departamento (de baixo p/ cima).
+  const dados = sh.getDataRange().getValues();
+  for (let i = dados.length - 1; i >= 1; i--) {
+    if (formatData(dados[i][0]) === dataBR && String(dados[i][4] || '').trim() === departamento) {
+      sh.deleteRow(i + 1);
+    }
+  }
+
+  // Insere os novos escalados.
+  let inseridos = 0;
+  codigos.forEach(function (cod) {
+    const vol = buscarVoluntarioRaw(cod);
+    const nome = vol ? vol.nome : '';
+    sh.appendRow([dataBR, horario, cod, nome, departamento]);
+    inseridos++;
+  });
+
+  return { ok: true, data: dataBR, departamento: departamento, total: inseridos };
+}
+
+/** Lista a escala já salva de uma data + departamento (para pré-marcar). */
+function listarEscala(req) {
+  if (String(req.pin || '') !== PIN_LIDER) return { ok: false, erro: 'PIN incorreto.' };
+  const dataBR = isoParaBR(req.data);
+  const departamento = String(req.departamento || '').trim();
+  const dados = getEscalaSheet().getDataRange().getValues();
+  const codigos = [];
+  let horario = '';
+  for (let i = 1; i < dados.length; i++) {
+    if (formatData(dados[i][0]) === dataBR && String(dados[i][4] || '').trim() === departamento) {
+      codigos.push(String(dados[i][2]).trim());
+      if (!horario) horario = String(dados[i][1] || '').trim();
+    }
+  }
+  return { ok: true, codigos: codigos, horario: horario };
+}
+
+/** Escalas de um voluntário (todas as datas em que ele está escalado). */
+function minhasEscalas(codigo) {
+  codigo = String(codigo || '').trim();
+  if (!codigo) return { ok: false, erro: 'Informe seu código.' };
+  const vol = buscarVoluntarioRaw(codigo);
+  if (!vol) return { ok: false, erro: 'Código não encontrado.' };
+
+  const dados = getEscalaSheet().getDataRange().getValues();
+  const escalas = [];
+  for (let i = 1; i < dados.length; i++) {
+    if (String(dados[i][2]).trim() === codigo) {
+      escalas.push({
+        data: formatData(dados[i][0]),
+        horario: String(dados[i][1] || '').trim(),
+        departamento: String(dados[i][4] || '').trim()
+      });
+    }
+  }
+  escalas.sort(function (a, b) { return brParaOrdenavel(a.data) - brParaOrdenavel(b.data); });
+  return { ok: true, nome: vol.nome, escalas: escalas };
+}
+
+/** true se o código está escalado na data informada (dd/MM/yyyy). */
+function estaEscalado(codigo, dataBR) {
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(ABA_ESCALA);
+  if (!sh) return false; // aba ESCALA ainda não existe
+  const dados = sh.getDataRange().getValues();
+  for (let i = 1; i < dados.length; i++) {
+    if (String(dados[i][2]).trim() === String(codigo).trim() && formatData(dados[i][0]) === dataBR) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /* ------------------------------------------------------------------ */
@@ -122,6 +265,33 @@ function formatData(v) {
 function formatHora(v) {
   if (v instanceof Date) return Utilities.formatDate(v, FUSO, 'HH:mm');
   return String(v).trim();
+}
+
+/** Obtém a aba ESCALA, criando-a com cabeçalho se ainda não existir. */
+function getEscalaSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(ABA_ESCALA);
+  if (!sh) {
+    sh = ss.insertSheet(ABA_ESCALA);
+    sh.appendRow(['Data', 'Horário', 'Codigo', 'Nome completo', 'Departamento']);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+/** Converte 'yyyy-mm-dd' (input date) para 'dd/MM/yyyy'. Aceita já em BR. */
+function isoParaBR(s) {
+  s = String(s || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[3] + '/' + m[2] + '/' + m[1];
+  return s; // assume já estar em dd/MM/yyyy
+}
+
+/** 'dd/MM/yyyy' -> número aaaammdd para ordenar. */
+function brParaOrdenavel(s) {
+  const m = String(s || '').match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? Number(m[3] + m[2] + m[1]) : 0;
 }
 
 function json(obj) {
@@ -172,4 +342,13 @@ function formatarPlanilha() {
   });
 
   ss.toast('Planilha formatada (estilo discreto).', 'AAVA', 5);
+}
+
+/**
+ * Cria a aba ESCALA (com cabeçalho) caso ainda não exista.
+ * Rode pelo editor (▶ Executar) — não precisa implantar.
+ */
+function criarAbaEscala() {
+  getEscalaSheet();
+  SpreadsheetApp.getActiveSpreadsheet().toast('Aba ESCALA pronta!', 'AAVA', 4);
 }

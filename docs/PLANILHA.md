@@ -34,7 +34,21 @@ O app preenche esta aba automaticamente. Você só cria o cabeçalho:
 
 ---
 
-### Próximas abas (fases seguintes — ainda não usadas)
-- `DEPARTAMENTOS` — Código + Nome do departamento.
-- `ESCALA` — quem está escalado por data (resolve o "Estava escalado? Sim/Não").
-- Abas por mês — datas/horários de culto cadastrados pelo pastor.
+## Aba `ESCALA` — quem está escalado por data (Fase 2)
+
+Criada automaticamente pelo sistema (ou rode `criarAbaEscala` no Apps Script).
+O líder monta a escala pela tela **Montar Escala** (Área do Líder, com PIN).
+
+| A: Data | B: Horário | C: Codigo | D: Nome completo | E: Departamento |
+|---------|-----------|-----------|------------------|-----------------|
+| 21/06/2026 | 09:00 | 1001 | Elton de Moraes | Transmissão |
+
+- Cada linha = um voluntário escalado para uma data.
+- Ao salvar a escala de uma data+departamento, o sistema **substitui** as linhas
+  anteriores daquela data+departamento (permite reabrir e editar).
+- No **REGISTROS**, a coluna F *"Estava escalado?"* passa a ser preenchida
+  automaticamente com **Sim/Não** comparando o registro com esta aba.
+
+### Próximas abas (fases seguintes)
+- `DEPARTAMENTOS` — Código + Nome do departamento (hoje os departamentos vêm da aba VOLUNTARIOS).
+- `CULTOS` — datas/horários de culto cadastrados pelo pastor (para o líder só selecionar).

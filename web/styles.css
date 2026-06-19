@@ -116,3 +116,94 @@ body {
 .ok__titulo { font-size: 22px; margin: 18px 0 4px; color: var(--ok); }
 .ok__nome { font-size: 26px; font-weight: 700; margin: 6px 0; }
 .ok__detalhe { color: var(--cinza-rotulo); font-size: 15px; margin: 4px 0 8px; }
+.ok__escala { font-size: 14px; font-weight: 600; margin: 2px 0 8px; }
+.ok__escala.sim { color: var(--ok); }
+.ok__escala.nao { color: var(--cinza-rotulo); }
+
+/* Títulos de tela */
+.titulo { font-size: 20px; font-weight: 700; text-align: center; margin: 0 0 24px; }
+
+/* Botões de menu (início / área do líder) */
+.menu-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 18px;
+  border: 1.5px solid var(--cinza-campo);
+  background: #fff;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--texto);
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.menu-btn:hover { background: #f7f9fb; }
+.menu-btn--primary { background: var(--azul); border-color: var(--azul); color: #fff; }
+.menu-btn--primary:hover { background: var(--azul-escuro); }
+.menu-btn--ghost { color: var(--azul); border-color: var(--azul); }
+.menu-btn:disabled { opacity: .5; cursor: default; }
+
+/* Link voltar */
+.voltar {
+  display: inline-block;
+  margin: 18px auto 0;
+  color: var(--cinza-rotulo);
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  text-align: center;
+}
+.voltar:hover { color: var(--azul); }
+
+/* Formulários */
+.screen--form { text-align: left; }
+.campo-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cinza-rotulo);
+  margin: 14px 0 6px;
+}
+.campo {
+  width: 100%;
+  border: 1.5px solid var(--cinza-campo);
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color .15s ease;
+}
+.campo:focus { border-color: var(--azul); }
+.form-row { display: flex; gap: 12px; }
+.form-col { flex: 1; }
+
+/* Listas (voluntários / escalas) */
+.lista { margin-top: 8px; }
+.lista-vazia { color: var(--cinza-rotulo); font-size: 14px; padding: 8px 2px; }
+.voluntario-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.voluntario-item:hover { background: #f7f9fb; }
+.voluntario-item input { width: 20px; height: 20px; accent-color: var(--azul); }
+.voluntario-item span { font-size: 16px; }
+
+/* Item de escala (minhas escalas) */
+.escala-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 12px;
+  border: 1px solid var(--cinza-campo);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.escala-item .data { font-weight: 700; font-size: 16px; }
+.escala-item .meta { color: var(--cinza-rotulo); font-size: 13px; }

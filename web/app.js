@@ -1,113 +1,271 @@
-/* AAVA — Registro de Presença (frontend) */
+/* AAVA — Voluntários (frontend) */
 (function () {
   'use strict';
 
   const cfg = window.CONFIG || {};
   const MODO_DEMO = !cfg.APPS_SCRIPT_URL;
+  let pinLider = '';
 
-  // Voluntários fictícios para o MODO DEMONSTRAÇÃO (sem backend).
-  const DEMO = {
+  const DEMO_VOL = {
     '1001': { nome: 'Maria Oliveira', departamento: 'Louvor' },
     '1002': { nome: 'João Pereira',   departamento: 'Recepção' },
     '1003': { nome: 'Ana Souza',      departamento: 'Infantil' }
   };
 
-  // Elementos
-  const telaCodigo = document.getElementById('tela-codigo');
-  const telaOk     = document.getElementById('tela-ok');
-  const campo      = document.getElementById('campo-codigo');
-  const erro       = document.getElementById('msg-erro');
-  const btn        = document.getElementById('btn-confirmar');
-  const btnNovo    = document.getElementById('btn-novo');
-  const avisoDemo  = document.getElementById('aviso-demo');
-  const okNome     = document.getElementById('ok-nome');
-  const okTitulo   = document.getElementById('ok-titulo');
-  const okDetalhe  = document.getElementById('ok-detalhe');
-
-  if (MODO_DEMO) avisoDemo.hidden = false;
-
-  // Se o QR Code abrir a página com ?codigo=123, já preenche.
-  const params = new URLSearchParams(location.search);
-  if (params.get('codigo')) {
-    campo.value = params.get('codigo').trim();
-    confirmar();
+  /* ----- Navegação entre telas ----- */
+  function irPara(id) {
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
+    const alvo = document.getElementById(id);
+    if (alvo) alvo.classList.add('is-active');
+    const foco = alvo && alvo.querySelector('input, select');
+    if (foco && id !== 'tela-inicio') setTimeout(function () { foco.focus(); }, 50);
   }
-
-  btn.addEventListener('click', confirmar);
-  campo.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') confirmar();
+  document.querySelectorAll('[data-ir]').forEach(function (el) {
+    el.addEventListener('click', function () { irPara(el.getAttribute('data-ir')); });
   });
-  campo.addEventListener('input', () => { erro.textContent = ''; });
-  btnNovo.addEventListener('click', reiniciar);
 
-  async function confirmar() {
-    const codigo = campo.value.trim();
-    erro.textContent = '';
-    if (!codigo) {
-      erro.textContent = 'Digite seu código.';
-      campo.focus();
-      return;
-    }
-
-    setCarregando(true);
-    try {
-      const r = await registrarPresenca(codigo);
-      if (!r.ok) {
-        erro.textContent = r.erro || 'Não foi possível registrar.';
-        campo.focus();
-        return;
-      }
-      mostrarConfirmacao(r);
-    } catch (e) {
-      erro.textContent = 'Falha de conexão. Verifique a internet e tente de novo.';
-    } finally {
-      setCarregando(false);
-    }
-  }
-
-  async function registrarPresenca(codigo) {
-    if (MODO_DEMO) {
-      await espera(500);
-      const v = DEMO[codigo];
-      if (!v) return { ok: false, erro: 'Código não encontrado (modo demonstração).' };
-      const agora = new Date();
-      const data = agora.toLocaleDateString('pt-BR');
-      const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      return { ok: true, nome: v.nome, departamento: v.departamento, data, hora, jaRegistrado: false };
-    }
+  /* ----- Chamada ao backend ----- */
+  async function api(payload) {
+    if (MODO_DEMO) return demo(payload);
     const resp = await fetch(cfg.APPS_SCRIPT_URL, {
       method: 'POST',
-      // text/plain evita o "preflight" de CORS no Apps Script.
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'registrarPresenca', codigo })
+      body: JSON.stringify(payload)
     });
     return resp.json();
   }
 
+  /* ============================================================= */
+  /* PRESENÇA                                                      */
+  /* ============================================================= */
+  const campo = document.getElementById('campo-codigo');
+  const erro  = document.getElementById('msg-erro');
+  const btn   = document.getElementById('btn-confirmar');
+
+  if (MODO_DEMO) document.getElementById('aviso-demo').hidden = false;
+
+  // QR Code: ?codigo=123 abre direto na presença e confirma.
+  const params = new URLSearchParams(location.search);
+  if (params.get('codigo')) {
+    irPara('tela-codigo');
+    campo.value = params.get('codigo').trim();
+    confirmarPresenca();
+  }
+
+  btn.addEventListener('click', confirmarPresenca);
+  campo.addEventListener('keydown', function (e) { if (e.key === 'Enter') confirmarPresenca(); });
+  campo.addEventListener('input', function () { erro.textContent = ''; });
+  document.getElementById('btn-novo').addEventListener('click', function () {
+    campo.value = ''; erro.textContent = ''; irPara('tela-codigo');
+  });
+
+  async function confirmarPresenca() {
+    const codigo = campo.value.trim();
+    erro.textContent = '';
+    if (!codigo) { erro.textContent = 'Digite seu código.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Registrando...';
+    try {
+      const r = await api({ action: 'registrarPresenca', codigo: codigo });
+      if (!r.ok) { erro.textContent = r.erro || 'Não foi possível registrar.'; return; }
+      mostrarConfirmacao(r);
+    } catch (e) {
+      erro.textContent = 'Falha de conexão. Verifique a internet e tente de novo.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Confirmar';
+    }
+  }
+
   function mostrarConfirmacao(r) {
-    okTitulo.textContent = r.jaRegistrado ? 'Presença já registrada' : 'Presença registrada!';
-    okNome.textContent   = r.nome;
+    document.getElementById('ok-titulo').textContent = 'Presença registrada!';
+    document.getElementById('ok-nome').textContent = r.nome;
     const partes = [];
     if (r.departamento) partes.push(r.departamento);
     const dataHora = [r.data, r.hora].filter(Boolean).join(' às ');
     if (dataHora) partes.push('Chegada: ' + dataHora);
-    okDetalhe.textContent = partes.join(' · ');
-    telaCodigo.classList.remove('is-active');
-    telaOk.classList.add('is-active');
+    document.getElementById('ok-detalhe').textContent = partes.join(' · ');
+
+    const escala = document.getElementById('ok-escala');
+    if (r.escalado === true) {
+      escala.textContent = '✓ Você está na escala de hoje';
+      escala.className = 'ok__escala sim';
+    } else if (r.escalado === false) {
+      escala.textContent = 'Você não estava escalado(a) hoje';
+      escala.className = 'ok__escala nao';
+    } else {
+      escala.textContent = '';
+    }
+    irPara('tela-ok');
   }
 
-  function reiniciar() {
-    campo.value = '';
-    erro.textContent = '';
-    telaOk.classList.remove('is-active');
-    telaCodigo.classList.add('is-active');
-    campo.focus();
+  /* ============================================================= */
+  /* PIN DA ÁREA DO LÍDER                                          */
+  /* ============================================================= */
+  const campoPin = document.getElementById('campo-pin');
+  const pinErro  = document.getElementById('pin-erro');
+  document.getElementById('btn-pin').addEventListener('click', entrarLider);
+  campoPin.addEventListener('keydown', function (e) { if (e.key === 'Enter') entrarLider(); });
+
+  function entrarLider() {
+    const pin = campoPin.value.trim();
+    if (!pin) { pinErro.textContent = 'Digite o PIN.'; return; }
+    pinLider = pin;
+    pinErro.textContent = '';
+    campoPin.value = '';
+    irPara('tela-menu');
+    carregarDepartamentos();
   }
 
-  function setCarregando(v) {
-    btn.disabled = v;
-    btn.textContent = v ? 'Registrando...' : 'Confirmar';
+  /* ============================================================= */
+  /* MONTAR ESCALA                                                 */
+  /* ============================================================= */
+  const selDep   = document.getElementById('esc-departamento');
+  const inpData  = document.getElementById('esc-data');
+  const inpHora  = document.getElementById('esc-horario');
+  const divLista = document.getElementById('esc-lista');
+  const escMsg   = document.getElementById('esc-msg');
+  let depsCarregados = false;
+
+  async function carregarDepartamentos() {
+    if (depsCarregados) return;
+    try {
+      const r = await api({ action: 'listarDepartamentos' });
+      if (r.ok) {
+        selDep.innerHTML = '<option value="">Selecione...</option>' +
+          r.departamentos.map(function (d) { return '<option>' + escapeHtml(d) + '</option>'; }).join('');
+        depsCarregados = true;
+      }
+    } catch (e) { /* silencioso */ }
   }
 
-  const espera = (ms) => new Promise((res) => setTimeout(res, ms));
+  selDep.addEventListener('change', atualizarLista);
+  inpData.addEventListener('change', atualizarLista);
+
+  async function atualizarLista() {
+    const dep = selDep.value;
+    escMsg.textContent = '';
+    if (!dep) { divLista.innerHTML = '<p class="lista-vazia">Selecione um departamento.</p>'; return; }
+
+    divLista.innerHTML = '<p class="lista-vazia">Carregando...</p>';
+    try {
+      const r = await api({ action: 'listarVoluntarios', departamento: dep });
+      if (!r.ok || !r.voluntarios.length) {
+        divLista.innerHTML = '<p class="lista-vazia">Nenhum voluntário neste departamento.</p>';
+        return;
+      }
+      // Marca quem já estava escalado nessa data (se data informada).
+      let jaEscalados = [];
+      if (inpData.value) {
+        const e = await api({ action: 'listarEscala', pin: pinLider, data: inpData.value, departamento: dep });
+        if (e.ok) { jaEscalados = e.codigos || []; if (e.horario && !inpHora.value) inpHora.value = e.horario; }
+      }
+      divLista.innerHTML = r.voluntarios.map(function (v) {
+        const checked = jaEscalados.indexOf(v.codigo) >= 0 ? 'checked' : '';
+        return '<label class="voluntario-item">' +
+                 '<input type="checkbox" value="' + escapeHtml(v.codigo) + '" ' + checked + '>' +
+                 '<span>' + escapeHtml(v.nome) + '</span>' +
+               '</label>';
+      }).join('');
+    } catch (e) {
+      divLista.innerHTML = '<p class="lista-vazia">Erro ao carregar. Tente de novo.</p>';
+    }
+  }
+
+  document.getElementById('btn-salvar-escala').addEventListener('click', salvarEscala);
+
+  async function salvarEscala() {
+    escMsg.textContent = '';
+    const dep = selDep.value;
+    if (!dep)          { escMsg.textContent = 'Selecione o departamento.'; return; }
+    if (!inpData.value){ escMsg.textContent = 'Escolha a data do culto.'; return; }
+
+    const codigos = Array.prototype.slice
+      .call(divLista.querySelectorAll('input[type=checkbox]:checked'))
+      .map(function (c) { return c.value; });
+
+    const btnS = document.getElementById('btn-salvar-escala');
+    btnS.disabled = true; btnS.textContent = 'Salvando...';
+    try {
+      const r = await api({
+        action: 'salvarEscala', pin: pinLider,
+        data: inpData.value, horario: inpHora.value,
+        departamento: dep, codigos: codigos
+      });
+      if (!r.ok) { escMsg.textContent = r.erro || 'Não foi possível salvar.'; return; }
+      escMsg.style.color = '#27ae60';
+      escMsg.textContent = '✓ Escala salva: ' + r.total + ' voluntário(s) em ' + r.data + '.';
+      setTimeout(function () { escMsg.style.color = ''; }, 4000);
+    } catch (e) {
+      escMsg.textContent = 'Falha de conexão. Tente de novo.';
+    } finally {
+      btnS.disabled = false; btnS.textContent = 'Salvar escala';
+    }
+  }
+
+  /* ============================================================= */
+  /* MINHAS ESCALAS                                                */
+  /* ============================================================= */
+  const campoMinhas = document.getElementById('campo-minhas');
+  const minhasErro  = document.getElementById('minhas-erro');
+  const minhasLista = document.getElementById('minhas-lista');
+  document.getElementById('btn-minhas').addEventListener('click', verMinhas);
+  campoMinhas.addEventListener('keydown', function (e) { if (e.key === 'Enter') verMinhas(); });
+
+  async function verMinhas() {
+    const codigo = campoMinhas.value.trim();
+    minhasErro.textContent = ''; minhasLista.innerHTML = '';
+    if (!codigo) { minhasErro.textContent = 'Digite seu código.'; return; }
+    try {
+      const r = await api({ action: 'minhasEscalas', codigo: codigo });
+      if (!r.ok) { minhasErro.textContent = r.erro || 'Não encontrado.'; return; }
+      if (!r.escalas.length) {
+        minhasLista.innerHTML = '<p class="lista-vazia">Você não tem escalas cadastradas.</p>';
+        return;
+      }
+      minhasLista.innerHTML = r.escalas.map(function (e) {
+        const meta = [e.horario, e.departamento].filter(Boolean).join(' · ');
+        return '<div class="escala-item"><span class="data">' + escapeHtml(e.data) + '</span>' +
+               '<span class="meta">' + escapeHtml(meta) + '</span></div>';
+      }).join('');
+    } catch (e) {
+      minhasErro.textContent = 'Falha de conexão. Tente de novo.';
+    }
+  }
+
+  /* ----- Utilidades ----- */
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ----- Modo demonstração (sem backend) ----- */
+  async function demo(p) {
+    await new Promise(function (r) { setTimeout(r, 300); });
+    switch (p.action) {
+      case 'registrarPresenca': {
+        const v = DEMO_VOL[p.codigo];
+        if (!v) return { ok: false, erro: 'Código não encontrado (demo).' };
+        const now = new Date();
+        return { ok: true, nome: v.nome, departamento: v.departamento,
+                 data: now.toLocaleDateString('pt-BR'),
+                 hora: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                 escalado: p.codigo === '1001' };
+      }
+      case 'listarDepartamentos':
+        return { ok: true, departamentos: ['Infantil', 'Louvor', 'Recepção'] };
+      case 'listarVoluntarios':
+        return { ok: true, voluntarios: [
+          { codigo: '1001', nome: 'Maria Oliveira' },
+          { codigo: '1002', nome: 'João Pereira' }
+        ] };
+      case 'listarEscala':  return { ok: true, codigos: ['1001'], horario: '09:00' };
+      case 'salvarEscala':  return { ok: true, data: '21/06/2026', total: (p.codigos || []).length };
+      case 'minhasEscalas':
+        return { ok: true, nome: 'Maria Oliveira', escalas: [
+          { data: '21/06/2026', horario: '09:00', departamento: 'Louvor' }
+        ] };
+      default: return { ok: false, erro: 'Ação demo desconhecida.' };
+    }
+  }
 })();

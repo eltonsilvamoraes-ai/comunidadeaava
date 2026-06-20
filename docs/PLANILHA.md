@@ -49,6 +49,19 @@ O líder monta a escala pela tela **Montar Escala** (Área do Líder, com PIN).
 - No **REGISTROS**, a coluna F *"Estava escalado?"* passa a ser preenchida
   automaticamente com **Sim/Não** comparando o registro com esta aba.
 
+## Aba `CULTOS` — calendário de cultos
+
+Criada automaticamente. O líder gera/edita pela tela **Cultos do Mês** (Área do Líder).
+
+| A: Data | B: Horário | C: Descrição |
+|---------|-----------|--------------|
+| 24/06/2026 | 19:30 | Culto de Ensino |
+| 26/06/2026 | 20:00 | Encontro de Jovens |
+| 28/06/2026 | 09:00 | Culto Família |
+
+- **Gerar automático:** Quarta 19:30 (Ensino), Sexta 20:00 (Jovens), Domingo 09:00 (Família).
+- **Avulsos:** o pastor adiciona encontros esporádicos pela tela.
+- Base para os **relatórios de frequência/ausências** (saber quais cultos aconteceram).
+
 ### Próximas abas (fases seguintes)
 - `DEPARTAMENTOS` — Código + Nome do departamento (hoje os departamentos vêm da aba VOLUNTARIOS).
-- `CULTOS` — datas/horários de culto cadastrados pelo pastor (para o líder só selecionar).

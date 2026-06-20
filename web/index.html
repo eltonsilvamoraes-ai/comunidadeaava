@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=9" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
   <main class="card" role="main">
@@ -54,8 +54,35 @@
     <section id="tela-menu" class="screen">
       <h2 class="titulo">Área do Líder</h2>
       <button class="menu-btn menu-btn--primary" data-ir="tela-escala">Montar Escala</button>
+      <button class="menu-btn" data-ir="tela-cultos">Cultos do Mês</button>
       <button class="menu-btn menu-btn--ghost" disabled>Relatórios (em breve)</button>
       <a class="voltar" data-ir="tela-inicio">‹ Sair</a>
+    </section>
+
+    <!-- TELA: Cultos do Mês -->
+    <section id="tela-cultos" class="screen screen--form">
+      <h2 class="titulo">Cultos do Mês</h2>
+
+      <label class="campo-label" for="cul-mes">Gerar cultos fixos (Quarta / Sexta / Domingo)</label>
+      <div class="form-row">
+        <input id="cul-mes" class="campo" type="month" />
+        <button id="btn-gerar-cultos" class="btn btn-inline" type="button">Gerar</button>
+      </div>
+
+      <p class="campo-label">Adicionar culto avulso (esporádico)</p>
+      <div class="form-row">
+        <div class="form-col"><input id="cul-data" class="campo" type="date" /></div>
+        <div class="form-col"><input id="cul-hora" class="campo" type="time" /></div>
+      </div>
+      <input id="cul-desc" class="campo campo-mt" type="text" placeholder="Descrição (ex.: Encontro especial)" />
+      <button id="btn-add-culto" class="btn" type="button">Adicionar culto</button>
+
+      <p id="cul-msg" class="erro" role="alert"></p>
+
+      <p class="campo-label">Cultos cadastrados</p>
+      <div id="cul-lista" class="lista"></div>
+
+      <a class="voltar" data-ir="tela-menu">‹ Voltar</a>
     </section>
 
     <!-- TELA: Montar Escala -->
@@ -109,6 +136,6 @@
   </main>
 
   <script src="config.js"></script>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>

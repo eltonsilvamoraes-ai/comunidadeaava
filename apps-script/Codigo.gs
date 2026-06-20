@@ -19,10 +19,17 @@
 const ABA_VOLUNTARIOS = 'VOLUNTARIOS';
 const ABA_REGISTROS   = 'REGISTROS';
 const ABA_ESCALA      = 'ESCALA';
+const ABA_CULTOS      = 'CULTOS';
 const FUSO            = 'America/Sao_Paulo';
 
 // PIN genérico da Área do Líder. Troque aqui quando quiser (e republique).
 const PIN_LIDER = '2024';
+
+// Restrição de localização: só registra presença perto da igreja.
+const RESTRINGIR_LOCAL = true;        // mude para false para desligar a checagem
+const IGREJA_LAT  = -23.3122366;
+const IGREJA_LNG  = -45.988886;
+const RAIO_METROS = 200;
 
 /** Recebe as chamadas POST do app (corpo em texto/JSON). */
 function doPost(e) {
@@ -31,7 +38,7 @@ function doPost(e) {
     let resultado;
     switch (req.action) {
       case 'registrarPresenca':
-        resultado = registrarPresenca(req.codigo);
+        resultado = registrarPresenca(req);
         break;
       case 'buscarVoluntario':
         resultado = buscarVoluntario(req);
@@ -54,6 +61,15 @@ function doPost(e) {
       case 'minhasEscalas':
         resultado = minhasEscalas(req.codigo);
         break;
+      case 'gerarCultosMes':
+        resultado = gerarCultosMes(req);
+        break;
+      case 'adicionarCulto':
+        resultado = adicionarCulto(req);
+        break;
+      case 'listarCultos':
+        resultado = listarCultos(req);
+        break;
       default:
         resultado = { ok: false, erro: 'Ação desconhecida: ' + req.action };
     }
@@ -66,17 +82,29 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 9 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 10 });
 }
 
 /* ------------------------------------------------------------------ */
 /* Regras de negócio                                                  */
 /* ------------------------------------------------------------------ */
 
-/** Registra a presença de um voluntário a partir do código. */
-function registrarPresenca(codigo) {
-  codigo = String(codigo || '').trim();
+/** Registra a presença de um voluntário a partir do código. req: {codigo, lat, lng} */
+function registrarPresenca(req) {
+  const codigo = String((req && req.codigo) || '').trim();
   if (!codigo) return { ok: false, erro: 'Informe um código.' };
+
+  // Restrição de localização: precisa estar dentro do raio da igreja.
+  if (RESTRINGIR_LOCAL) {
+    const lat = parseFloat(req && req.lat);
+    const lng = parseFloat(req && req.lng);
+    if (isNaN(lat) || isNaN(lng)) {
+      return { ok: false, erro: 'Ative a localização do celular para registrar na igreja.' };
+    }
+    if (distanciaMetros(lat, lng, IGREJA_LAT, IGREJA_LNG) > RAIO_METROS) {
+      return { ok: false, erro: 'Você precisa estar na igreja para registrar a presença.' };
+    }
+  }
 
   const vol = buscarVoluntarioRaw(codigo);
   if (!vol) {
@@ -253,6 +281,99 @@ function estaEscalado(codigo, dataBR) {
 }
 
 /* ------------------------------------------------------------------ */
+/* CULTOS (calendário)                                                */
+/* ------------------------------------------------------------------ */
+
+/** Padrão semanal de culto por dia da semana (0=Dom ... 6=Sáb). */
+function padraoCulto(dow) {
+  switch (dow) {
+    case 3: return { horario: '19:30', descricao: 'Culto de Ensino' };    // quarta
+    case 5: return { horario: '20:00', descricao: 'Encontro de Jovens' }; // sexta
+    case 0: return { horario: '09:00', descricao: 'Culto Família' };      // domingo
+    default: return null;
+  }
+}
+
+/** Gera os cultos fixos (Qua/Sex/Dom) de um mês. req: {pin, ano, mes(1-12)} */
+function gerarCultosMes(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const ano = Number(req.ano), mes = Number(req.mes);
+  if (!ano || !mes || mes < 1 || mes > 12) return { ok: false, erro: 'Mês inválido.' };
+
+  const sh = getCultosSheet();
+  sh.getRange('A:B').setNumberFormat('@');
+
+  const existentes = {};
+  const dados = sh.getDataRange().getValues();
+  for (let i = 1; i < dados.length; i++) existentes[formatData(dados[i][0])] = true;
+
+  let criados = 0;
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  for (let d = 1; d <= ultimoDia; d++) {
+    const dt = new Date(ano, mes - 1, d);
+    const p = padraoCulto(dt.getDay());
+    if (p) {
+      const dataBR = Utilities.formatDate(dt, FUSO, 'dd/MM/yyyy');
+      if (!existentes[dataBR]) {
+        sh.appendRow([dataBR, p.horario, p.descricao]);
+        existentes[dataBR] = true;
+        criados++;
+      }
+    }
+  }
+  return { ok: true, criados: criados };
+}
+
+/** Adiciona um culto avulso (esporádico). req: {pin, data(yyyy-mm-dd), horario, descricao} */
+function adicionarCulto(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const dataBR = isoParaBR(req.data);
+  if (!dataBR) return { ok: false, erro: 'Data inválida.' };
+  const horario = String(req.horario || '').trim();
+  const descricao = String(req.descricao || '').trim();
+
+  const sh = getCultosSheet();
+  sh.getRange('A:B').setNumberFormat('@');
+  const dados = sh.getDataRange().getValues();
+  for (let i = 1; i < dados.length; i++) {
+    if (formatData(dados[i][0]) === dataBR && formatHora(dados[i][1]) === horario) {
+      return { ok: false, erro: 'Esse culto já está cadastrado.' };
+    }
+  }
+  sh.appendRow([dataBR, horario, descricao]);
+  return { ok: true, data: dataBR };
+}
+
+/** Lista os cultos cadastrados, em ordem de data. req: {pin} */
+function listarCultos(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const dados = getCultosSheet().getDataRange().getValues();
+  const cultos = [];
+  for (let i = 1; i < dados.length; i++) {
+    if (!dados[i][0]) continue;
+    cultos.push({
+      data: formatData(dados[i][0]),
+      horario: formatHora(dados[i][1]),
+      descricao: String(dados[i][2] || '').trim()
+    });
+  }
+  cultos.sort(function (a, b) { return brParaOrdenavel(a.data) - brParaOrdenavel(b.data); });
+  return { ok: true, cultos: cultos };
+}
+
+/** Obtém a aba CULTOS, criando-a com cabeçalho se não existir. */
+function getCultosSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(ABA_CULTOS);
+  if (!sh) {
+    sh = ss.insertSheet(ABA_CULTOS);
+    sh.appendRow(['Data', 'Horário', 'Descrição']);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+/* ------------------------------------------------------------------ */
 /* Auxiliares                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -315,6 +436,18 @@ function brParaOrdenavel(s) {
   return m ? Number(m[3] + m[2] + m[1]) : 0;
 }
 
+/** Distância em metros entre dois pontos GPS (fórmula de Haversine). */
+function distanciaMetros(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = function (x) { return x * Math.PI / 180; };
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
 function json(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
@@ -372,6 +505,13 @@ function formatarPlanilha() {
 function criarAbaEscala() {
   getEscalaSheet();
   SpreadsheetApp.getActiveSpreadsheet().toast('Aba ESCALA pronta!', 'AAVA', 4);
+}
+
+/** Gera os cultos fixos (Qua/Sex/Dom) do MÊS ATUAL. Rode pelo editor (▶ Executar). */
+function gerarCultosMesAtual() {
+  const now = new Date();
+  const r = gerarCultosMes({ pin: PIN_LIDER, ano: now.getFullYear(), mes: now.getMonth() + 1 });
+  SpreadsheetApp.getActiveSpreadsheet().toast((r.criados || 0) + ' culto(s) criado(s).', 'AAVA', 5);
 }
 
 /**

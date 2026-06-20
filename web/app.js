@@ -21,7 +21,11 @@
     if (foco && id !== 'tela-inicio') setTimeout(function () { foco.focus(); }, 50);
   }
   document.querySelectorAll('[data-ir]').forEach(function (el) {
-    el.addEventListener('click', function () { irPara(el.getAttribute('data-ir')); });
+    el.addEventListener('click', function () {
+      const destino = el.getAttribute('data-ir');
+      irPara(destino);
+      if (destino === 'tela-cultos') abrirCultos();
+    });
   });
 
   /* ----- Chamada ao backend ----- */
@@ -64,9 +68,18 @@
     erro.textContent = '';
     if (!codigo) { erro.textContent = 'Digite seu código.'; return; }
 
-    btn.disabled = true; btn.textContent = 'Registrando...';
+    btn.disabled = true;
     try {
-      const r = await api({ action: 'registrarPresenca', codigo: codigo });
+      let coords = null;
+      if (!MODO_DEMO) {
+        btn.textContent = 'Localizando...';
+        coords = await obterLocalizacao();   // null se o usuário negar/falhar
+      }
+      btn.textContent = 'Registrando...';
+      const r = await api({
+        action: 'registrarPresenca', codigo: codigo,
+        lat: coords ? coords.lat : '', lng: coords ? coords.lng : ''
+      });
       if (!r.ok) { erro.textContent = r.erro || 'Não foi possível registrar.'; return; }
       mostrarConfirmacao(r);
     } catch (e) {
@@ -74,6 +87,18 @@
     } finally {
       btn.disabled = false; btn.textContent = 'Confirmar';
     }
+  }
+
+  /** Pede a localização do navegador. Resolve {lat,lng} ou null (o servidor decide). */
+  function obterLocalizacao() {
+    return new Promise(function (resolve) {
+      if (!navigator.geolocation) { resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
+        function () { resolve(null); },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    });
   }
 
   function mostrarConfirmacao(r) {
@@ -270,6 +295,87 @@
     }
   }
 
+  /* ============================================================= */
+  /* CULTOS DO MÊS (líder)                                         */
+  /* ============================================================= */
+  const culMes  = document.getElementById('cul-mes');
+  const culData = document.getElementById('cul-data');
+  const culHora = document.getElementById('cul-hora');
+  const culDesc = document.getElementById('cul-desc');
+  const culMsg  = document.getElementById('cul-msg');
+  const culLista = document.getElementById('cul-lista');
+
+  document.getElementById('btn-gerar-cultos').addEventListener('click', gerarCultos);
+  document.getElementById('btn-add-culto').addEventListener('click', adicionarCulto);
+
+  function abrirCultos() {
+    if (!culMes.value) {
+      const h = new Date();
+      culMes.value = h.getFullYear() + '-' + ('0' + (h.getMonth() + 1)).slice(-2);
+    }
+    carregarCultos();
+  }
+
+  async function carregarCultos() {
+    culLista.innerHTML = '<p class="lista-vazia">Carregando...</p>';
+    try {
+      const r = await api({ action: 'listarCultos', pin: pinLider });
+      if (!r.ok) { culLista.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      if (!r.cultos.length) { culLista.innerHTML = '<p class="lista-vazia">Nenhum culto cadastrado ainda.</p>'; return; }
+      const linhas = r.cultos.map(function (c) {
+        return '<tr><td class="td-data">' + escapeHtml(c.data) + '</td>' +
+               '<td>' + escapeHtml(c.horario || '–') + '</td>' +
+               '<td>' + escapeHtml(c.descricao || '–') + '</td></tr>';
+      }).join('');
+      culLista.innerHTML =
+        '<table class="tabela"><thead><tr><th>Data</th><th>Horário</th><th>Descrição</th></tr></thead>' +
+        '<tbody>' + linhas + '</tbody></table>';
+    } catch (e) {
+      culLista.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
+    }
+  }
+
+  async function gerarCultos() {
+    culMsg.textContent = ''; culMsg.style.color = '';
+    if (!culMes.value) { culMsg.textContent = 'Escolha o mês.'; return; }
+    const partes = culMes.value.split('-');
+    const btn = document.getElementById('btn-gerar-cultos');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const r = await api({ action: 'gerarCultosMes', pin: pinLider, ano: partes[0], mes: partes[1] });
+      if (!r.ok) { culMsg.textContent = r.erro || 'Não foi possível gerar.'; return; }
+      culMsg.style.color = '#27ae60';
+      culMsg.textContent = '✓ ' + r.criados + ' culto(s) gerado(s).';
+      carregarCultos();
+    } catch (e) {
+      culMsg.textContent = 'Falha de conexão. Tente de novo.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Gerar';
+    }
+  }
+
+  async function adicionarCulto() {
+    culMsg.textContent = ''; culMsg.style.color = '';
+    if (!culData.value) { culMsg.textContent = 'Escolha a data do culto.'; return; }
+    const btn = document.getElementById('btn-add-culto');
+    btn.disabled = true; btn.textContent = 'Adicionando...';
+    try {
+      const r = await api({
+        action: 'adicionarCulto', pin: pinLider,
+        data: culData.value, horario: culHora.value, descricao: culDesc.value
+      });
+      if (!r.ok) { culMsg.textContent = r.erro || 'Não foi possível adicionar.'; return; }
+      culMsg.style.color = '#27ae60';
+      culMsg.textContent = '✓ Culto de ' + r.data + ' adicionado.';
+      culData.value = ''; culHora.value = ''; culDesc.value = '';
+      carregarCultos();
+    } catch (e) {
+      culMsg.textContent = 'Falha de conexão. Tente de novo.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Adicionar culto';
+    }
+  }
+
   /* ----- Utilidades ----- */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -306,6 +412,14 @@
           { data: '21/06/2026', horario: '09:00', departamento: 'Louvor' },
           { data: '24/06/2026', horario: '19:30', departamento: 'Louvor' }
         ] };
+      case 'listarCultos':
+        return { ok: true, cultos: [
+          { data: '24/06/2026', horario: '19:30', descricao: 'Culto de Ensino' },
+          { data: '26/06/2026', horario: '20:00', descricao: 'Encontro de Jovens' },
+          { data: '28/06/2026', horario: '09:00', descricao: 'Culto Família' }
+        ] };
+      case 'gerarCultosMes':  return { ok: true, criados: 13 };
+      case 'adicionarCulto':  return { ok: true, data: '30/06/2026' };
       default: return { ok: false, erro: 'Ação demo desconhecida.' };
     }
   }

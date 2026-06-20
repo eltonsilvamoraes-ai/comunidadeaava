@@ -197,8 +197,11 @@ body {
   transition: border-color .15s ease;
 }
 .campo:focus { border-color: var(--azul); }
-.form-row { display: flex; gap: 12px; }
+.form-row { display: flex; gap: 12px; align-items: center; }
 .form-col { flex: 1; }
+.form-row .campo { flex: 1; }
+.btn-inline { margin-top: 0; width: auto; flex: 0 0 auto; padding: 14px 22px; font-size: 16px; }
+.campo-mt { margin-top: 10px; }
 
 /* Listas (voluntários / escalas) */
 .lista { margin-top: 8px; }

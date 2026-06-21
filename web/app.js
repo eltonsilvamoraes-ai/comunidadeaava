@@ -457,14 +457,55 @@
   const dashMes      = document.getElementById('dash-mes');
   const dashMsg      = document.getElementById('dash-msg');
   const dashConteudo = document.getElementById('dash-conteudo');
-  document.getElementById('btn-dash').addEventListener('click', carregarDashboard);
+  const cultoLista   = document.getElementById('culto-lista');
+  const cultoDetalhe = document.getElementById('culto-detalhe');
+  const relDep       = document.getElementById('rel-departamento');
+  const relConteudo  = document.getElementById('rel-conteudo');
+  let abaAtiva = 'geral';
+  let relDepsLoaded = false;
+
+  document.getElementById('btn-dash').addEventListener('click', carregarAba);
+  relDep.addEventListener('change', carregarDepto);
+  document.querySelectorAll('.aba').forEach(function (a) {
+    a.addEventListener('click', function () { mostrarAba(a.getAttribute('data-aba')); });
+  });
 
   function abrirDashboard() {
     if (!dashMes.value) {
       const h = new Date();
       dashMes.value = h.getFullYear() + '-' + ('0' + (h.getMonth() + 1)).slice(-2);
     }
-    carregarDashboard();
+    carregarDepartamentosRel();
+    mostrarAba(abaAtiva);
+  }
+
+  function mostrarAba(nome) {
+    abaAtiva = nome;
+    document.querySelectorAll('.aba').forEach(function (a) {
+      a.classList.toggle('is-on', a.getAttribute('data-aba') === nome);
+    });
+    document.getElementById('painel-geral').hidden = nome !== 'geral';
+    document.getElementById('painel-culto').hidden = nome !== 'culto';
+    document.getElementById('painel-depto').hidden = nome !== 'depto';
+    carregarAba();
+  }
+
+  function carregarAba() {
+    if (abaAtiva === 'geral') carregarDashboard();
+    else if (abaAtiva === 'culto') carregarPorCulto();
+    else if (abaAtiva === 'depto') carregarDepto();
+  }
+
+  async function carregarDepartamentosRel() {
+    if (relDepsLoaded) return;
+    try {
+      const r = await api({ action: 'listarDepartamentos', pin: pinLider });
+      if (r.ok) {
+        relDep.innerHTML = '<option value="">Selecione...</option>' +
+          r.departamentos.map(function (d) { return '<option>' + escapeHtml(d) + '</option>'; }).join('');
+        relDepsLoaded = true;
+      }
+    } catch (e) { /* silencioso */ }
   }
 
   async function carregarDashboard() {
@@ -531,6 +572,106 @@
            '<span class="barra-pct">' + pct + '%</span>';
   }
 
+  /* ----- Aba: Por Culto ----- */
+  async function carregarPorCulto() {
+    dashMsg.textContent = '';
+    if (!dashMes.value) { dashMsg.textContent = 'Escolha o mês.'; return; }
+    const p = dashMes.value.split('-');
+    cultoLista.innerHTML = '<p class="lista-vazia">Carregando...</p>'; cultoDetalhe.innerHTML = '';
+    try {
+      const r = await api({ action: 'presencasPorCulto', pin: pinLider, ano: p[0], mes: p[1] });
+      if (!r.ok) { cultoLista.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      if (!r.cultos.length) { cultoLista.innerHTML = '<p class="lista-vazia">Nenhum culto cadastrado nesse mês.</p>'; return; }
+      cultoLista.innerHTML =
+        '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Pres.</th><th>Faltas</th><th></th></tr></thead><tbody>' +
+        r.cultos.map(function (c) {
+          return '<tr><td class="td-data">' + escapeHtml(c.data) + '</td>' +
+                 '<td>' + escapeHtml(c.descricao || '–') + '</td>' +
+                 '<td class="num" style="color:var(--ok)">' + c.presentes + '</td>' +
+                 '<td class="num" style="color:var(--erro)">' + c.faltas + '</td>' +
+                 '<td><button type="button" class="link-acao" data-ver="' + escapeHtml(c.data) + '">Ver</button></td></tr>';
+        }).join('') + '</tbody></table>';
+      cultoLista.querySelectorAll('[data-ver]').forEach(function (b) {
+        b.addEventListener('click', function () { verDetalheCulto(b.getAttribute('data-ver')); });
+      });
+    } catch (e) {
+      cultoLista.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
+    }
+  }
+
+  async function verDetalheCulto(data) {
+    cultoDetalhe.innerHTML = '<p class="lista-vazia">Carregando...</p>';
+    try {
+      const r = await api({ action: 'detalheCulto', pin: pinLider, data: data });
+      if (!r.ok) { cultoDetalhe.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      cultoDetalhe.innerHTML =
+        '<p class="campo-label">Culto de ' + escapeHtml(data) + '</p>' +
+        '<div class="dash-cols">' +
+          '<div class="dash-col"><p class="sub-ok">✓ Compareceram (' + r.presentes.length + ')</p>' + listaNomes(r.presentes) + '</div>' +
+          '<div class="dash-col"><p class="sub-falta">✗ Faltaram (' + r.ausentes.length + ')</p>' + listaNomes(r.ausentes) + '</div>' +
+        '</div>';
+      cultoDetalhe.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      cultoDetalhe.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
+    }
+  }
+
+  function listaNomes(arr) {
+    if (!arr.length) return '<p class="lista-vazia">—</p>';
+    return '<ul class="nomes">' + arr.map(function (v) {
+      return '<li>' + escapeHtml(v.nome) +
+             (v.departamento ? ' <span class="dep">' + escapeHtml(v.departamento) + '</span>' : '') + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  /* ----- Aba: Por Departamento ----- */
+  async function carregarDepto() {
+    dashMsg.textContent = '';
+    const dep = relDep.value;
+    if (!dep) { relConteudo.innerHTML = '<p class="lista-vazia">Selecione um departamento.</p>'; return; }
+    if (!dashMes.value) { dashMsg.textContent = 'Escolha o mês.'; return; }
+    const p = dashMes.value.split('-');
+    relConteudo.innerHTML = '<p class="lista-vazia">Carregando...</p>';
+    try {
+      const r = await api({ action: 'relatorioDepartamento', pin: pinLider, ano: p[0], mes: p[1], departamento: dep });
+      if (!r.ok) { relConteudo.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      renderDepto(r);
+    } catch (e) {
+      relConteudo.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
+    }
+  }
+
+  function renderDepto(r) {
+    if (!r.nCultos) { relConteudo.innerHTML = '<p class="lista-vazia">Nenhum culto cadastrado nesse mês.</p>'; return; }
+    let html = '';
+    if (r.alertas.length) {
+      html += '<div class="aviso-alerta">⚠️ Atenção: <strong>' + r.alertas.map(escapeHtml).join(', ') +
+              '</strong> com alto índice de falta.</div>';
+    }
+    html += '<div class="dash-cols">' +
+      '<div class="dash-col"><p class="campo-label">Maior frequência</p>' + miniRank(r.maior) + '</div>' +
+      '<div class="dash-col"><p class="campo-label">Menor frequência</p>' + miniRank(r.menor) + '</div>' +
+    '</div>';
+    html += '<p class="campo-label">Todos os voluntários · ' + r.nCultos + ' culto(s)</p>';
+    html += '<table class="tabela"><thead><tr><th>Voluntário</th><th>Pres.</th><th>Faltas</th><th>%</th></tr></thead><tbody>' +
+      r.voluntarios.map(function (v) {
+        return '<tr' + (v.alerta ? ' class="linha-alerta"' : '') + '><td>' + escapeHtml(v.nome) + '</td>' +
+               '<td class="num">' + v.presencas + '</td>' +
+               '<td class="num">' + v.faltas + '</td>' +
+               '<td class="num"><span class="' + corPct(v.pct) + '">' + v.pct + '%</span></td></tr>';
+      }).join('') + '</tbody></table>';
+    relConteudo.innerHTML = html;
+  }
+
+  function miniRank(arr) {
+    if (!arr || !arr.length) return '<p class="lista-vazia">—</p>';
+    return '<ol class="rank">' + arr.map(function (v) {
+      return '<li>' + escapeHtml(v.nome) + ' <span class="' + corPct(v.pct) + '">' + v.pct + '%</span></li>';
+    }).join('') + '</ol>';
+  }
+
+  function corPct(pct) { return pct >= 75 ? 'pct-bom' : (pct >= 50 ? 'pct-medio' : 'pct-ruim'); }
+
   /* ----- Utilidades ----- */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -593,6 +734,22 @@
           menor: [{ nome: 'Ryan', presencas: 1, pct: 25 }, { nome: 'Yan', presencas: 1, pct: 25 }, { nome: 'Davi', presencas: 2, pct: 50 }],
           maior: [{ nome: 'Elton', presencas: 4, pct: 100 }, { nome: 'Lucas', presencas: 3, pct: 75 }, { nome: 'Maria', presencas: 3, pct: 75 }]
         };
+      case 'presencasPorCulto':
+        return { ok: true, nVol: 7, cultos: [
+          { data: '03/06/2026', descricao: 'Culto de Ensino',    presentes: 5, faltas: 2, pct: 71.4 },
+          { data: '05/06/2026', descricao: 'Encontro de Jovens', presentes: 4, faltas: 3, pct: 57.1 },
+          { data: '07/06/2026', descricao: 'Culto Família',      presentes: 6, faltas: 1, pct: 85.7 }
+        ] };
+      case 'detalheCulto':
+        return { ok: true, data: p.data, presentes: [
+          { nome: 'Elton de Moraes', departamento: 'Transmissão' }, { nome: 'Maria Oliveira', departamento: 'Louvor' }
+        ], ausentes: [{ nome: 'Ryan', departamento: 'Jovens' }, { nome: 'Yan', departamento: 'Jovens' }] };
+      case 'relatorioDepartamento':
+        return { ok: true, departamento: p.departamento || 'Louvor', nCultos: 4, voluntarios: [
+          { nome: 'Maria Oliveira', presencas: 4, faltas: 0, pct: 100, alerta: false },
+          { nome: 'João Pereira',   presencas: 2, faltas: 2, pct: 50,  alerta: false },
+          { nome: 'Ana Souza',      presencas: 1, faltas: 3, pct: 25,  alerta: true }
+        ], maior: [{ nome: 'Maria Oliveira', pct: 100 }], menor: [{ nome: 'Ana Souza', pct: 25 }], alertas: ['Ana Souza'] };
       default: return { ok: false, erro: 'Ação demo desconhecida.' };
     }
   }

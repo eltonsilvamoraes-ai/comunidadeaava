@@ -79,6 +79,15 @@ function doPost(e) {
       case 'dashboard':
         resultado = dashboard(req);
         break;
+      case 'presencasPorCulto':
+        resultado = presencasPorCulto(req);
+        break;
+      case 'detalheCulto':
+        resultado = detalheCulto(req);
+        break;
+      case 'relatorioDepartamento':
+        resultado = relatorioDepartamento(req);
+        break;
       default:
         resultado = { ok: false, erro: 'Ação desconhecida: ' + req.action };
     }
@@ -91,7 +100,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 12 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 13 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -515,6 +524,133 @@ function dashboard(req) {
     taxaPresenca: taxaPresenca, taxaFalta: taxaFalta,
     porCulto: porCulto, menor: menor, maior: maior
   };
+}
+
+/* --- Auxiliares de relatório --- */
+
+/** Lista de voluntários ativos: [{codigo, nome, departamento}]. */
+function voluntariosAtivos() {
+  const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
+  const vols = [];
+  for (let i = 1; i < dados.length; i++) {
+    const cod = String(dados[i][0] || '').trim();
+    const status = String(dados[i][3] || '').trim().toLowerCase();
+    if (cod && status !== 'inativo') {
+      vols.push({ codigo: cod, nome: String(dados[i][1] || '').trim(), departamento: String(dados[i][2] || '').trim() });
+    }
+  }
+  return vols;
+}
+
+/** Cultos de um mês: [{data, descricao}] ordenados. */
+function cultosDoMesArr(ano, mes) {
+  const dados = getCultosSheet().getDataRange().getValues();
+  const arr = [], seen = {};
+  for (let i = 1; i < dados.length; i++) {
+    const dataBR = formatData(dados[i][0]);
+    const m = dataBR.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m && Number(m[2]) === mes && Number(m[3]) === ano && !seen[dataBR]) {
+      seen[dataBR] = true;
+      arr.push({ data: dataBR, descricao: String(dados[i][2] || '').trim() });
+    }
+  }
+  arr.sort(function (a, b) { return brParaOrdenavel(a.data) - brParaOrdenavel(b.data); });
+  return arr;
+}
+
+/** Mapa data -> {codigo: true} de presenças (somente códigos do conjunto informado). */
+function mapaPresencas(codSet) {
+  const reg = getSheet(ABA_REGISTROS).getDataRange().getValues();
+  const map = {};
+  for (let i = 1; i < reg.length; i++) {
+    const dataBR = formatData(reg[i][0]);
+    const cod = String(reg[i][2] || '').trim();
+    if (codSet[cod]) {
+      if (!map[dataBR]) map[dataBR] = {};
+      map[dataBR][cod] = true;
+    }
+  }
+  return map;
+}
+
+/** Presenças/faltas por culto do mês. req: {pin, ano, mes} */
+function presencasPorCulto(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const ano = Number(req.ano), mes = Number(req.mes);
+  if (!ano || !mes) return { ok: false, erro: 'Mês inválido.' };
+
+  const vols = voluntariosAtivos();
+  const codSet = {}; vols.forEach(function (v) { codSet[v.codigo] = true; });
+  const nVol = vols.length;
+  const cultos = cultosDoMesArr(ano, mes);
+  const presMap = mapaPresencas(codSet);
+
+  const lista = cultos.map(function (c) {
+    const p = presMap[c.data] ? Object.keys(presMap[c.data]).length : 0;
+    return { data: c.data, descricao: c.descricao, presentes: p,
+             faltas: Math.max(nVol - p, 0), pct: nVol ? Math.round(p / nVol * 1000) / 10 : 0 };
+  });
+  return { ok: true, nVol: nVol, cultos: lista };
+}
+
+/** Quem compareceu e quem faltou num culto. req: {pin, data} */
+function detalheCulto(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const dataBR = isoParaBR(req.data);
+  const vols = voluntariosAtivos();
+  const codSet = {}; vols.forEach(function (v) { codSet[v.codigo] = true; });
+  const presMap = mapaPresencas(codSet);
+  const presentesSet = presMap[dataBR] || {};
+
+  const presentes = [], ausentes = [];
+  vols.forEach(function (v) {
+    const item = { nome: v.nome, departamento: v.departamento };
+    if (presentesSet[v.codigo]) presentes.push(item); else ausentes.push(item);
+  });
+  presentes.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  ausentes.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  return { ok: true, data: dataBR, presentes: presentes, ausentes: ausentes };
+}
+
+/** Relatório de frequência de um departamento. req: {pin, ano, mes, departamento} */
+function relatorioDepartamento(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const ano = Number(req.ano), mes = Number(req.mes);
+  const departamento = String(req.departamento || '').trim();
+  if (!ano || !mes) return { ok: false, erro: 'Mês inválido.' };
+  if (!departamento) return { ok: false, erro: 'Informe o departamento.' };
+
+  const cultos = cultosDoMesArr(ano, mes);
+  const nCultos = cultos.length;
+  const cultoSet = {}; cultos.forEach(function (c) { cultoSet[c.data] = true; });
+
+  const vols = voluntariosAtivos().filter(function (v) { return v.departamento === departamento; });
+  const codSet = {}; vols.forEach(function (v) { codSet[v.codigo] = true; });
+
+  const count = {}; vols.forEach(function (v) { count[v.codigo] = 0; });
+  const vistos = {};
+  const reg = getSheet(ABA_REGISTROS).getDataRange().getValues();
+  for (let i = 1; i < reg.length; i++) {
+    const dataBR = formatData(reg[i][0]);
+    const cod = String(reg[i][2] || '').trim();
+    if (cultoSet[dataBR] && codSet[cod]) {
+      const k = cod + '|' + dataBR;
+      if (!vistos[k]) { vistos[k] = true; count[cod]++; }
+    }
+  }
+
+  const lista = vols.map(function (v) {
+    const p = count[v.codigo];
+    const pct = nCultos ? Math.round(p / nCultos * 1000) / 10 : 0;
+    return { nome: v.nome, presencas: p, faltas: Math.max(nCultos - p, 0), pct: pct, alerta: nCultos > 0 && pct < 50 };
+  });
+  lista.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+
+  const maior = lista.slice().sort(function (a, b) { return (b.presencas - a.presencas) || a.nome.localeCompare(b.nome); }).slice(0, 3);
+  const menor = lista.slice().sort(function (a, b) { return (a.presencas - b.presencas) || a.nome.localeCompare(b.nome); }).slice(0, 3);
+  const alertas = lista.filter(function (v) { return v.alerta; }).map(function (v) { return v.nome; });
+
+  return { ok: true, departamento: departamento, nCultos: nCultos, voluntarios: lista, maior: maior, menor: menor, alertas: alertas };
 }
 
 /* ------------------------------------------------------------------ */

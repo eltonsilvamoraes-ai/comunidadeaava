@@ -270,6 +270,47 @@ body {
   .card--wide .dash-col { flex: 1; min-width: 0; }
 }
 
+/* Abas (paginação do dashboard) */
+.abas { display: flex; gap: 8px; margin: 4px 0 14px; }
+.aba {
+  flex: 1;
+  padding: 10px 6px;
+  border: 1px solid var(--cinza-campo);
+  background: #fff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cinza-rotulo);
+  cursor: pointer;
+}
+.aba.is-on { background: var(--azul); color: #fff; border-color: var(--azul); }
+
+/* Cores de percentual */
+.pct-bom   { color: var(--ok);    font-weight: 700; }
+.pct-medio { color: #c98a00;      font-weight: 700; }
+.pct-ruim  { color: var(--erro);  font-weight: 700; }
+
+/* Aviso de alerta (alto índice de falta) */
+.aviso-alerta {
+  background: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c6c0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  margin: 8px 0 14px;
+}
+.linha-alerta { background: #fdf2f2; }
+
+/* Rankings e listas de nomes */
+.rank { margin: 6px 0 10px; padding-left: 22px; font-size: 14px; }
+.rank li { margin-bottom: 4px; }
+.nomes { list-style: none; padding: 0; margin: 6px 0; }
+.nomes li { padding: 7px 8px; border-bottom: 1px solid var(--cinza-campo); font-size: 14px; }
+.nomes .dep { color: var(--cinza-rotulo); font-size: 12px; }
+.sub-ok    { color: var(--ok);   font-weight: 700; font-size: 13px; margin: 2px 0; }
+.sub-falta { color: var(--erro); font-weight: 700; font-size: 13px; margin: 2px 0; }
+
 /* Listas (voluntários / escalas) */
 .lista { margin-top: 8px; }
 .lista-vazia { color: var(--cinza-rotulo); font-size: 14px; padding: 8px 2px; }

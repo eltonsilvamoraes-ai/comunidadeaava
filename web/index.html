@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=12" />
+  <link rel="stylesheet" href="styles.css?v=13" />
 </head>
 <body>
   <main class="card" role="main">
@@ -68,30 +68,53 @@
         <button id="btn-dash" class="btn btn-inline" type="button">Atualizar</button>
       </div>
 
+      <div class="abas">
+        <button class="aba is-on" type="button" data-aba="geral">Geral</button>
+        <button class="aba" type="button" data-aba="culto">Por Culto</button>
+        <button class="aba" type="button" data-aba="depto">Departamento</button>
+      </div>
+
       <p id="dash-msg" class="erro" role="alert"></p>
 
-      <div id="dash-conteudo" hidden>
-        <div class="kpis">
-          <div class="kpi"><div id="kpi-presenca" class="kpi-num verde">–</div><div class="kpi-label">Taxa de presença</div></div>
-          <div class="kpi"><div id="kpi-falta" class="kpi-num vermelho">–</div><div class="kpi-label">Taxa de falta</div></div>
-          <div class="kpi"><div id="kpi-presentes" class="kpi-num azul">–</div><div class="kpi-label">Presenças</div></div>
-          <div class="kpi"><div id="kpi-faltas" class="kpi-num">–</div><div class="kpi-label">Faltas</div></div>
-        </div>
-        <p id="dash-resumo" class="dash-resumo"></p>
-
-        <p class="campo-label">Participação por culto</p>
-        <div id="dash-cultos" class="lista"></div>
-
-        <div class="dash-cols">
-          <div class="dash-col">
-            <p class="campo-label">Menor frequência</p>
-            <div id="dash-menor" class="lista"></div>
+      <!-- Aba GERAL -->
+      <div id="painel-geral" class="painel">
+        <div id="dash-conteudo" hidden>
+          <div class="kpis">
+            <div class="kpi"><div id="kpi-presenca" class="kpi-num verde">–</div><div class="kpi-label">Taxa de presença</div></div>
+            <div class="kpi"><div id="kpi-falta" class="kpi-num vermelho">–</div><div class="kpi-label">Taxa de falta</div></div>
+            <div class="kpi"><div id="kpi-presentes" class="kpi-num azul">–</div><div class="kpi-label">Presenças</div></div>
+            <div class="kpi"><div id="kpi-faltas" class="kpi-num">–</div><div class="kpi-label">Faltas</div></div>
           </div>
-          <div class="dash-col">
-            <p class="campo-label">Maior frequência</p>
-            <div id="dash-maior" class="lista"></div>
+          <p id="dash-resumo" class="dash-resumo"></p>
+
+          <p class="campo-label">Participação por culto</p>
+          <div id="dash-cultos" class="lista"></div>
+
+          <div class="dash-cols">
+            <div class="dash-col">
+              <p class="campo-label">Menor frequência</p>
+              <div id="dash-menor" class="lista"></div>
+            </div>
+            <div class="dash-col">
+              <p class="campo-label">Maior frequência</p>
+              <div id="dash-maior" class="lista"></div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Aba POR CULTO -->
+      <div id="painel-culto" class="painel" hidden>
+        <p class="campo-label">Toque em um culto para ver quem compareceu e quem faltou</p>
+        <div id="culto-lista" class="lista"></div>
+        <div id="culto-detalhe"></div>
+      </div>
+
+      <!-- Aba POR DEPARTAMENTO -->
+      <div id="painel-depto" class="painel" hidden>
+        <label class="campo-label" for="rel-departamento">Departamento</label>
+        <select id="rel-departamento" class="campo"></select>
+        <div id="rel-conteudo"></div>
       </div>
 
       <a class="voltar" data-ir="tela-menu">‹ Voltar</a>
@@ -176,6 +199,6 @@
   </main>
 
   <script src="config.js"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

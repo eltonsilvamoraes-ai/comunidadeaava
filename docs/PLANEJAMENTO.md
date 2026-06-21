@@ -61,18 +61,31 @@ ao pastor um **panorama de engajamento**.
 - **PWA instalável** + QR rotativo no totem
 - Confirmação de disponibilidade do voluntário
 
-## 5. Modelo de negócio (rascunho)
+## 5. Modelo de negócio
 
-Assinatura mensal por igreja, com camada grátis para fisgar:
+Assinatura por **igreja** (não por departamento). Camada grátis como amostra.
 
-| Plano | Preço (rascunho) | Para quem |
+| Plano | Preço | Limite |
 |---|---|---|
-| **Grátis** | R$ 0 | 1 departamento, até ~15 voluntários |
-| **Essencial** | ~R$ 49/mês | Ilimitado, dashboard, relatórios |
-| **Pro** | ~R$ 99/mês | White-label, multi-campus, suporte prioritário |
+| **Grátis** | R$ 0 | até **10 voluntários**, 1 igreja, recursos básicos (amostra) |
+| **Profissional** | **R$ 99/mês** | ilimitado: voluntários, departamentos, dashboard, relatórios |
+| **Anual** (futuro) | 11× R$ 99 (**1 mês grátis**) | igual ao Profissional, com desconto |
 
-- Possível **taxa de implantação** no início (modelo "Kit").
-- **Break-even:** ~3 igrejas no Essencial já cobrem a infra inicial + MEI.
+- **Regra-chave: 1 conta por CNPJ.** Impede a mesma igreja abrir várias contas
+  grátis (ex.: um login por departamento). A conta é da **igreja inteira**.
+- **Break-even:** ~3 igrejas no Profissional já cobrem infra + MEI.
+
+## 5.1 Modelo de contas (multi-tenant) — resolve o risco do "grátis"
+
+- **Conta = Igreja (1 por CNPJ).** O CNPJ é a chave única do sistema.
+- **Usuários dentro da igreja**, com papéis:
+  - **Pastor / Admin:** cria a igreja, gerencia departamentos, vê tudo, cuida da assinatura.
+  - **Líder:** monta a escala do seu departamento e vê seus relatórios.
+- **Voluntários:** **não precisam de login** — usam o código (presença) e consultam a própria escala.
+- **Plano grátis** limita a **igreja** (10 voluntários), não o departamento. Assim,
+  uma igreja com 5 departamentos **não** consegue 5 contas grátis: é **uma conta só**.
+- Caso da AAVA (referência): ~200 membros, ~90 voluntários, ~5 departamentos →
+  **1 conta** (Profissional), vários líderes, presença sem login.
 
 ## 6. Arquitetura em fases
 
@@ -120,11 +133,32 @@ Assinatura mensal por igreja, com camada grátis para fisgar:
 - **Verificar:** domínios (`escalaai.com.br`, `escalaai.app`), redes sociais, marca (INPI).
 - **Tom:** leve, acolhedor, próximo da realidade da igreja.
 
-## 12. Próximos passos sugeridos
+## 12. Estratégia de execução (decidida)
 
-1. Fechar **posicionamento, nome e pricing** (este documento).
-2. Verificar **domínios e redes** ESCALA AÍ.
-3. Deixar o app **white-label** (Fase 1) — serve para Kit e SaaS.
-4. Rodar **piloto** com 2–3 igrejas.
-5. Abrir **MEI** ao fechar o 1º cliente.
-6. Planejar a **Fase 2 (multi-tenant)** com receita validada.
+- **AAVA primeiro:** a igreja continua usando a versão atual (Sheets + Apps
+  Script) em produção, sem parar.
+- **SaaS em paralelo:** começamos a construir o **ESCALA AÍ** como produto
+  multi-tenant, num stack próprio, reaproveitando as **telas que já temos**.
+
+### Reaproveitamento (o que migra)
+- **Frontend (telas):** presença, escala, cultos, dashboard, minhas escalas —
+  praticamente tudo reaproveitável. Só troca para onde elas "conversam".
+- **Backend:** sai o Apps Script/Sheets, entra um backend real **multi-tenant**
+  com **login** e **dados isolados por igreja**.
+
+### Stack recomendado para o SaaS
+- **Supabase** (Postgres + Auth + isolamento por igreja) — banco relacional
+  combina com nossos dados (igrejas, departamentos, voluntários, escalas, cultos,
+  registros); plano grátis generoso; login pronto.
+- **Frontend** hospedado em Vercel/Cloudflare (grátis no início).
+- **Cobrança** (Fase 3): Asaas/Mercado Pago (Pix/boleto BR) ou Stripe (cartão).
+
+## 13. Próximos passos
+
+1. Confirmar **stack** (Supabase) e identidade da marca ESCALA AÍ.
+2. Modelar o **banco multi-tenant** (igreja/CNPJ, usuários/papéis, departamentos,
+   voluntários, cultos, escalas, registros).
+3. Construir **cadastro de igreja + login** (com regra 1 conta por CNPJ).
+4. Migrar as **telas** para o novo backend.
+5. **Cobrança** (assinatura) + painel do dono.
+6. **MEI** ao fechar o 1º cliente pagante.

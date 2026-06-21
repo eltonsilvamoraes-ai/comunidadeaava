@@ -160,6 +160,7 @@
   const inpHora  = document.getElementById('esc-horario');
   const divLista = document.getElementById('esc-lista');
   const escMsg   = document.getElementById('esc-msg');
+  const escExistentes = document.getElementById('esc-existentes');
   let depsCarregados = false;
 
   async function carregarDepartamentos() {
@@ -174,14 +175,19 @@
     } catch (e) { /* silencioso */ }
   }
 
-  selDep.addEventListener('change', atualizarLista);
-  inpData.addEventListener('change', atualizarLista);
+  selDep.addEventListener('change', function () {
+    inpData.value = ''; inpHora.value = '';
+    carregarVoluntarios();
+    carregarEscalasDepartamento();
+  });
+  inpData.addEventListener('change', preCheck);
+  inpHora.addEventListener('change', preCheck);
 
-  async function atualizarLista() {
+  // Renderiza os voluntários do departamento (todos desmarcados).
+  async function carregarVoluntarios() {
     const dep = selDep.value;
     escMsg.textContent = '';
     if (!dep) { divLista.innerHTML = '<p class="lista-vazia">Selecione um departamento.</p>'; return; }
-
     divLista.innerHTML = '<p class="lista-vazia">Carregando...</p>';
     try {
       const r = await api({ action: 'listarVoluntarios', departamento: dep, pin: pinLider });
@@ -189,28 +195,88 @@
         divLista.innerHTML = '<p class="lista-vazia">Nenhum voluntário neste departamento.</p>';
         return;
       }
-      // Marca quem já estava escalado nessa data (se data informada).
-      let jaEscalados = [];
-      if (inpData.value) {
-        const e = await api({ action: 'listarEscala', pin: pinLider, data: inpData.value, departamento: dep });
-        if (e.ok) { jaEscalados = e.codigos || []; if (e.horario && !inpHora.value) inpHora.value = e.horario; }
-      }
       divLista.innerHTML = r.voluntarios.map(function (v) {
-        const checked = jaEscalados.indexOf(v.codigo) >= 0 ? 'checked' : '';
         return '<label class="voluntario-item">' +
-                 '<input type="checkbox" value="' + escapeHtml(v.codigo) + '" ' + checked + '>' +
+                 '<input type="checkbox" value="' + escapeHtml(v.codigo) + '">' +
                  '<span>' + escapeHtml(v.nome) + '</span>' +
                '</label>';
       }).join('');
+      preCheck();
     } catch (e) {
       divLista.innerHTML = '<p class="lista-vazia">Erro ao carregar. Tente de novo.</p>';
+    }
+  }
+
+  // Marca os voluntários já escalados para a data+horário selecionados.
+  async function preCheck() {
+    const dep = selDep.value;
+    const boxes = divLista.querySelectorAll('input[type=checkbox]');
+    if (!dep || !inpData.value || !boxes.length) return;
+    try {
+      const r = await api({ action: 'listarEscala', pin: pinLider,
+        data: inpData.value, horario: inpHora.value, departamento: dep });
+      if (!r.ok) return;
+      const marcados = {};
+      (r.codigos || []).forEach(function (c) { marcados[c] = true; });
+      boxes.forEach(function (b) { b.checked = !!marcados[b.value]; });
+    } catch (e) { /* silencioso */ }
+  }
+
+  // Lista as escalas já criadas do departamento, com Editar/Excluir.
+  async function carregarEscalasDepartamento() {
+    const dep = selDep.value;
+    escExistentes.innerHTML = '';
+    if (!dep) return;
+    try {
+      const r = await api({ action: 'listarEscalasDepartamento', pin: pinLider, departamento: dep });
+      if (!r.ok || !r.escalas.length) return;
+      escExistentes.innerHTML = '<p class="campo-label">Escalas já criadas</p>' +
+        r.escalas.map(function (e) {
+          const rotulo = e.data + (e.horario ? ' · ' + e.horario : '') + ' · ' + e.total + ' voluntário(s)';
+          const chave = e.data + '|' + e.horario;
+          return '<div class="esc-item"><span>' + escapeHtml(rotulo) + '</span>' +
+                   '<span class="esc-acoes">' +
+                     '<button type="button" class="link-acao" data-edit="' + escapeHtml(chave) + '">Editar</button>' +
+                     '<button type="button" class="link-acao link-excluir" data-del="' + escapeHtml(chave) + '">Excluir</button>' +
+                   '</span></div>';
+        }).join('');
+      escExistentes.querySelectorAll('[data-edit]').forEach(function (b) {
+        b.addEventListener('click', function () { const p = b.getAttribute('data-edit').split('|'); editarEscala(p[0], p[1]); });
+      });
+      escExistentes.querySelectorAll('[data-del]').forEach(function (b) {
+        b.addEventListener('click', function () { const p = b.getAttribute('data-del').split('|'); removerEscala(p[0], p[1]); });
+      });
+    } catch (e) { /* silencioso */ }
+  }
+
+  function editarEscala(dataBR, horario) {
+    inpData.value = brParaIso(dataBR);
+    inpHora.value = horario || '';
+    escMsg.textContent = ''; escMsg.style.color = '';
+    preCheck();
+    inpData.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function removerEscala(dataBR, horario) {
+    if (!confirm('Excluir a escala de ' + dataBR + (horario ? ' (' + horario + ')' : '') + '?')) return;
+    try {
+      const r = await api({ action: 'excluirEscala', pin: pinLider,
+        data: dataBR, horario: horario, departamento: selDep.value });
+      if (!r.ok) { escMsg.textContent = r.erro || 'Não foi possível excluir.'; return; }
+      escMsg.style.color = '#27ae60';
+      escMsg.textContent = '✓ Escala de ' + dataBR + ' excluída.';
+      setTimeout(function () { escMsg.style.color = ''; }, 4000);
+      carregarEscalasDepartamento();
+      preCheck();
+    } catch (e) {
+      escMsg.textContent = 'Falha de conexão. Tente de novo.';
     }
   }
 
   document.getElementById('btn-salvar-escala').addEventListener('click', salvarEscala);
 
   async function salvarEscala() {
-    escMsg.textContent = '';
+    escMsg.textContent = ''; escMsg.style.color = '';
     const dep = selDep.value;
     if (!dep)          { escMsg.textContent = 'Selecione o departamento.'; return; }
     if (!inpData.value){ escMsg.textContent = 'Escolha a data do culto.'; return; }
@@ -231,11 +297,18 @@
       escMsg.style.color = '#27ae60';
       escMsg.textContent = '✓ Escala salva: ' + r.total + ' voluntário(s) em ' + r.data + '.';
       setTimeout(function () { escMsg.style.color = ''; }, 4000);
+      carregarEscalasDepartamento();
     } catch (e) {
       escMsg.textContent = 'Falha de conexão. Tente de novo.';
     } finally {
       btnS.disabled = false; btnS.textContent = 'Salvar escala';
     }
+  }
+
+  /** 'dd/MM/yyyy' -> 'yyyy-MM-dd' (para preencher input date). */
+  function brParaIso(dataBR) {
+    const m = String(dataBR || '').match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    return m ? (m[3] + '-' + m[2] + '-' + m[1]) : '';
   }
 
   /* ============================================================= */
@@ -405,7 +478,13 @@
           { codigo: '1001', nome: 'Maria Oliveira' },
           { codigo: '1002', nome: 'João Pereira' }
         ] };
-      case 'listarEscala':  return { ok: true, codigos: ['1001'], horario: '09:00' };
+      case 'listarEscala':  return { ok: true, codigos: ['1001'] };
+      case 'listarEscalasDepartamento':
+        return { ok: true, escalas: [
+          { data: '21/06/2026', horario: '09:00', total: 2 },
+          { data: '24/06/2026', horario: '19:30', total: 1 }
+        ] };
+      case 'excluirEscala': return { ok: true, removidos: 1 };
       case 'salvarEscala':  return { ok: true, data: '21/06/2026', total: (p.codigos || []).length };
       case 'minhasEscalas':
         return { ok: true, nome: 'Maria Oliveira', departamento: 'Louvor', escalas: [

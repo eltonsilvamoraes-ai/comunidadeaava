@@ -58,6 +58,12 @@ function doPost(e) {
       case 'listarEscala':
         resultado = listarEscala(req);
         break;
+      case 'listarEscalasDepartamento':
+        resultado = listarEscalasDepartamento(req);
+        break;
+      case 'excluirEscala':
+        resultado = excluirEscala(req);
+        break;
       case 'minhasEscalas':
         resultado = minhasEscalas(req.codigo);
         break;
@@ -82,7 +88,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 10 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 11 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -228,21 +234,64 @@ function salvarEscala(req) {
   return { ok: true, data: dataBR, departamento: departamento, total: inseridos };
 }
 
-/** Lista a escala já salva de uma data + departamento (para pré-marcar). */
+/** Lista os códigos escalados de uma data+horário+departamento (para pré-marcar ao editar). */
 function listarEscala(req) {
-  if (String(req.pin || '') !== PIN_LIDER) return { ok: false, erro: 'PIN incorreto.' };
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
   const dataBR = isoParaBR(req.data);
+  const horario = String(req.horario || '').trim();
   const departamento = String(req.departamento || '').trim();
   const dados = getEscalaSheet().getDataRange().getValues();
   const codigos = [];
-  let horario = '';
   for (let i = 1; i < dados.length; i++) {
-    if (formatData(dados[i][0]) === dataBR && String(dados[i][4] || '').trim() === departamento) {
+    if (formatData(dados[i][0]) === dataBR &&
+        formatHora(dados[i][1]) === horario &&
+        String(dados[i][4] || '').trim() === departamento) {
       codigos.push(String(dados[i][2]).trim());
-      if (!horario) horario = formatHora(dados[i][1]);
     }
   }
-  return { ok: true, codigos: codigos, horario: horario };
+  return { ok: true, codigos: codigos };
+}
+
+/** Lista as escalas já criadas de um departamento (agrupadas por data+horário). */
+function listarEscalasDepartamento(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const departamento = String(req.departamento || '').trim();
+  const dados = getEscalaSheet().getDataRange().getValues();
+  const grupos = {};
+  for (let i = 1; i < dados.length; i++) {
+    if (String(dados[i][4] || '').trim() === departamento) {
+      const data = formatData(dados[i][0]);
+      const horario = formatHora(dados[i][1]);
+      const key = data + '|' + horario;
+      if (!grupos[key]) grupos[key] = { data: data, horario: horario, total: 0 };
+      grupos[key].total++;
+    }
+  }
+  const lista = Object.keys(grupos).map(function (k) { return grupos[k]; });
+  lista.sort(function (a, b) {
+    return (brParaOrdenavel(a.data) - brParaOrdenavel(b.data)) || a.horario.localeCompare(b.horario);
+  });
+  return { ok: true, escalas: lista };
+}
+
+/** Exclui a escala de uma data+horário+departamento. */
+function excluirEscala(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const dataBR = isoParaBR(req.data);
+  const horario = String(req.horario || '').trim();
+  const departamento = String(req.departamento || '').trim();
+  const sh = getEscalaSheet();
+  const dados = sh.getDataRange().getValues();
+  let removidos = 0;
+  for (let i = dados.length - 1; i >= 1; i--) {
+    if (formatData(dados[i][0]) === dataBR &&
+        formatHora(dados[i][1]) === horario &&
+        String(dados[i][4] || '').trim() === departamento) {
+      sh.deleteRow(i + 1);
+      removidos++;
+    }
+  }
+  return { ok: true, removidos: removidos };
 }
 
 /** Escalas de um voluntário (todas as datas em que ele está escalado). */

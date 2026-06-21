@@ -203,6 +203,32 @@ body {
 .btn-inline { margin-top: 0; width: auto; flex: 0 0 auto; padding: 14px 22px; font-size: 16px; }
 .campo-mt { margin-top: 10px; }
 
+/* Escalas já criadas (editar/excluir) */
+.esc-existentes { margin: 8px 0 6px; }
+.esc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--cinza-campo);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.esc-acoes { display: flex; gap: 12px; flex: 0 0 auto; }
+.link-acao {
+  border: none;
+  background: none;
+  color: var(--azul);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+}
+.link-acao:hover { text-decoration: underline; }
+.link-excluir { color: var(--erro); }
+
 /* Listas (voluntários / escalas) */
 .lista { margin-top: 8px; }
 .lista-vazia { color: var(--cinza-rotulo); font-size: 14px; padding: 8px 2px; }

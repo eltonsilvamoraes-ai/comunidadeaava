@@ -230,7 +230,7 @@ body {
 .link-excluir { color: var(--erro); }
 
 /* Dashboard */
-.card--wide { max-width: 880px; }
+.card.card--wide { max-width: 880px; }
 .kpis {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -310,6 +310,39 @@ body {
 .nomes .dep { color: var(--cinza-rotulo); font-size: 12px; }
 .sub-ok    { color: var(--ok);   font-weight: 700; font-size: 13px; margin: 2px 0; }
 .sub-falta { color: var(--erro); font-weight: 700; font-size: 13px; margin: 2px 0; }
+
+/* ================= Responsividade (celular / tablet / computador) ================= */
+
+/* Tabelas e listas longas rolam horizontalmente em telas estreitas (não quebram) */
+.lista,
+#minhas-resultado,
+#rel-conteudo,
+#culto-detalhe { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Telas bem estreitas (celulares pequenos): empilha campos lado a lado */
+@media (max-width: 380px) {
+  .card { padding: 34px 18px 42px; }
+  .form-row { flex-direction: column; align-items: stretch; }
+  .btn-inline { width: 100%; }
+  .abas .aba { font-size: 12px; padding: 9px 4px; }
+  .kpi-num { font-size: 22px; }
+}
+
+/* Tablets e computadores: mais respiro e leitura confortável */
+@media (min-width: 768px) {
+  body { padding: 40px; }
+  .card { padding: 56px 44px 60px; }
+  .brand { margin-bottom: 48px; }
+  .brand__logo { width: 210px; }
+  .input { font-size: 24px; }
+  .titulo { font-size: 22px; }
+  .card.card--wide { max-width: 920px; padding: 48px 44px 52px; }
+}
+
+/* Telas grandes: dashboard ainda mais amplo */
+@media (min-width: 1100px) {
+  .card.card--wide { max-width: 1040px; }
+}
 
 /* Listas (voluntários / escalas) */
 .lista { margin-top: 8px; }

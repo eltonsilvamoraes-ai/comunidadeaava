@@ -76,6 +76,9 @@ function doPost(e) {
       case 'listarCultos':
         resultado = listarCultos(req);
         break;
+      case 'dashboard':
+        resultado = dashboard(req);
+        break;
       default:
         resultado = { ok: false, erro: 'Ação desconhecida: ' + req.action };
     }
@@ -88,7 +91,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 11 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 12 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -420,6 +423,98 @@ function getCultosSheet() {
     sh.setFrozenRows(1);
   }
   return sh;
+}
+
+/* ------------------------------------------------------------------ */
+/* DASHBOARD                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Indicadores de frequência de um mês. req: {pin, ano, mes(1-12)} */
+function dashboard(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const ano = Number(req.ano), mes = Number(req.mes);
+  if (!ano || !mes || mes < 1 || mes > 12) return { ok: false, erro: 'Mês inválido.' };
+
+  // 1) Cultos do mês (datas que de fato aconteceram).
+  const cultosDados = getCultosSheet().getDataRange().getValues();
+  const cultosMes = [];
+  const ehCulto = {};
+  for (let i = 1; i < cultosDados.length; i++) {
+    const dataBR = formatData(cultosDados[i][0]);
+    const m = dataBR.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m && Number(m[2]) === mes && Number(m[3]) === ano && !ehCulto[dataBR]) {
+      ehCulto[dataBR] = true;
+      cultosMes.push({ data: dataBR, descricao: String(cultosDados[i][2] || '').trim() });
+    }
+  }
+  const nCultos = cultosMes.length;
+
+  // 2) Voluntários ativos.
+  const volDados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
+  const vols = {};
+  let nVol = 0;
+  for (let i = 1; i < volDados.length; i++) {
+    const cod = String(volDados[i][0] || '').trim();
+    const status = String(volDados[i][3] || '').trim().toLowerCase();
+    if (cod && status !== 'inativo') {
+      vols[cod] = { nome: String(volDados[i][1] || '').trim(), count: 0 };
+      nVol++;
+    }
+  }
+
+  // 3) Presenças distintas (código+data) que caem em datas de culto do mês.
+  const presPorCulto = {};
+  cultosMes.forEach(function (c) { presPorCulto[c.data] = {}; });
+  const vistos = {};
+  const regDados = getSheet(ABA_REGISTROS).getDataRange().getValues();
+  for (let i = 1; i < regDados.length; i++) {
+    const dataBR = formatData(regDados[i][0]);
+    const cod = String(regDados[i][2] || '').trim();
+    if (ehCulto[dataBR] && vols[cod]) {
+      const chave = cod + '|' + dataBR;
+      if (!vistos[chave]) {
+        vistos[chave] = true;
+        vols[cod].count++;
+        presPorCulto[dataBR][cod] = true;
+      }
+    }
+  }
+
+  // 4) Totais e taxas.
+  const possiveis = nVol * nCultos;
+  let presentes = 0;
+  Object.keys(vols).forEach(function (c) { presentes += vols[c].count; });
+  const faltas = Math.max(possiveis - presentes, 0);
+  const taxaPresenca = possiveis ? Math.round(presentes / possiveis * 1000) / 10 : 0;
+  const taxaFalta = possiveis ? Math.round((100 - taxaPresenca) * 10) / 10 : 0;
+
+  // 5) Frequência por voluntário (para os rankings).
+  const lista = Object.keys(vols).map(function (c) {
+    return {
+      nome: vols[c].nome, presencas: vols[c].count,
+      pct: nCultos ? Math.round(vols[c].count / nCultos * 1000) / 10 : 0
+    };
+  });
+  const menor = lista.slice().sort(function (a, b) {
+    return (a.presencas - b.presencas) || a.nome.localeCompare(b.nome);
+  }).slice(0, 10);
+  const maior = lista.slice().sort(function (a, b) {
+    return (b.presencas - a.presencas) || a.nome.localeCompare(b.nome);
+  }).slice(0, 10);
+
+  // 6) Participação por culto.
+  const porCulto = cultosMes.map(function (c) {
+    const p = Object.keys(presPorCulto[c.data]).length;
+    return { data: c.data, descricao: c.descricao, presentes: p,
+             pct: nVol ? Math.round(p / nVol * 1000) / 10 : 0 };
+  }).sort(function (a, b) { return brParaOrdenavel(a.data) - brParaOrdenavel(b.data); });
+
+  return {
+    ok: true, nVol: nVol, nCultos: nCultos,
+    presentes: presentes, faltas: faltas,
+    taxaPresenca: taxaPresenca, taxaFalta: taxaFalta,
+    porCulto: porCulto, menor: menor, maior: maior
+  };
 }
 
 /* ------------------------------------------------------------------ */

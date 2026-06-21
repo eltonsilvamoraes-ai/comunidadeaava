@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=11" />
+  <link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
   <main class="card" role="main">
@@ -55,8 +55,46 @@
       <h2 class="titulo">Área do Líder</h2>
       <button class="menu-btn menu-btn--primary" data-ir="tela-escala">Montar Escala</button>
       <button class="menu-btn" data-ir="tela-cultos">Cultos do Mês</button>
-      <button class="menu-btn menu-btn--ghost" disabled>Relatórios (em breve)</button>
+      <button class="menu-btn" data-ir="tela-dashboard">Dashboard</button>
       <a class="voltar" data-ir="tela-inicio">‹ Sair</a>
+    </section>
+
+    <!-- TELA: Dashboard -->
+    <section id="tela-dashboard" class="screen screen--form">
+      <h2 class="titulo">Dashboard de Frequência</h2>
+
+      <div class="form-row">
+        <input id="dash-mes" class="campo" type="month" />
+        <button id="btn-dash" class="btn btn-inline" type="button">Atualizar</button>
+      </div>
+
+      <p id="dash-msg" class="erro" role="alert"></p>
+
+      <div id="dash-conteudo" hidden>
+        <div class="kpis">
+          <div class="kpi"><div id="kpi-presenca" class="kpi-num verde">–</div><div class="kpi-label">Taxa de presença</div></div>
+          <div class="kpi"><div id="kpi-falta" class="kpi-num vermelho">–</div><div class="kpi-label">Taxa de falta</div></div>
+          <div class="kpi"><div id="kpi-presentes" class="kpi-num azul">–</div><div class="kpi-label">Presenças</div></div>
+          <div class="kpi"><div id="kpi-faltas" class="kpi-num">–</div><div class="kpi-label">Faltas</div></div>
+        </div>
+        <p id="dash-resumo" class="dash-resumo"></p>
+
+        <p class="campo-label">Participação por culto</p>
+        <div id="dash-cultos" class="lista"></div>
+
+        <div class="dash-cols">
+          <div class="dash-col">
+            <p class="campo-label">Menor frequência</p>
+            <div id="dash-menor" class="lista"></div>
+          </div>
+          <div class="dash-col">
+            <p class="campo-label">Maior frequência</p>
+            <div id="dash-maior" class="lista"></div>
+          </div>
+        </div>
+      </div>
+
+      <a class="voltar" data-ir="tela-menu">‹ Voltar</a>
     </section>
 
     <!-- TELA: Cultos do Mês -->
@@ -138,6 +176,6 @@
   </main>
 
   <script src="config.js"></script>
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

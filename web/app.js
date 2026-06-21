@@ -17,6 +17,7 @@
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
     const alvo = document.getElementById(id);
     if (alvo) alvo.classList.add('is-active');
+    document.querySelector('.card').classList.toggle('card--wide', id === 'tela-dashboard');
     const foco = alvo && alvo.querySelector('input, select');
     if (foco && id !== 'tela-inicio') setTimeout(function () { foco.focus(); }, 50);
   }
@@ -25,6 +26,7 @@
       const destino = el.getAttribute('data-ir');
       irPara(destino);
       if (destino === 'tela-cultos') abrirCultos();
+      if (destino === 'tela-dashboard') abrirDashboard();
     });
   });
 
@@ -449,6 +451,86 @@
     }
   }
 
+  /* ============================================================= */
+  /* DASHBOARD                                                     */
+  /* ============================================================= */
+  const dashMes      = document.getElementById('dash-mes');
+  const dashMsg      = document.getElementById('dash-msg');
+  const dashConteudo = document.getElementById('dash-conteudo');
+  document.getElementById('btn-dash').addEventListener('click', carregarDashboard);
+
+  function abrirDashboard() {
+    if (!dashMes.value) {
+      const h = new Date();
+      dashMes.value = h.getFullYear() + '-' + ('0' + (h.getMonth() + 1)).slice(-2);
+    }
+    carregarDashboard();
+  }
+
+  async function carregarDashboard() {
+    dashMsg.textContent = ''; dashMsg.style.color = '';
+    if (!dashMes.value) { dashMsg.textContent = 'Escolha o mês.'; return; }
+    const partes = dashMes.value.split('-');
+    const btn = document.getElementById('btn-dash');
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const r = await api({ action: 'dashboard', pin: pinLider, ano: partes[0], mes: partes[1] });
+      if (!r.ok) { dashConteudo.hidden = true; dashMsg.textContent = r.erro || 'Erro.'; return; }
+      if (r.nCultos === 0) {
+        dashConteudo.hidden = true;
+        dashMsg.textContent = 'Nenhum culto cadastrado nesse mês. Gere os cultos primeiro.';
+        return;
+      }
+      renderDashboard(r);
+      dashConteudo.hidden = false;
+    } catch (e) {
+      dashMsg.textContent = 'Falha de conexão. Tente de novo.';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Atualizar';
+    }
+  }
+
+  function renderDashboard(r) {
+    document.getElementById('kpi-presenca').textContent  = r.taxaPresenca + '%';
+    document.getElementById('kpi-falta').textContent     = r.taxaFalta + '%';
+    document.getElementById('kpi-presentes').textContent = r.presentes;
+    document.getElementById('kpi-faltas').textContent    = r.faltas;
+    document.getElementById('dash-resumo').textContent   =
+      r.nVol + ' voluntário(s) · ' + r.nCultos + ' culto(s) no mês';
+
+    document.getElementById('dash-cultos').innerHTML = r.porCulto.length
+      ? tabelaCultos(r.porCulto) : '<p class="lista-vazia">Sem cultos.</p>';
+    document.getElementById('dash-menor').innerHTML = tabelaFreq(r.menor);
+    document.getElementById('dash-maior').innerHTML = tabelaFreq(r.maior);
+  }
+
+  function tabelaCultos(arr) {
+    const linhas = arr.map(function (c) {
+      return '<tr><td class="td-data">' + escapeHtml(c.data) + '</td>' +
+             '<td>' + escapeHtml(c.descricao || '–') + '</td>' +
+             '<td>' + barra(c.pct) + '</td></tr>';
+    }).join('');
+    return '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Participação</th></tr></thead>' +
+           '<tbody>' + linhas + '</tbody></table>';
+  }
+
+  function tabelaFreq(arr) {
+    if (!arr || !arr.length) return '<p class="lista-vazia">Sem dados.</p>';
+    const linhas = arr.map(function (v) {
+      return '<tr><td>' + escapeHtml(v.nome) + '</td>' +
+             '<td class="num">' + v.presencas + '</td>' +
+             '<td>' + barra(v.pct) + '</td></tr>';
+    }).join('');
+    return '<table class="tabela"><thead><tr><th>Voluntário</th><th>Pres.</th><th>%</th></tr></thead>' +
+           '<tbody>' + linhas + '</tbody></table>';
+  }
+
+  function barra(pct) {
+    const w = Math.max(0, Math.min(100, Number(pct) || 0));
+    return '<div class="barra"><div class="barra-fill" style="width:' + w + '%"></div></div>' +
+           '<span class="barra-pct">' + pct + '%</span>';
+  }
+
   /* ----- Utilidades ----- */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -499,6 +581,18 @@
         ] };
       case 'gerarCultosMes':  return { ok: true, criados: 13 };
       case 'adicionarCulto':  return { ok: true, data: '30/06/2026' };
+      case 'dashboard':
+        return { ok: true, nVol: 7, nCultos: 4, presentes: 18, faltas: 10,
+          taxaPresenca: 64.3, taxaFalta: 35.7,
+          porCulto: [
+            { data: '03/06/2026', descricao: 'Culto de Ensino',    presentes: 5, pct: 71.4 },
+            { data: '05/06/2026', descricao: 'Encontro de Jovens', presentes: 4, pct: 57.1 },
+            { data: '07/06/2026', descricao: 'Culto Família',      presentes: 6, pct: 85.7 },
+            { data: '10/06/2026', descricao: 'Culto de Ensino',    presentes: 3, pct: 42.9 }
+          ],
+          menor: [{ nome: 'Ryan', presencas: 1, pct: 25 }, { nome: 'Yan', presencas: 1, pct: 25 }, { nome: 'Davi', presencas: 2, pct: 50 }],
+          maior: [{ nome: 'Elton', presencas: 4, pct: 100 }, { nome: 'Lucas', presencas: 3, pct: 75 }, { nome: 'Maria', presencas: 3, pct: 75 }]
+        };
       default: return { ok: false, erro: 'Ação demo desconhecida.' };
     }
   }

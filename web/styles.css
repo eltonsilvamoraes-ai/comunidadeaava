@@ -229,6 +229,47 @@ body {
 .link-acao:hover { text-decoration: underline; }
 .link-excluir { color: var(--erro); }
 
+/* Dashboard */
+.card--wide { max-width: 880px; }
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 16px 0 8px;
+}
+.kpi {
+  background: #f7f9fb;
+  border: 1px solid var(--cinza-campo);
+  border-radius: 12px;
+  padding: 16px 10px;
+  text-align: center;
+}
+.kpi-num { font-size: 26px; font-weight: 700; line-height: 1.1; }
+.kpi-num.azul { color: var(--azul); }
+.kpi-num.verde { color: var(--ok); }
+.kpi-num.vermelho { color: var(--erro); }
+.kpi-label { font-size: 12px; color: var(--cinza-rotulo); margin-top: 4px; }
+.dash-resumo { text-align: center; color: var(--cinza-rotulo); font-size: 13px; margin: 4px 0 14px; }
+
+.barra {
+  display: inline-block;
+  width: 54px; height: 8px;
+  background: #eef0f2;
+  border-radius: 4px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.barra-fill { height: 100%; background: var(--azul); }
+.barra-pct { font-size: 12px; color: var(--cinza-rotulo); }
+.tabela td.num { text-align: center; font-weight: 600; }
+
+@media (min-width: 640px) {
+  .card--wide .kpis { grid-template-columns: repeat(4, 1fr); }
+  .card--wide .dash-cols { display: flex; gap: 18px; }
+  .card--wide .dash-col { flex: 1; min-width: 0; }
+}
+
 /* Listas (voluntários / escalas) */
 .lista { margin-top: 8px; }
 .lista-vazia { color: var(--cinza-rotulo); font-size: 14px; padding: 8px 2px; }

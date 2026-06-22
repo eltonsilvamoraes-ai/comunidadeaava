@@ -56,6 +56,65 @@ pessoal. Resolver isso é **pastoreio**, e é o nosso diferencial.
 - "Saiba **quem foi escalado e não veio** — e cuide da pessoa antes que ela suma."
 - "Transforme **envolvidos em comprometidos**."
 
+## Mapa AMPLIADO de dores (por categoria)
+
+Legenda: ✅ resolvemos bem · 🟡 parcial/futuro · ❌ relacional/cultural (fora do app)
+
+### A. Mobilização e recrutamento
+- **"Sempre os mesmos servem" (regra 80/20)** — 🟡 mostramos capacidade ociosa,
+  "vaga aberta" e reconhecimento que atrai; recrutar em si é cultura/convite pessoal.
+- **Membros sem nenhum ministério** (não sabe quem poderia servir) — 🟡 visão de
+  quem está cadastrado e não serve.
+- **Falta de cultura de voluntariado** — ❌ é discipulado/ensino; mas dados ajudam o pastor a comunicar.
+
+### B. Alocação por dom/talento
+- **Voluntário na função errada** (faz o que não tem aptidão) — 🟡 perfil com
+  **funções/habilidades** para alocar certo.
+- **Não conhecer os dons das pessoas** — 🟡 cadastro de habilidades (e, no futuro, teste de dons).
+
+### C. Cuidado e saúde da equipe
+- **Sobrecarga/burnout dos fiéis** — ✅ escala justa + alerta de quem serve demais.
+- **Ninguém cuida do líder** (cuidar do cuidador) — 🟡 o pastor também enxerga a
+  saúde dos líderes no painel.
+- **Voluntário serve muito e se alimenta pouco** (não vai a culto/célula) — 🟡
+  cruzar presença em culto × serviço como sinal de cuidado.
+- **Conflitos/panelinhas entre voluntários** — ❌ é relacional.
+
+### D. Gestão e visão consolidada
+- **Não ter visão geral** (quantos ativos, por ministério, capacidade) — ✅ dashboard/relatórios.
+- **Dependência de pessoa-chave** ("se o fulano falta, para tudo") — 🟡 ver cobertura
+  por função e sugerir substituto.
+- **Voluntário em vários ministérios → conflito de escala** — 🟡 detectar choque de
+  escala entre departamentos.
+- **Dados espalhados** (planilha/papel/cabeça) — ✅ tudo centralizado.
+
+### E. Comunicação e treinamento
+- **Comunicação confusa** (WhatsApp/planilha) — ✅ avisos + lembretes.
+- **Falta de preparo/treino** — 🟡 anexar materiais e checklist à função.
+- **Avisar todos** de reuniões/mudanças — 🟡 comunicados/notificações.
+- **Voluntário sem feedback** (não sabe se vai bem) — 🟡 reconhecimento (e avaliação futura).
+
+### F. Integração de novos
+- **Visitante quer servir e não há porta de entrada** — 🟡 botão "quero servir" /
+  inscrição em ministério.
+- **Onboarding do novo voluntário** — 🟡 jornada de integração guiada.
+
+### G. Segurança e conformidade
+- **Ministério infantil** (habilitação, proporção adulto-criança, segurança) — 🟡
+  marcar quem está habilitado/treinado + check-in.
+- **LGPD / dados sensíveis** — ✅ guardar com segurança e consentimento.
+
+### H. Espiritual e propósito
+- **Servir vira tarefa** (perde o "porquê") — 🟡 reconhecimento + palavra de
+  incentivo reforçam propósito.
+- **Medir a saúde do ministério no tempo** — ✅ tendências e engajamento.
+
+> **Disciplina de foco:** atacamos com força **C, D, E (cuidado, gestão,
+> comunicação)** — é onde software brilha e onde está nosso diferencial. As dores
+> ❌ (cultura, conflito, discipulado) são **humanas**: ajudamos com dados, mas não
+> prometemos resolver. Honestidade aqui constrói confiança.
+
 ## Fontes
 - sitedopastor.com.br (envolvidos x comprometidos), inchurch.com.br/blog,
-  coalizaopeloevangelho.org, institutojetro.com
+  coalizaopeloevangelho.org, institutojetro.com, sepal.org.br, ibrateo.org.br,
+  blog.atos6.com

@@ -129,3 +129,23 @@ no registro.br + INPI.)
 
 > Palavras reais podem ter `.com.br` tomado (comuns). Para máxima disponibilidade,
 > usar grafia coined: *Ninhô, Lumi, Seva, Tecê, Nexa, Komunha*.
+
+## Rodada 6 — DUAS palavras (fusão e justaposição) — destrava domínio
+
+✅ Pré-checadas (sem app de igreja): Servive, Cuidamais, EquipeViva, Voluvida.
+
+**Fusão (vira uma palavra — mais ownable):**
+| Nome | Junção | Significado |
+|---|---|---|
+| **Servive** ⭐ | servir + vive | servir traz vida |
+| **Cuidamais** ⭐ | cuidar + mais | cuidar mais das pessoas |
+| **Vincare** | vínculo + care | vínculo + cuidado |
+| **Voluvida** | voluntário + vida | — |
+| **Servelo / Cuidelo** | servir/cuidar + elo | servir/cuidar criando laços |
+
+**Justaposição (duas palavras juntas — .com.br quase sempre livre):**
+- **EquipeViva** ⭐ · **CuidaEquipe** · **VínculoVivo** · **ServirJuntos** ·
+  **TimeQueCuida** · **GenteQueServe**
+
+**Top 3:** Servive · Cuidamais · EquipeViva.
+> Fusão = domínio livre + registrável no INPI (palavra nova) + única.

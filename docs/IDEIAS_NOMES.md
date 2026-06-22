@@ -109,3 +109,23 @@ Pare de caçar nome único no mundo (não existe). O que importa para o Brasil:
 
 (✅ nenhum app de igreja com esses nomes foi encontrado na pré-checagem; confirmar
 no registro.br + INPI.)
+
+## Rodada 5 — mais cuidado + envolvimento (pré-checadas no nicho)
+
+✅ Livres no nicho de igreja: **Ninho**, **Seiva**, **Lume**.
+
+| Nome | Significado | Tipo |
+|---|---|---|
+| **Ninho** ⭐ | acolhimento/pertencimento | palavra real (checar .com.br) |
+| **Seiva** ⭐ | a vida que corre pela equipe | palavra real |
+| **Lume** ⭐ | a chama/luz da equipe | palavra real |
+| **Colo** | abraço/acolhimento | palavra real |
+| **Cultiva** | cultivar os voluntários | palavra real |
+| **Trama** | entrelaçar pessoas | palavra real |
+| **Tece** | tecer a equipe | palavra real |
+| **Nexo** | conexão/vínculo | palavra real |
+| **Voca** | vocação/chamado | curta |
+| **Comunha** | de "comunhão" | quase-coined |
+
+> Palavras reais podem ter `.com.br` tomado (comuns). Para máxima disponibilidade,
+> usar grafia coined: *Ninhô, Lumi, Seva, Tecê, Nexa, Komunha*.

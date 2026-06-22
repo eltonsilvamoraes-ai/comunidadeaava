@@ -85,3 +85,27 @@
 1. **Voluntah** (caloroso, claro do nicho)
 2. **Pertença** (emocional, retenção — combina com nosso diferencial)
 3. **Servee** (moderno, brandável)
+
+## Rodada 3 — a regra real do jogo (marca é territorial)
+
+Pare de caçar nome único no mundo (não existe). O que importa para o Brasil:
+1. **`.com.br` livre** (registro.br) — o `.com` puro e o `@` exato quase nunca estão livres.
+2. **Sem registro no INPI** nas classes **9 e 42**.
+3. **Nenhum concorrente de igreja/escala no Brasil** com o nome.
+> App estrangeiro/de outro ramo **não te impede** (país e classe diferentes).
+> Handle pode ser **@usenome / @nome.app / @nomebr**.
+
+## Rodada 4 — direção CUIDADO + ENVOLVIMENTO (pré-checadas no nicho)
+
+❌ **Conviva** → ocupado: já existe "Conviva Igreja" na Play Store (mesmo nicho).
+
+| Nome | Significado | .com.br a testar |
+|---|---|---|
+| **Ampara** ⭐ | amparar/cuidar de quem serve | ampara.com.br |
+| **Acolhe** | acolher/pertencer | acolhe.com.br / acolhe.app |
+| **Vínko** ⭐ | de "vínculo" (o laço que envolve) | vinko.com.br |
+| **Engajô** | de "engajar" (envolvimento, BR) | engajo.com.br |
+| **Abraza** | de "abraçar" (acolhimento) | abraza.com.br |
+
+(✅ nenhum app de igreja com esses nomes foi encontrado na pré-checagem; confirmar
+no registro.br + INPI.)

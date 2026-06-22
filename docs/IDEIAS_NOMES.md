@@ -49,3 +49,39 @@
 
 > Posso rodar uma **checagem rápida na web** dos que você curtir para já eliminar
 > os que têm colisão óbvia, antes de você ir ao registro.br e ao INPI.
+
+## Rodada 2 — nomes INVENTADOS (maior chance de estar livre)
+
+> Aprisco (muitas igrejas), Servio, Zelo → tomados. Lição: **palavra real comum
+> já tem dono**. Solução: **criar** a palavra. Inventados são mais fáceis de
+> registrar e de ter domínio/@ livres.
+
+### Mais quentes e acessíveis (caloroso + provável de estar livre) ⭐
+- ⭐ **Voluntah** — "voluntário" + jeito brasileiro ("tá/aê"). Caloroso e do nicho.
+- ⭐ **Servee** — de "servir", som moderno (estilo SaaS), fácil internacionalizar.
+- ⭐ **Pertença** — de "pertencer". O sentimento que **retém** o voluntário. Emocional e diferente.
+- **Sirvo** — "eu sirvo": pessoal, curto, com propósito.
+- **Reuni** — de "reunir a equipe". Curtinho.
+- **ServaÊ** / **VoluntaÊ** — bem brasileiros e descontraídos.
+
+### Distintivos com significado (mais "marca", som único)
+- **Grex** — latim para **rebanho** (a equipe cuidada). Curto e exclusivo.
+- **Koiná** — de *koinonia* (comunhão). Suave e distintivo.
+- **Zelus** — latim de **zelo** (já que "Zelo" está tomado).
+- **Diakô** — de *diákonos* (servir), com cara de marca.
+- **Servus** — latim para "servo" (checar — também é saudação em alemão).
+
+### ⚠️ Evitar
+- **Servia/Sérvia** → confunde com o país (Sérvia).
+- Qualquer coisa com **"escala"** → saturado.
+- **+ "app"** na frente → genérico e não resolve a colisão (como você viu).
+
+### Como achar livre rápido (tática)
+1. No **registro.br**, digitar o nome mostra **na hora** se o **.com.br** está livre.
+2. Se o .com.br estiver livre, **teste o @ no Instagram** e a **busca no INPI**.
+3. Feche só quando os **três** baterem.
+
+### Meus 3 da rodada 2 (cheque primeiro)
+1. **Voluntah** (caloroso, claro do nicho)
+2. **Pertença** (emocional, retenção — combina com nosso diferencial)
+3. **Servee** (moderno, brandável)

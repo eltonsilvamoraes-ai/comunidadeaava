@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=15" />
+  <link rel="stylesheet" href="styles.css?v=16" />
 </head>
 <body>
   <main class="card" role="main">
@@ -102,6 +102,8 @@
         <button class="aba" type="button" data-aba="depto">Departamento</button>
         <button class="aba" type="button" data-aba="alertas">Alertas</button>
       </div>
+
+      <button id="btn-pdf" class="btn btn--ghost btn-pdf" type="button">⬇ Baixar PDF</button>
 
       <p id="dash-msg" class="erro" role="alert"></p>
 
@@ -233,7 +235,9 @@
 
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>

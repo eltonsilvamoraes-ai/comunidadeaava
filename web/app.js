@@ -472,8 +472,10 @@
   const relConteudo  = document.getElementById('rel-conteudo');
   let abaAtiva = 'geral';
   let relDepsLoaded = false;
+  let dadosGeral = null, dadosCulto = null, dadosDepto = null, dadosAlertas = null;
 
   document.getElementById('btn-dash').addEventListener('click', carregarAba);
+  document.getElementById('btn-pdf').addEventListener('click', exportarPDF);
   relDep.addEventListener('change', carregarDepto);
   document.querySelectorAll('.aba').forEach(function (a) {
     a.addEventListener('click', function () { mostrarAba(a.getAttribute('data-aba')); });
@@ -528,6 +530,7 @@
     try {
       const r = await api({ action: 'dashboard', pin: pinLider, ano: partes[0], mes: partes[1] });
       if (!r.ok) { dashConteudo.hidden = true; dashMsg.textContent = r.erro || 'Erro.'; return; }
+      dadosGeral = r;
       if (r.nCultos === 0) {
         dashConteudo.hidden = true;
         dashMsg.textContent = 'Nenhum culto cadastrado nesse mês. Gere os cultos primeiro.';
@@ -592,6 +595,7 @@
     try {
       const r = await api({ action: 'presencasPorCulto', pin: pinLider, ano: p[0], mes: p[1] });
       if (!r.ok) { cultoLista.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      dadosCulto = r;
       if (!r.cultos.length) { cultoLista.innerHTML = '<p class="lista-vazia">Nenhum culto cadastrado nesse mês.</p>'; return; }
       cultoLista.innerHTML =
         '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Pres.</th><th>Faltas</th><th></th></tr></thead><tbody>' +
@@ -646,6 +650,7 @@
     try {
       const r = await api({ action: 'relatorioDepartamento', pin: pinLider, ano: p[0], mes: p[1], departamento: dep });
       if (!r.ok) { relConteudo.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      dadosDepto = r;
       renderDepto(r);
     } catch (e) {
       relConteudo.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
@@ -683,6 +688,70 @@
 
   function corPct(pct) { return pct >= 75 ? 'pct-bom' : (pct >= 50 ? 'pct-medio' : 'pct-ruim'); }
 
+  /* ----- Exportar relatório em PDF (aba ativa) ----- */
+  function exportarPDF() {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      dashMsg.style.color = ''; dashMsg.textContent = 'Gerador de PDF não carregou. Verifique a internet e tente de novo.';
+      return;
+    }
+    const dados = { geral: dadosGeral, culto: dadosCulto, depto: dadosDepto, alertas: dadosAlertas }[abaAtiva];
+    if (!dados) { dashMsg.style.color = ''; dashMsg.textContent = 'Toque em "Atualizar" para carregar o relatório antes de baixar.'; return; }
+
+    const doc = new window.jspdf.jsPDF('p', 'pt', 'a4');
+    const margin = 40;
+    const larg = doc.internal.pageSize.getWidth() - margin * 2;
+    const AZUL = [45, 156, 219];
+    let y = margin;
+    const titulos = { geral: 'Visão Geral', culto: 'Por Culto', depto: 'Por Departamento', alertas: 'Alertas de Afastamento' };
+    const mes = dashMes.value ? dashMes.value.split('-').reverse().join('/') : '';
+
+    function quebra(min) { if (y > doc.internal.pageSize.getHeight() - (min || 60)) { doc.addPage(); y = margin; } }
+    function titulo(t) { quebra(); doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(70); doc.text(t, margin, y); y += 14; doc.setTextColor(0); doc.setFont('helvetica', 'normal'); }
+    function texto(t, cor) { quebra(); doc.setFontSize(10); if (cor) doc.setTextColor(cor[0], cor[1], cor[2]); const ls = doc.splitTextToSize(t, larg); doc.text(ls, margin, y); y += ls.length * 13 + 4; doc.setTextColor(0); }
+    function tabela(head, body) {
+      quebra(80);
+      doc.autoTable({ head: [head], body: body, startY: y, margin: { left: margin, right: margin },
+        styles: { fontSize: 9, cellPadding: 4 }, headStyles: { fillColor: AZUL }, theme: 'grid' });
+      y = doc.lastAutoTable.finalY + 14;
+    }
+
+    // Cabeçalho
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+    doc.text((cfg.NOME_IGREJA || 'AAVA') + ' — Relatório de Frequência', margin, y); y += 20;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text(titulos[abaAtiva] + (mes ? '   ·   ' + mes : ''), margin, y); y += 14;
+    doc.setFontSize(9); doc.setTextColor(120);
+    doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), margin, y); y += 18; doc.setTextColor(0);
+
+    if (abaAtiva === 'geral') {
+      texto('Taxa de presença: ' + dados.taxaPresenca + '%   |   Taxa de falta: ' + dados.taxaFalta +
+            '%   |   Presenças: ' + dados.presentes + '   |   Faltas: ' + dados.faltas);
+      texto(dados.nVol + ' voluntário(s) · ' + dados.nCultos + ' culto(s) no mês');
+      titulo('Participação por culto');
+      tabela(['Data', 'Culto', 'Presentes', '%'], dados.porCulto.map(function (c) { return [c.data, c.descricao || '-', c.presentes, c.pct + '%']; }));
+      titulo('Menor frequência');
+      tabela(['Voluntário', 'Pres.', '%'], dados.menor.map(function (v) { return [v.nome, v.presencas, v.pct + '%']; }));
+      titulo('Maior frequência');
+      tabela(['Voluntário', 'Pres.', '%'], dados.maior.map(function (v) { return [v.nome, v.presencas, v.pct + '%']; }));
+    } else if (abaAtiva === 'culto') {
+      tabela(['Data', 'Culto', 'Presentes', 'Faltas', '%'],
+        dados.cultos.map(function (c) { return [c.data, c.descricao || '-', c.presentes, c.faltas, c.pct + '%']; }));
+    } else if (abaAtiva === 'depto') {
+      if (dados.alertas && dados.alertas.length) texto('Atenção (alto índice de falta): ' + dados.alertas.join(', '), [179, 38, 30]);
+      titulo('Maior frequência'); tabela(['Voluntário', '%'], (dados.maior || []).map(function (v) { return [v.nome, v.pct + '%']; }));
+      titulo('Menor frequência'); tabela(['Voluntário', '%'], (dados.menor || []).map(function (v) { return [v.nome, v.pct + '%']; }));
+      titulo('Todos os voluntários · ' + dados.nCultos + ' culto(s)');
+      tabela(['Voluntário', 'Pres.', 'Faltas', '%'], dados.voluntarios.map(function (v) { return [v.nome, v.presencas, v.faltas, v.pct + '%']; }));
+    } else if (abaAtiva === 'alertas') {
+      tabela(['Voluntário', 'Departamento', 'Faltas seguidas', 'Última presença'],
+        (dados.alertas || []).map(function (a) { return [a.nome, a.departamento || '-', a.faltas, a.ultima || '-']; }));
+    }
+
+    doc.save('relatorio-' + abaAtiva + (mes ? '-' + mes.replace(/\//g, '-') : '') + '.pdf');
+    dashMsg.style.color = '#27ae60'; dashMsg.textContent = '✓ PDF gerado.';
+    setTimeout(function () { dashMsg.style.color = ''; dashMsg.textContent = ''; }, 4000);
+  }
+
   /* ----- Aba: Alertas (afastamento) ----- */
   async function carregarAlertas() {
     const div = document.getElementById('alertas-conteudo');
@@ -690,6 +759,7 @@
     try {
       const r = await api({ action: 'alertasAfastamento', pin: pinLider });
       if (!r.ok) { div.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      dadosAlertas = r;
       if (!r.alertas.length) { div.innerHTML = '<p class="lista-vazia">Ninguém com faltas seguidas. 🎉</p>'; return; }
       div.innerHTML = '<table class="tabela"><thead><tr><th>Voluntário</th><th>Faltas seguidas</th><th>Última presença</th></tr></thead><tbody>' +
         r.alertas.map(function (a) {

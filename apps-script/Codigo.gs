@@ -31,6 +31,9 @@ const IGREJA_LAT  = -23.3122366;
 const IGREJA_LNG  = -45.988886;
 const RAIO_METROS = 200;
 
+// Quantas faltas seguidas em cultos para gerar alerta pastoral de afastamento.
+const LIMITE_FALTAS = 2;
+
 /** Recebe as chamadas POST do app (corpo em texto/JSON). */
 function doPost(e) {
   try {
@@ -88,6 +91,15 @@ function doPost(e) {
       case 'relatorioDepartamento':
         resultado = relatorioDepartamento(req);
         break;
+      case 'alertasAfastamento':
+        resultado = alertasAfastamento(req);
+        break;
+      case 'listarTodosVoluntarios':
+        resultado = listarTodosVoluntarios(req);
+        break;
+      case 'salvarVoluntario':
+        resultado = salvarVoluntario(req);
+        break;
       default:
         resultado = { ok: false, erro: 'Ação desconhecida: ' + req.action };
     }
@@ -100,7 +112,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 13 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 14 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -146,11 +158,46 @@ function registrarPresenca(req) {
   // SEMPRE insere uma NOVA linha (log puro). Coluna F = Sim/Não conforme a escala.
   sh.appendRow([dataStr, horaStr, codigo, vol.nome, vol.departamento, escaladoTxt]);
 
+  // Reconhecimento: marcos de presença + palavra de incentivo.
+  const totalPresencas = contarPresencas(codigo);
+
   return {
     ok: true, jaRegistrado: false,
     nome: vol.nome, departamento: vol.departamento,
-    data: dataStr, hora: horaStr, escalado: escalado
+    data: dataStr, hora: horaStr, escalado: escalado,
+    reconhecimento: mensagemReconhecimento(totalPresencas)
   };
+}
+
+/** Conta quantas presenças um voluntário já registrou (total de check-ins). */
+function contarPresencas(codigo) {
+  const dados = getSheet(ABA_REGISTROS).getDataRange().getValues();
+  let n = 0;
+  for (let i = 1; i < dados.length; i++) {
+    if (String(dados[i][2]).trim() === String(codigo).trim()) n++;
+  }
+  return n;
+}
+
+/** Monta a mensagem de reconhecimento (marco ou incentivo). */
+function mensagemReconhecimento(total) {
+  const marcos = {
+    1:   'Bem-vindo(a) ao time! 🎉 Sua 1ª presença.',
+    5:   '5 presenças! Que constância. 🙌',
+    10:  '10ª presença! Você faz diferença. 💙',
+    25:  '25 presenças! Servo(a) fiel. 👏',
+    50:  '50ª presença! Inspirador(a). 🌟',
+    100: '100 presenças! Que legado. 🏆',
+    200: '200 presenças! Lenda. 👑'
+  };
+  if (marcos[total]) return { marco: true, mensagem: marcos[total], total: total };
+  const frases = [
+    'Obrigado por servir! 💙',
+    'Sua presença abençoa. 🙏',
+    'Que bom ter você aqui!',
+    'Deus recompense o seu servir. 🌟'
+  ];
+  return { marco: false, mensagem: frases[total % frases.length], total: total };
 }
 
 /** Retorna os dados de um voluntário por código. (restrito por PIN) */
@@ -651,6 +698,114 @@ function relatorioDepartamento(req) {
   const alertas = lista.filter(function (v) { return v.alerta; }).map(function (v) { return v.nome; });
 
   return { ok: true, departamento: departamento, nCultos: nCultos, voluntarios: lista, maior: maior, menor: menor, alertas: alertas };
+}
+
+/* ------------------------------------------------------------------ */
+/* ALERTA PASTORAL (afastamento)                                      */
+/* ------------------------------------------------------------------ */
+
+/** Voluntários que faltaram a cultos seguidos (sinal de afastamento). req: {pin} */
+function alertasAfastamento(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+
+  const hojeOrd = brParaOrdenavel(Utilities.formatDate(new Date(), FUSO, 'dd/MM/yyyy'));
+
+  // Cultos já realizados (data <= hoje), em ordem cronológica.
+  const cultosDados = getCultosSheet().getDataRange().getValues();
+  const cultos = [], seen = {};
+  for (let i = 1; i < cultosDados.length; i++) {
+    const d = formatData(cultosDados[i][0]);
+    if (d && !seen[d] && brParaOrdenavel(d) <= hojeOrd) { seen[d] = true; cultos.push(d); }
+  }
+  cultos.sort(function (a, b) { return brParaOrdenavel(a) - brParaOrdenavel(b); });
+
+  const vols = voluntariosAtivos();
+  const codSet = {}; vols.forEach(function (v) { codSet[v.codigo] = true; });
+  const presMap = mapaPresencas(codSet);
+
+  // Total de presenças e última data por voluntário.
+  const totalPorCod = {}, ultimaPorCod = {};
+  vols.forEach(function (v) { totalPorCod[v.codigo] = 0; });
+  const reg = getSheet(ABA_REGISTROS).getDataRange().getValues();
+  for (let i = 1; i < reg.length; i++) {
+    const cod = String(reg[i][2] || '').trim();
+    const d = formatData(reg[i][0]);
+    if (codSet[cod]) {
+      totalPorCod[cod]++;
+      if (!ultimaPorCod[cod] || brParaOrdenavel(d) > brParaOrdenavel(ultimaPorCod[cod])) ultimaPorCod[cod] = d;
+    }
+  }
+
+  const lista = [];
+  vols.forEach(function (v) {
+    if (totalPorCod[v.codigo] < 1) return; // só quem já serviu (tem histórico)
+    let streak = 0;
+    for (let i = cultos.length - 1; i >= 0; i--) {
+      if ((presMap[cultos[i]] || {})[v.codigo]) break;
+      streak++;
+    }
+    if (streak >= LIMITE_FALTAS) {
+      lista.push({ nome: v.nome, departamento: v.departamento, faltas: streak,
+                   ultima: ultimaPorCod[v.codigo] || '—' });
+    }
+  });
+  lista.sort(function (a, b) { return (b.faltas - a.faltas) || a.nome.localeCompare(b.nome); });
+  return { ok: true, limite: LIMITE_FALTAS, alertas: lista };
+}
+
+/* ------------------------------------------------------------------ */
+/* CADASTRO DE VOLUNTÁRIOS (pela web, líder)                          */
+/* ------------------------------------------------------------------ */
+
+/** Lista todos os voluntários (para a tela de cadastro). req: {pin} */
+function listarTodosVoluntarios(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
+  const lista = [];
+  for (let i = 1; i < dados.length; i++) {
+    const cod = String(dados[i][0] || '').trim();
+    const nome = String(dados[i][1] || '').trim();
+    if (!cod && !nome) continue;
+    lista.push({ codigo: cod, nome: nome,
+                 departamento: String(dados[i][2] || '').trim(),
+                 status: String(dados[i][3] || '').trim() || 'Ativo' });
+  }
+  lista.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+  return { ok: true, voluntarios: lista };
+}
+
+/** Cria ou atualiza um voluntário. req: {pin, codigo?, nome, departamento, status} */
+function salvarVoluntario(req) {
+  if (!pinValido(req)) return { ok: false, erro: 'Acesso restrito.' };
+  const nome = String(req.nome || '').trim();
+  const departamento = String(req.departamento || '').trim();
+  const status = String(req.status || 'Ativo').trim() || 'Ativo';
+  let codigo = String(req.codigo || '').trim();
+  if (!nome) return { ok: false, erro: 'Informe o nome.' };
+
+  const sh = getSheet(ABA_VOLUNTARIOS);
+  sh.getRange('A:A').setNumberFormat('@');
+  const dados = sh.getDataRange().getValues();
+
+  if (codigo) {
+    for (let i = 1; i < dados.length; i++) {
+      if (String(dados[i][0]).trim() === codigo) {
+        sh.getRange(i + 1, 2).setValue(nome);
+        sh.getRange(i + 1, 3).setValue(departamento);
+        sh.getRange(i + 1, 4).setValue(status);
+        return { ok: true, codigo: codigo, novo: false };
+      }
+    }
+  } else {
+    const usados = {};
+    for (let i = 1; i < dados.length; i++) {
+      const c = String(dados[i][0] || '').trim();
+      if (c) usados[c] = true;
+    }
+    do { codigo = String(Math.floor(1000 + Math.random() * 9000)); } while (usados[codigo]);
+  }
+  sh.appendRow([codigo, nome, departamento, status]);
+  return { ok: true, codigo: codigo, novo: true };
 }
 
 /* ------------------------------------------------------------------ */

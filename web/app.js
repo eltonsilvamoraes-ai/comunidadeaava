@@ -27,6 +27,7 @@
       irPara(destino);
       if (destino === 'tela-cultos') abrirCultos();
       if (destino === 'tela-dashboard') abrirDashboard();
+      if (destino === 'tela-voluntarios') abrirVoluntarios();
     });
   });
 
@@ -121,6 +122,14 @@
       escala.className = 'ok__escala nao';
     } else {
       escala.textContent = '';
+    }
+
+    const rec = document.getElementById('ok-reconhecimento');
+    if (r.reconhecimento && r.reconhecimento.mensagem) {
+      rec.textContent = r.reconhecimento.mensagem;
+      rec.className = 'ok__reconhecimento' + (r.reconhecimento.marco ? ' marco' : '');
+    } else {
+      rec.textContent = '';
     }
     irPara('tela-ok');
   }
@@ -487,6 +496,7 @@
     document.getElementById('painel-geral').hidden = nome !== 'geral';
     document.getElementById('painel-culto').hidden = nome !== 'culto';
     document.getElementById('painel-depto').hidden = nome !== 'depto';
+    document.getElementById('painel-alertas').hidden = nome !== 'alertas';
     carregarAba();
   }
 
@@ -494,6 +504,7 @@
     if (abaAtiva === 'geral') carregarDashboard();
     else if (abaAtiva === 'culto') carregarPorCulto();
     else if (abaAtiva === 'depto') carregarDepto();
+    else if (abaAtiva === 'alertas') carregarAlertas();
   }
 
   async function carregarDepartamentosRel() {
@@ -672,6 +683,106 @@
 
   function corPct(pct) { return pct >= 75 ? 'pct-bom' : (pct >= 50 ? 'pct-medio' : 'pct-ruim'); }
 
+  /* ----- Aba: Alertas (afastamento) ----- */
+  async function carregarAlertas() {
+    const div = document.getElementById('alertas-conteudo');
+    div.innerHTML = '<p class="lista-vazia">Carregando...</p>';
+    try {
+      const r = await api({ action: 'alertasAfastamento', pin: pinLider });
+      if (!r.ok) { div.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      if (!r.alertas.length) { div.innerHTML = '<p class="lista-vazia">Ninguém com faltas seguidas. 🎉</p>'; return; }
+      div.innerHTML = '<table class="tabela"><thead><tr><th>Voluntário</th><th>Faltas seguidas</th><th>Última presença</th></tr></thead><tbody>' +
+        r.alertas.map(function (a) {
+          return '<tr class="linha-alerta"><td>' + escapeHtml(a.nome) +
+                 '<span class="td-dia">' + escapeHtml(a.departamento || '') + '</span></td>' +
+                 '<td class="num"><span class="pct-ruim">' + a.faltas + '</span></td>' +
+                 '<td>' + escapeHtml(a.ultima || '—') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    } catch (e) {
+      div.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
+    }
+  }
+
+  /* ============================================================= */
+  /* CADASTRO DE VOLUNTÁRIOS (líder)                               */
+  /* ============================================================= */
+  const volNome   = document.getElementById('vol-nome');
+  const volDepto  = document.getElementById('vol-depto');
+  const volStatus = document.getElementById('vol-status');
+  const volCodigo = document.getElementById('vol-codigo');
+  const volMsg    = document.getElementById('vol-msg');
+  const volLista  = document.getElementById('vol-lista');
+  const volCancelar = document.getElementById('vol-cancelar');
+  const btnSalvarVol = document.getElementById('btn-salvar-vol');
+
+  btnSalvarVol.addEventListener('click', salvarVoluntarioCad);
+  volCancelar.addEventListener('click', limparFormVol);
+
+  function abrirVoluntarios() { carregarVoluntariosCadastro(); }
+
+  async function carregarVoluntariosCadastro() {
+    volLista.innerHTML = '<p class="lista-vazia">Carregando...</p>';
+    try {
+      const r = await api({ action: 'listarTodosVoluntarios', pin: pinLider });
+      if (!r.ok) { volLista.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
+      const deps = {};
+      r.voluntarios.forEach(function (v) { if (v.departamento) deps[v.departamento] = true; });
+      document.getElementById('lista-deptos').innerHTML =
+        Object.keys(deps).sort().map(function (d) { return '<option value="' + escapeHtml(d) + '">'; }).join('');
+      if (!r.voluntarios.length) { volLista.innerHTML = '<p class="lista-vazia">Nenhum voluntário ainda.</p>'; return; }
+      volLista.innerHTML = '<table class="tabela"><thead><tr><th>Código</th><th>Nome</th><th>Depto</th><th></th></tr></thead><tbody>' +
+        r.voluntarios.map(function (v) {
+          const dados = encodeURIComponent(JSON.stringify(v));
+          const inativo = (v.status || '').toLowerCase() === 'inativo';
+          return '<tr' + (inativo ? ' style="opacity:.5"' : '') + '><td class="td-data">' + escapeHtml(v.codigo) + '</td>' +
+                 '<td>' + escapeHtml(v.nome) + '</td><td>' + escapeHtml(v.departamento || '–') + '</td>' +
+                 '<td><button type="button" class="link-acao" data-vol="' + dados + '">Editar</button></td></tr>';
+        }).join('') + '</tbody></table>';
+      volLista.querySelectorAll('[data-vol]').forEach(function (b) {
+        b.addEventListener('click', function () { editarVol(JSON.parse(decodeURIComponent(b.getAttribute('data-vol')))); });
+      });
+    } catch (e) {
+      volLista.innerHTML = '<p class="lista-vazia">Falha de conexão.</p>';
+    }
+  }
+
+  function editarVol(v) {
+    volCodigo.value = v.codigo;
+    volNome.value = v.nome;
+    volDepto.value = v.departamento || '';
+    volStatus.value = v.status || 'Ativo';
+    btnSalvarVol.textContent = 'Salvar alterações';
+    volCancelar.hidden = false;
+    volMsg.textContent = '';
+    volNome.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function limparFormVol() {
+    volCodigo.value = ''; volNome.value = ''; volDepto.value = ''; volStatus.value = 'Ativo';
+    btnSalvarVol.textContent = 'Adicionar voluntário';
+    volCancelar.hidden = true; volMsg.textContent = ''; volMsg.style.color = '';
+  }
+
+  async function salvarVoluntarioCad() {
+    volMsg.textContent = ''; volMsg.style.color = '';
+    if (!volNome.value.trim()) { volMsg.textContent = 'Informe o nome.'; return; }
+    btnSalvarVol.disabled = true;
+    try {
+      const r = await api({ action: 'salvarVoluntario', pin: pinLider,
+        codigo: volCodigo.value, nome: volNome.value, departamento: volDepto.value, status: volStatus.value });
+      if (!r.ok) { volMsg.textContent = r.erro || 'Não foi possível salvar.'; return; }
+      const msg = r.novo ? ('✓ Adicionado! Código: ' + r.codigo) : '✓ Atualizado.';
+      limparFormVol();
+      volMsg.style.color = '#27ae60';
+      volMsg.textContent = msg;
+      carregarVoluntariosCadastro();
+    } catch (e) {
+      volMsg.textContent = 'Falha de conexão. Tente de novo.';
+    } finally {
+      btnSalvarVol.disabled = false;
+    }
+  }
+
   /* ----- Utilidades ----- */
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -690,7 +801,8 @@
         return { ok: true, nome: v.nome, departamento: v.departamento,
                  data: now.toLocaleDateString('pt-BR'),
                  hora: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                 escalado: p.codigo === '1001' };
+                 escalado: p.codigo === '1001',
+                 reconhecimento: { marco: true, mensagem: '10ª presença! Você faz diferença. 💙', total: 10 } };
       }
       case 'verificarPin':
         return p.pin === '2024' ? { ok: true } : { ok: false, erro: 'PIN incorreto.' };
@@ -750,6 +862,19 @@
           { nome: 'João Pereira',   presencas: 2, faltas: 2, pct: 50,  alerta: false },
           { nome: 'Ana Souza',      presencas: 1, faltas: 3, pct: 25,  alerta: true }
         ], maior: [{ nome: 'Maria Oliveira', pct: 100 }], menor: [{ nome: 'Ana Souza', pct: 25 }], alertas: ['Ana Souza'] };
+      case 'alertasAfastamento':
+        return { ok: true, limite: 2, alertas: [
+          { nome: 'Ana Souza',   departamento: 'Infantil', faltas: 3, ultima: '01/06/2026' },
+          { nome: 'João Pereira', departamento: 'Recepção', faltas: 2, ultima: '10/06/2026' }
+        ] };
+      case 'listarTodosVoluntarios':
+        return { ok: true, voluntarios: [
+          { codigo: '1001', nome: 'Maria Oliveira', departamento: 'Louvor',   status: 'Ativo' },
+          { codigo: '1002', nome: 'João Pereira',   departamento: 'Recepção', status: 'Ativo' },
+          { codigo: '1003', nome: 'Ana Souza',      departamento: 'Infantil', status: 'Inativo' }
+        ] };
+      case 'salvarVoluntario':
+        return { ok: true, codigo: p.codigo || '4821', novo: !p.codigo };
       default: return { ok: false, erro: 'Ação demo desconhecida.' };
     }
   }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=14" />
+  <link rel="stylesheet" href="styles.css?v=15" />
 </head>
 <body>
   <main class="card" role="main">
@@ -38,6 +38,7 @@
       <p id="ok-nome" class="ok__nome"></p>
       <p id="ok-detalhe" class="ok__detalhe"></p>
       <p id="ok-escala" class="ok__escala"></p>
+      <p id="ok-reconhecimento" class="ok__reconhecimento"></p>
       <button id="btn-novo" class="btn btn--ghost" type="button">Registrar outro</button>
     </section>
 
@@ -54,9 +55,36 @@
     <section id="tela-menu" class="screen">
       <h2 class="titulo">Área do Líder</h2>
       <button class="menu-btn menu-btn--primary" data-ir="tela-escala">Montar Escala</button>
+      <button class="menu-btn" data-ir="tela-voluntarios">Voluntários</button>
       <button class="menu-btn" data-ir="tela-cultos">Cultos do Mês</button>
       <button class="menu-btn" data-ir="tela-dashboard">Dashboard</button>
       <a class="voltar" data-ir="tela-inicio">‹ Sair</a>
+    </section>
+
+    <!-- TELA: Cadastro de Voluntários -->
+    <section id="tela-voluntarios" class="screen screen--form">
+      <h2 class="titulo">Voluntários</h2>
+
+      <div class="form-row">
+        <input id="vol-nome" class="campo" type="text" placeholder="Nome completo" />
+      </div>
+      <div class="form-row">
+        <input id="vol-depto" class="campo" type="text" placeholder="Departamento" list="lista-deptos" />
+        <select id="vol-status" class="campo" style="max-width:130px">
+          <option value="Ativo">Ativo</option>
+          <option value="Inativo">Inativo</option>
+        </select>
+      </div>
+      <datalist id="lista-deptos"></datalist>
+      <input type="hidden" id="vol-codigo" />
+      <button id="btn-salvar-vol" class="btn" type="button">Adicionar voluntário</button>
+      <a id="vol-cancelar" class="voltar" hidden>cancelar edição</a>
+      <p id="vol-msg" class="erro" role="alert"></p>
+
+      <p class="campo-label">Cadastrados</p>
+      <div id="vol-lista" class="lista"></div>
+
+      <a class="voltar" data-ir="tela-menu">‹ Voltar</a>
     </section>
 
     <!-- TELA: Dashboard -->
@@ -72,6 +100,7 @@
         <button class="aba is-on" type="button" data-aba="geral">Geral</button>
         <button class="aba" type="button" data-aba="culto">Por Culto</button>
         <button class="aba" type="button" data-aba="depto">Departamento</button>
+        <button class="aba" type="button" data-aba="alertas">Alertas</button>
       </div>
 
       <p id="dash-msg" class="erro" role="alert"></p>
@@ -115,6 +144,12 @@
         <label class="campo-label" for="rel-departamento">Departamento</label>
         <select id="rel-departamento" class="campo"></select>
         <div id="rel-conteudo"></div>
+      </div>
+
+      <!-- Aba ALERTAS -->
+      <div id="painel-alertas" class="painel" hidden>
+        <p class="campo-label">Voluntários que faltaram a cultos seguidos (para cuidar 💚)</p>
+        <div id="alertas-conteudo"></div>
       </div>
 
       <a class="voltar" data-ir="tela-menu">‹ Voltar</a>
@@ -199,6 +234,6 @@
   </main>
 
   <script src="config.js"></script>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

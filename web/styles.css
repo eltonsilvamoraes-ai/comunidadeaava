@@ -140,6 +140,15 @@ body {
 .ok__escala { font-size: 14px; font-weight: 600; margin: 2px 0 8px; }
 .ok__escala.sim { color: var(--ok); }
 .ok__escala.nao { color: var(--cinza-rotulo); }
+.ok__reconhecimento { font-size: 14px; color: var(--cinza-rotulo); margin: 6px 0 4px; }
+.ok__reconhecimento.marco {
+  color: #b8860b;
+  font-weight: 700;
+  font-size: 16px;
+  background: #fff8e6;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
 
 /* Títulos de tela */
 .titulo { font-size: 20px; font-weight: 700; text-align: center; margin: 0 0 24px; }

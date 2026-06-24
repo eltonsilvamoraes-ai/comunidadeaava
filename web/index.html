@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#ffffff" />
   <title>AAVA — Voluntários</title>
-  <link rel="stylesheet" href="styles.css?v=16" />
+  <link rel="stylesheet" href="styles.css?v=17" />
 </head>
 <body>
   <main class="card" role="main">
@@ -69,12 +69,13 @@
         <input id="vol-nome" class="campo" type="text" placeholder="Nome completo" />
       </div>
       <div class="form-row">
-        <input id="vol-depto" class="campo" type="text" placeholder="Departamento" list="lista-deptos" />
+        <input id="vol-depto" class="campo" type="text" placeholder="Departamento(s) — separe por ;" list="lista-deptos" />
         <select id="vol-status" class="campo" style="max-width:130px">
           <option value="Ativo">Ativo</option>
           <option value="Inativo">Inativo</option>
         </select>
       </div>
+      <p class="campo-hint">Pode servir em vários: ex. <strong>Louvor; Staff</strong></p>
       <datalist id="lista-deptos"></datalist>
       <input type="hidden" id="vol-codigo" />
       <button id="btn-salvar-vol" class="btn" type="button">Adicionar voluntário</button>
@@ -238,6 +239,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=17"></script>
 </body>
 </html>

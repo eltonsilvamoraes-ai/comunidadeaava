@@ -796,7 +796,7 @@
       const r = await api({ action: 'listarTodosVoluntarios', pin: pinLider });
       if (!r.ok) { volLista.innerHTML = '<p class="lista-vazia">' + escapeHtml(r.erro || 'Erro.') + '</p>'; return; }
       const deps = {};
-      r.voluntarios.forEach(function (v) { if (v.departamento) deps[v.departamento] = true; });
+      r.voluntarios.forEach(function (v) { parseDeptos(v.departamento).forEach(function (d) { deps[d] = true; }); });
       document.getElementById('lista-deptos').innerHTML =
         Object.keys(deps).sort().map(function (d) { return '<option value="' + escapeHtml(d) + '">'; }).join('');
       if (!r.voluntarios.length) { volLista.innerHTML = '<p class="lista-vazia">Nenhum voluntário ainda.</p>'; return; }
@@ -854,6 +854,11 @@
   }
 
   /* ----- Utilidades ----- */
+  // Quebra "Louvor; Staff" em ["Louvor","Staff"] (aceita ; , ou /).
+  function parseDeptos(s) {
+    return String(s || '').split(/[;,\/]/).map(function (x) { return x.trim(); }).filter(Boolean);
+  }
+
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -877,7 +882,7 @@
       case 'verificarPin':
         return p.pin === '2024' ? { ok: true } : { ok: false, erro: 'PIN incorreto.' };
       case 'listarDepartamentos':
-        return { ok: true, departamentos: ['Infantil', 'Louvor', 'Recepção'] };
+        return { ok: true, departamentos: ['Infantil', 'Louvor', 'Recepção', 'Staff'] };
       case 'listarVoluntarios':
         return { ok: true, voluntarios: [
           { codigo: '1001', nome: 'Maria Oliveira' },
@@ -939,9 +944,9 @@
         ] };
       case 'listarTodosVoluntarios':
         return { ok: true, voluntarios: [
-          { codigo: '1001', nome: 'Maria Oliveira', departamento: 'Louvor',   status: 'Ativo' },
-          { codigo: '1002', nome: 'João Pereira',   departamento: 'Recepção', status: 'Ativo' },
-          { codigo: '1003', nome: 'Ana Souza',      departamento: 'Infantil', status: 'Inativo' }
+          { codigo: '1001', nome: 'Maria Oliveira', departamento: 'Louvor; Staff', status: 'Ativo' },
+          { codigo: '1002', nome: 'João Pereira',   departamento: 'Recepção',      status: 'Ativo' },
+          { codigo: '1003', nome: 'Ana Souza',      departamento: 'Infantil',      status: 'Inativo' }
         ] };
       case 'salvarVoluntario':
         return { ok: true, codigo: p.codigo || '4821', novo: !p.codigo };

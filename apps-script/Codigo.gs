@@ -12,8 +12,12 @@
  *   5. Copie a URL gerada (termina em /exec) e cole em web/config.js.
  *
  * Abas esperadas na planilha (nomes EXATOS, em maiúsculas):
- *   VOLUNTARIOS  ->  A: Codigo | B: Nome completo | C: Departamento | D: Status (Ativo/Inativo)
- *   REGISTROS    ->  A: Data   | B: Hora chegada  | C: Codigo       | D: Nome | E: Departamento | F: Estava escalado?
+ *   VOLUNTARIOS  ->  A: Codigo | B: Nome completo | C: Departamento(s) | D: Status (Ativo/Inativo)
+ *   REGISTROS    ->  A: Data   | B: Hora chegada  | C: Codigo          | D: Nome | E: Departamento | F: Estava escalado?
+ *
+ * OBS — Múltiplos departamentos: na coluna C de VOLUNTARIOS um voluntário pode
+ * servir em vários departamentos. Basta separar por ; , ou /  (ex.: "Louvor; Staff").
+ * O código (coluna A) pode ser a MATRÍCULA do membro (texto livre).
  */
 
 const ABA_VOLUNTARIOS = 'VOLUNTARIOS';
@@ -112,7 +116,7 @@ function doPost(e) {
 
 /** Permite testar a URL no navegador e serve de "check de saúde". */
 function doGet() {
-  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 14 });
+  return json({ ok: true, mensagem: 'API AAVA ativa', versao: 15 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -229,8 +233,7 @@ function listarDepartamentos(req) {
   const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
   const set = {};
   for (let i = 1; i < dados.length; i++) {
-    const d = String(dados[i][2] || '').trim();
-    if (d) set[d] = true;
+    parseDepartamentos(dados[i][2]).forEach(function (d) { set[d] = true; });
   }
   return { ok: true, departamentos: Object.keys(set).sort() };
 }
@@ -242,9 +245,9 @@ function listarVoluntarios(req) {
   const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
   const lista = [];
   for (let i = 1; i < dados.length; i++) {
-    const dep = String(dados[i][2] || '').trim();
+    const deps = parseDepartamentos(dados[i][2]);
     const status = String(dados[i][3] || '').trim().toLowerCase();
-    if (dep === departamento && status !== 'inativo') {
+    if (deps.indexOf(departamento) >= 0 && status !== 'inativo') {
       lista.push({ codigo: String(dados[i][0]).trim(), nome: String(dados[i][1] || '').trim() });
     }
   }
@@ -583,7 +586,9 @@ function voluntariosAtivos() {
     const cod = String(dados[i][0] || '').trim();
     const status = String(dados[i][3] || '').trim().toLowerCase();
     if (cod && status !== 'inativo') {
-      vols.push({ codigo: cod, nome: String(dados[i][1] || '').trim(), departamento: String(dados[i][2] || '').trim() });
+      const depRaw = String(dados[i][2] || '').trim();
+      vols.push({ codigo: cod, nome: String(dados[i][1] || '').trim(),
+                  departamento: depRaw, departamentos: parseDepartamentos(depRaw) });
     }
   }
   return vols;
@@ -671,7 +676,7 @@ function relatorioDepartamento(req) {
   const nCultos = cultos.length;
   const cultoSet = {}; cultos.forEach(function (c) { cultoSet[c.data] = true; });
 
-  const vols = voluntariosAtivos().filter(function (v) { return v.departamento === departamento; });
+  const vols = voluntariosAtivos().filter(function (v) { return v.departamentos.indexOf(departamento) >= 0; });
   const codSet = {}; vols.forEach(function (v) { codSet[v.codigo] = true; });
 
   const count = {}; vols.forEach(function (v) { count[v.codigo] = 0; });
@@ -817,10 +822,12 @@ function buscarVoluntarioRaw(codigo) {
   const dados = getSheet(ABA_VOLUNTARIOS).getDataRange().getValues();
   for (let i = 1; i < dados.length; i++) {
     if (String(dados[i][0]).trim() === codigo) {
+      const depRaw = String(dados[i][2] || '').trim();
       return {
         codigo: codigo,
         nome: String(dados[i][1] || '').trim(),
-        departamento: String(dados[i][2] || '').trim(),
+        departamento: depRaw,
+        departamentos: parseDepartamentos(depRaw),
         status: String(dados[i][3] || '').trim()
       };
     }
@@ -832,6 +839,16 @@ function getSheet(nome) {
   const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nome);
   if (!sh) throw new Error('Aba não encontrada: "' + nome + '". Crie a aba com esse nome exato.');
   return sh;
+}
+
+/**
+ * Quebra a célula de Departamento(s) em uma lista. Aceita ; , ou / como separador
+ * e remove espaços/itens vazios. Ex.: "Louvor; Staff" -> ["Louvor", "Staff"].
+ */
+function parseDepartamentos(s) {
+  return String(s || '').split(/[;,\/]/)
+    .map(function (x) { return x.trim(); })
+    .filter(function (x) { return x; });
 }
 
 function formatData(v) {

@@ -154,48 +154,59 @@ alter table public.assinaturas             enable row level security;
 
 -- ---------------------------------------------------------------------
 -- 4) POLÍTICAS — só enxerga/altera dados da PRÓPRIA igreja
+--    (cada uma é recriada: DROP IF EXISTS + CREATE => script idempotente)
 -- ---------------------------------------------------------------------
 
 -- igrejas: vê/edita só a sua.
+drop policy if exists tenant_igrejas on public.igrejas;
 create policy tenant_igrejas on public.igrejas
   for all using (id = public.auth_igreja_id())
   with check (id = public.auth_igreja_id());
 
 -- usuarios: vê os usuários da mesma igreja.
+drop policy if exists tenant_usuarios on public.usuarios;
 create policy tenant_usuarios on public.usuarios
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
 -- Tabelas com coluna igreja_id => regra igualzinha.
+drop policy if exists tenant_departamentos on public.departamentos;
 create policy tenant_departamentos on public.departamentos
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
+drop policy if exists tenant_voluntarios on public.voluntarios;
 create policy tenant_voluntarios on public.voluntarios
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
+drop policy if exists tenant_vol_dep on public.voluntario_departamento;
 create policy tenant_vol_dep on public.voluntario_departamento
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
+drop policy if exists tenant_cultos on public.cultos;
 create policy tenant_cultos on public.cultos
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
+drop policy if exists tenant_escalas on public.escalas;
 create policy tenant_escalas on public.escalas
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
+drop policy if exists tenant_registros on public.registros;
 create policy tenant_registros on public.registros
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
+drop policy if exists tenant_assinaturas on public.assinaturas;
 create policy tenant_assinaturas on public.assinaturas
   for all using (igreja_id = public.auth_igreja_id())
   with check (igreja_id = public.auth_igreja_id());
 
 -- escala_itens não tem igreja_id: validamos pela escala "dona".
+drop policy if exists tenant_escala_itens on public.escala_itens;
 create policy tenant_escala_itens on public.escala_itens
   for all using (
     exists (select 1 from public.escalas e

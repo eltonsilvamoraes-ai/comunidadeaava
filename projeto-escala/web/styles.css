@@ -89,3 +89,11 @@ body{
 textarea.input{resize:vertical; font-family:inherit; font-size:14px}
 .aviso{margin-top:12px; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:14px}
 
+/* Dashboard */
+.kpis{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+.kpi{flex:1; min-width:68px; border:1px solid var(--borda); border-radius:10px; padding:10px 8px; text-align:center}
+.kpi-num{font-size:20px; font-weight:800; color:var(--preto)}
+.kpi-lb{font-size:11px; color:var(--cinza); margin-top:2px}
+.rank{margin:6px 0 0; padding-left:18px; font-size:14px}
+.rank li{margin:3px 0}
+

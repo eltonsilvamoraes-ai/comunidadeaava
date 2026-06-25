@@ -67,6 +67,7 @@
       <button class="menu-btn" type="button" data-go="tela-cultos-fixos">⚙️ Cultos fixos da igreja</button>
       <button class="menu-btn" type="button" data-go="tela-cultos">📅 Cultos do mês</button>
       <button class="menu-btn" type="button" data-go="tela-escala">🗓️ Montar escala</button>
+      <button class="menu-btn" type="button" data-go="tela-dashboard">📊 Dashboard de frequência</button>
       <a id="home-presenca" class="menu-btn" target="_blank" rel="noopener" href="#">📲 Tela de presença (abrir / compartilhar)</a>
       <a id="btn-sair-2" class="voltar" href="#">sair</a>
     </section>
@@ -196,6 +197,29 @@
       <div id="esc-vols" class="checks"><p class="muted">Escolha culto e departamento.</p></div>
       <button id="btn-salvar-escala" class="btn" type="button">Salvar escala</button>
       <p id="esc-msg" class="msg" role="alert"></p>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="tela-dashboard" class="screen screen--left">
+      <h2 class="titulo">Dashboard de frequência</h2>
+      <div class="form-row">
+        <div class="form-col">
+          <label class="label" for="dash-mes">Mês</label>
+          <input id="dash-mes" class="input" type="month" />
+        </div>
+        <button id="btn-dash" class="btn btn-inline" type="button">Atualizar</button>
+      </div>
+      <p id="dash-msg" class="msg" role="alert"></p>
+      <div id="dash-kpis" class="kpis"></div>
+      <p class="label">Participação por culto</p>
+      <div id="dash-cultos" class="lista"></div>
+      <div class="form-row" style="gap:16px; align-items:flex-start">
+        <div class="form-col"><p class="label">Maior frequência</p><div id="dash-maior" class="lista"></div></div>
+        <div class="form-col"><p class="label">Menor frequência</p><div id="dash-menor" class="lista"></div></div>
+      </div>
+      <p class="label">Alertas de afastamento 💚</p>
+      <div id="dash-alertas" class="lista"></div>
       <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
     </section>
 

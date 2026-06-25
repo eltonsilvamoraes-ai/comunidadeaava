@@ -28,6 +28,7 @@
       if (destino === 'tela-cultos-fixos') carregarCultosFixos();
       if (destino === 'tela-cultos') abrirCultos();
       if (destino === 'tela-escala') abrirEscala();
+      if (destino === 'tela-dashboard') abrirDashboard();
     });
   });
 
@@ -601,6 +602,125 @@
     } catch (e) { msg('esc-msg', 'Falha de conexão.', true); }
     finally { destrava(this, 'Salvar escala'); }
   });
+
+  /* ============================================================ */
+  /* DASHBOARD                                                    */
+  /* ============================================================ */
+  const LIMITE_FALTAS = 2;
+
+  function abrirDashboard() {
+    const el = document.getElementById('dash-mes');
+    if (!el.value) { const h = new Date(); el.value = h.getFullYear() + '-' + pad(h.getMonth() + 1); }
+    carregarDashboard();
+  }
+  document.getElementById('btn-dash').addEventListener('click', carregarDashboard);
+
+  async function carregarDashboard() {
+    const mv = document.getElementById('dash-mes').value;
+    msg('dash-msg', '');
+    if (!mv) { msg('dash-msg', 'Escolha o mês.', true); return; }
+    const p = mv.split('-'), ano = Number(p[0]), mes = Number(p[1]);
+    const ini = ano + '-' + pad(mes) + '-01';
+    const fim = ano + '-' + pad(mes) + '-' + pad(new Date(ano, mes, 0).getDate());
+    msg('dash-msg', 'Carregando…');
+    const culR = await sb.from('cultos').select('id, data, descricao').gte('data', ini).lte('data', fim).order('data');
+    const regR = await sb.from('registros').select('voluntario_id, data').gte('data', ini).lte('data', fim);
+    const volR = await sb.from('voluntarios').select('id, nome, status');
+    if (culR.error || regR.error || volR.error) { msg('dash-msg', 'Erro ao carregar.', true); return; }
+    msg('dash-msg', '');
+
+    const cultos = culR.data || [];
+    const vols = (volR.data || []).filter(function (v) { return v.status !== 'inativo'; });
+    const nVol = vols.length, nCultos = cultos.length;
+
+    if (!nCultos) {
+      renderKpis(0, 0, 0, 0, nVol, 0);
+      document.getElementById('dash-cultos').innerHTML = '<p class="muted">Nenhum culto neste mês.</p>';
+      document.getElementById('dash-maior').innerHTML = '';
+      document.getElementById('dash-menor').innerHTML = '';
+    } else {
+      const ehCulto = {}; cultos.forEach(function (c) { ehCulto[c.data] = true; });
+      const volMap = {}; vols.forEach(function (v) { volMap[v.id] = { nome: v.nome, count: 0 }; });
+      const presPorData = {}; cultos.forEach(function (c) { presPorData[c.data] = {}; });
+      const vistos = {};
+      (regR.data || []).forEach(function (r) {
+        if (ehCulto[r.data] && volMap[r.voluntario_id]) {
+          const k = r.voluntario_id + '|' + r.data;
+          if (!vistos[k]) { vistos[k] = true; volMap[r.voluntario_id].count++; presPorData[r.data][r.voluntario_id] = true; }
+        }
+      });
+      const possiveis = nVol * nCultos;
+      let presentes = 0; Object.keys(volMap).forEach(function (id) { presentes += volMap[id].count; });
+      const faltas = Math.max(possiveis - presentes, 0);
+      const taxaP = possiveis ? Math.round(presentes / possiveis * 1000) / 10 : 0;
+      renderKpis(taxaP, possiveis ? Math.round((100 - taxaP) * 10) / 10 : 0, presentes, faltas, nVol, nCultos);
+
+      document.getElementById('dash-cultos').innerHTML =
+        '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Pres.</th><th>%</th></tr></thead><tbody>' +
+        cultos.map(function (c) {
+          const pp = Object.keys(presPorData[c.data]).length;
+          const pct = nVol ? Math.round(pp / nVol * 1000) / 10 : 0;
+          return '<tr><td>' + dataBR(c.data) + '</td><td>' + esc(c.descricao || '–') + '</td><td>' + pp + '</td><td>' + pct + '%</td></tr>';
+        }).join('') + '</tbody></table>';
+
+      const lista = Object.keys(volMap).map(function (id) {
+        return { nome: volMap[id].nome, c: volMap[id].count, pct: nCultos ? Math.round(volMap[id].count / nCultos * 1000) / 10 : 0 };
+      });
+      const maior = lista.slice().sort(function (a, b) { return b.c - a.c || a.nome.localeCompare(b.nome); }).slice(0, 8);
+      const menor = lista.slice().sort(function (a, b) { return a.c - b.c || a.nome.localeCompare(b.nome); }).slice(0, 8);
+      document.getElementById('dash-maior').innerHTML = rankHtml(maior);
+      document.getElementById('dash-menor').innerHTML = rankHtml(menor);
+    }
+
+    carregarAlertas();
+  }
+
+  function renderKpis(tp, tf, pres, falt, nVol, nCultos) {
+    document.getElementById('dash-kpis').innerHTML =
+      kpiBox(tp + '%', 'Presença') + kpiBox(tf + '%', 'Falta') + kpiBox(pres, 'Presenças') + kpiBox(falt, 'Faltas') +
+      '<p class="muted" style="width:100%;margin:6px 0 0">' + nVol + ' voluntário(s) · ' + nCultos + ' culto(s)</p>';
+  }
+  function kpiBox(num, label) { return '<div class="kpi"><div class="kpi-num">' + num + '</div><div class="kpi-lb">' + label + '</div></div>'; }
+  function rankHtml(arr) {
+    if (!arr.length) return '<p class="muted">—</p>';
+    return '<ol class="rank">' + arr.map(function (v) {
+      return '<li>' + esc(v.nome) + ' <span class="muted">' + v.c + ' (' + v.pct + '%)</span></li>';
+    }).join('') + '</ol>';
+  }
+
+  // Alerta pastoral: voluntários com faltas seguidas (em todos os cultos já realizados).
+  async function carregarAlertas() {
+    const div = document.getElementById('dash-alertas');
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const h = new Date();
+    const hojeISO = h.getFullYear() + '-' + pad(h.getMonth() + 1) + '-' + pad(h.getDate());
+    const culR = await sb.from('cultos').select('data').lte('data', hojeISO).order('data');
+    const datas = (culR.data || []).map(function (c) { return c.data; });
+    if (!datas.length) { div.innerHTML = '<p class="muted">Sem histórico ainda.</p>'; return; }
+    const volR = await sb.from('voluntarios').select('id, nome, status');
+    const vols = (volR.data || []).filter(function (v) { return v.status !== 'inativo'; });
+    const regR = await sb.from('registros').select('voluntario_id, data');
+    const presSet = {}, totalPres = {};
+    (regR.data || []).forEach(function (r) {
+      presSet[r.data + '|' + r.voluntario_id] = true;
+      totalPres[r.voluntario_id] = (totalPres[r.voluntario_id] || 0) + 1;
+    });
+    const alertas = [];
+    vols.forEach(function (v) {
+      if (!totalPres[v.id]) return;             // só quem já tem histórico
+      let streak = 0;
+      for (let i = datas.length - 1; i >= 0; i--) {
+        if (presSet[datas[i] + '|' + v.id]) break;
+        streak++;
+      }
+      if (streak >= LIMITE_FALTAS) alertas.push({ nome: v.nome, faltas: streak });
+    });
+    alertas.sort(function (a, b) { return b.faltas - a.faltas || a.nome.localeCompare(b.nome); });
+    if (!alertas.length) { div.innerHTML = '<p class="muted">Ninguém com faltas seguidas. 🎉</p>'; return; }
+    div.innerHTML = '<table class="tabela"><thead><tr><th>Voluntário</th><th>Faltas seguidas</th></tr></thead><tbody>' +
+      alertas.map(function (a) { return '<tr><td>' + esc(a.nome) + '</td><td>' + a.faltas + '</td></tr>'; }).join('') +
+      '</tbody></table>';
+  }
 
   /* ----- Utilidades ----- */
   function pad(n) { return ('0' + n).slice(-2); }

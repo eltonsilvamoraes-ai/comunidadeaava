@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projeto Escala</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="card" role="main">
+
+    <header class="brand">
+      <h1 class="brand__nome">Projeto Escala</h1>
+      <p class="brand__sub">Escalas de voluntários para igrejas</p>
+    </header>
+
+    <!-- Carregando -->
+    <section id="tela-load" class="screen is-active">
+      <p class="muted">Carregando…</p>
+    </section>
+
+    <!-- LOGIN / CADASTRO -->
+    <section id="tela-auth" class="screen">
+      <div class="abas">
+        <button class="aba is-on" type="button" data-aba="login">Entrar</button>
+        <button class="aba" type="button" data-aba="cadastro">Criar conta</button>
+      </div>
+
+      <!-- Login -->
+      <div id="painel-login" class="painel">
+        <label class="label" for="login-email">E-mail</label>
+        <input id="login-email" class="input" type="email" autocomplete="email" />
+        <label class="label" for="login-senha">Senha</label>
+        <input id="login-senha" class="input" type="password" autocomplete="current-password" />
+        <button id="btn-login" class="btn" type="button">Entrar</button>
+      </div>
+
+      <!-- Cadastro -->
+      <div id="painel-cadastro" class="painel" hidden>
+        <label class="label" for="cad-email">E-mail</label>
+        <input id="cad-email" class="input" type="email" autocomplete="email" />
+        <label class="label" for="cad-senha">Senha (mín. 6)</label>
+        <input id="cad-senha" class="input" type="password" autocomplete="new-password" />
+        <button id="btn-cadastro" class="btn" type="button">Criar conta</button>
+      </div>
+
+      <p id="auth-msg" class="msg" role="alert"></p>
+    </section>
+
+    <!-- CRIAR IGREJA (1 por CNPJ) -->
+    <section id="tela-igreja" class="screen">
+      <h2 class="titulo">Criar sua igreja</h2>
+      <p class="muted">Sua conta ainda não tem igreja. Cadastre — uma conta por CNPJ.</p>
+
+      <label class="label" for="ig-nome">Nome da igreja</label>
+      <input id="ig-nome" class="input" type="text" />
+      <label class="label" for="ig-cnpj">CNPJ</label>
+      <input id="ig-cnpj" class="input" type="text" inputmode="numeric" placeholder="somente números" />
+      <label class="label" for="ig-admin">Seu nome (responsável)</label>
+      <input id="ig-admin" class="input" type="text" />
+
+      <button id="btn-criar-igreja" class="btn" type="button">Criar igreja</button>
+      <a id="btn-sair-1" class="voltar" href="#">sair</a>
+      <p id="igreja-msg" class="msg" role="alert"></p>
+    </section>
+
+    <!-- HOME (logado, com igreja) -->
+    <section id="tela-home" class="screen">
+      <h2 class="titulo">Bem-vindo(a)! 🙌</h2>
+      <p id="home-igreja" class="destaque"></p>
+      <p id="home-papel" class="muted"></p>
+      <p class="muted">Fundação multi-tenant funcionando. As telas de voluntários,
+        escala e dashboard entram nas próximas etapas.</p>
+      <a id="btn-sair-2" class="voltar" href="#">sair</a>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

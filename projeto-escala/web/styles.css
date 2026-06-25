@@ -1,0 +1,52 @@
+:root{
+  --preto:#111111; --texto:#1f2937; --cinza:#6b7280;
+  --borda:#d1d5db; --fundo:#f3f4f6; --ok:#15803d; --erro:#b91c1c;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:var(--fundo); color:var(--texto);
+  font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  padding:16px;
+}
+.card{
+  width:100%; max-width:380px; background:#fff; border-radius:16px;
+  box-shadow:0 8px 30px rgba(0,0,0,.08); padding:28px 24px;
+}
+.brand{text-align:center; margin-bottom:18px}
+.brand__nome{font-size:22px; font-weight:800; margin:0; color:var(--preto)}
+.brand__sub{font-size:13px; color:var(--cinza); margin:4px 0 0}
+
+.screen{display:none}
+.screen.is-active{display:block}
+
+.titulo{font-size:18px; font-weight:700; margin:0 0 6px; color:var(--preto)}
+.muted{color:var(--cinza); font-size:14px; margin:6px 0 14px}
+.destaque{font-size:18px; font-weight:700; color:var(--preto); margin:4px 0}
+
+.label{display:block; font-size:13px; font-weight:600; color:var(--cinza); margin:12px 0 6px}
+.input{
+  width:100%; border:1.5px solid var(--borda); border-radius:10px;
+  padding:12px 14px; font-size:16px; outline:none;
+}
+.input:focus{border-color:var(--preto)}
+
+.btn{
+  width:100%; margin-top:18px; padding:13px; border:0; border-radius:10px;
+  background:var(--preto); color:#fff; font-size:16px; font-weight:600; cursor:pointer;
+}
+.btn:disabled{opacity:.6; cursor:default}
+
+.abas{display:flex; gap:8px; margin-bottom:8px}
+.aba{
+  flex:1; padding:10px; border:1.5px solid var(--borda); background:#fff;
+  border-radius:10px; font-size:14px; font-weight:600; color:var(--cinza); cursor:pointer;
+}
+.aba.is-on{background:var(--preto); color:#fff; border-color:var(--preto)}
+
+.voltar{display:inline-block; margin-top:16px; color:var(--cinza); font-size:14px; text-decoration:none}
+.voltar:hover{color:var(--preto)}
+
+.msg{margin-top:14px; font-size:14px; min-height:18px}
+.msg.erro{color:var(--erro)}
+.msg.ok{color:var(--ok)}

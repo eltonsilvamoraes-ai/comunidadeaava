@@ -13,8 +13,25 @@ projeto-escala/
   supabase/
     schema.sql      -> cria o banco multi-tenant (tabelas + RLS + cadastro 1/CNPJ)
     verificar.sql   -> confere que tudo subiu e a RLS está ligada
-  (frontend Next.js virá aqui na Fase 2)
+  web/
+    index.html      -> telas: login/cadastro, criar igreja, home
+    config.js       -> URL + anon key do Supabase (preencher)
+    app.js          -> auth (Supabase) + RPC criar_igreja
+    styles.css
 ```
+
+## Como rodar o frontend (Fase 1)
+
+1. **Pegue as chaves:** Supabase > **Settings > API**. Copie **Project URL** e a
+   **anon public** key. Cole no `web/config.js`.
+2. **Desligue a confirmação de e-mail** (só durante os testes): Supabase >
+   **Authentication > Sign In / Providers > Email** > desmarque *Confirm email* > Save.
+   (Assim você entra logo após cadastrar, sem clicar em link de e-mail.)
+3. **Abra** `web/index.html` no navegador (ou hospede numa pasta de teste).
+4. **Teste de isolamento:**
+   - Crie a **conta A** > crie a **Igreja A** (CNPJ qualquer com 14 dígitos).
+   - Saia, crie a **conta B** > crie a **Igreja B** (outro CNPJ).
+   - Cada conta deve ver **só a sua** igreja. ✅
 
 ## Como subir o banco (Fase 1)
 

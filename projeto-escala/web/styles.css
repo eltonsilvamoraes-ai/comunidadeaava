@@ -50,3 +50,42 @@ body{
 .msg{margin-top:14px; font-size:14px; min-height:18px}
 .msg.erro{color:var(--erro)}
 .msg.ok{color:var(--ok)}
+
+/* ---- Fase 2: menu, listas, voluntários, importação ---- */
+.screen--left{text-align:left}
+
+.menu-btn{
+  display:block; width:100%; margin-top:10px; padding:14px; text-align:left;
+  border:1.5px solid var(--borda); background:#fff; border-radius:12px;
+  font-size:15px; font-weight:600; color:var(--texto); cursor:pointer;
+}
+.menu-btn:hover{border-color:var(--preto)}
+
+.form-row{display:flex; gap:8px; align-items:flex-end}
+.form-col{flex:1}
+.btn-inline{width:auto; margin-top:0; white-space:nowrap; padding:12px 16px}
+.btn--ghost{background:#fff; color:var(--preto); border:1.5px solid var(--borda)}
+
+.lista{margin-top:10px}
+.item{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px; border:1px solid var(--borda); border-radius:8px; margin-bottom:6px;
+}
+.link-acao{background:none; border:0; color:var(--cinza); cursor:pointer; font-size:13px; text-decoration:underline}
+.link-acao:hover{color:var(--preto)}
+.link-excluir{color:var(--erro)}
+
+.checks{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px}
+.check{
+  display:flex; align-items:center; gap:6px; padding:7px 10px;
+  border:1.5px solid var(--borda); border-radius:20px; font-size:14px; cursor:pointer;
+}
+.check input{margin:0}
+
+.tabela{width:100%; border-collapse:collapse; margin-top:8px; font-size:14px}
+.tabela th{text-align:left; color:var(--cinza); font-weight:600; padding:6px 8px; border-bottom:1.5px solid var(--borda)}
+.tabela td{padding:8px; border-bottom:1px solid #eee}
+
+textarea.input{resize:vertical; font-family:inherit; font-size:14px}
+.aviso{margin-top:12px; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:14px}
+

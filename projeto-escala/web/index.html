@@ -25,8 +25,6 @@
         <button class="aba is-on" type="button" data-aba="login">Entrar</button>
         <button class="aba" type="button" data-aba="cadastro">Criar conta</button>
       </div>
-
-      <!-- Login -->
       <div id="painel-login" class="painel">
         <label class="label" for="login-email">E-mail</label>
         <input id="login-email" class="input" type="email" autocomplete="email" />
@@ -34,8 +32,6 @@
         <input id="login-senha" class="input" type="password" autocomplete="current-password" />
         <button id="btn-login" class="btn" type="button">Entrar</button>
       </div>
-
-      <!-- Cadastro -->
       <div id="painel-cadastro" class="painel" hidden>
         <label class="label" for="cad-email">E-mail</label>
         <input id="cad-email" class="input" type="email" autocomplete="email" />
@@ -43,35 +39,89 @@
         <input id="cad-senha" class="input" type="password" autocomplete="new-password" />
         <button id="btn-cadastro" class="btn" type="button">Criar conta</button>
       </div>
-
       <p id="auth-msg" class="msg" role="alert"></p>
     </section>
 
-    <!-- CRIAR IGREJA (1 por CNPJ) -->
+    <!-- CRIAR IGREJA -->
     <section id="tela-igreja" class="screen">
       <h2 class="titulo">Criar sua igreja</h2>
       <p class="muted">Sua conta ainda não tem igreja. Cadastre — uma conta por CNPJ.</p>
-
       <label class="label" for="ig-nome">Nome da igreja</label>
       <input id="ig-nome" class="input" type="text" />
       <label class="label" for="ig-cnpj">CNPJ</label>
       <input id="ig-cnpj" class="input" type="text" inputmode="numeric" placeholder="somente números" />
       <label class="label" for="ig-admin">Seu nome (responsável)</label>
       <input id="ig-admin" class="input" type="text" />
-
       <button id="btn-criar-igreja" class="btn" type="button">Criar igreja</button>
       <a id="btn-sair-1" class="voltar" href="#">sair</a>
       <p id="igreja-msg" class="msg" role="alert"></p>
     </section>
 
-    <!-- HOME (logado, com igreja) -->
+    <!-- HOME / MENU -->
     <section id="tela-home" class="screen">
-      <h2 class="titulo">Bem-vindo(a)! 🙌</h2>
-      <p id="home-igreja" class="destaque"></p>
+      <h2 id="home-igreja" class="titulo"></h2>
       <p id="home-papel" class="muted"></p>
-      <p class="muted">Fundação multi-tenant funcionando. As telas de voluntários,
-        escala e dashboard entram nas próximas etapas.</p>
+      <button class="menu-btn" type="button" data-go="tela-departamentos">📋 Departamentos</button>
+      <button class="menu-btn" type="button" data-go="tela-voluntarios">🙋 Voluntários</button>
+      <button class="menu-btn" type="button" data-go="tela-importar">⬆️ Importar voluntários (CSV)</button>
       <a id="btn-sair-2" class="voltar" href="#">sair</a>
+    </section>
+
+    <!-- DEPARTAMENTOS -->
+    <section id="tela-departamentos" class="screen screen--left">
+      <h2 class="titulo">Departamentos</h2>
+      <div class="form-row">
+        <input id="dep-nome" class="input" type="text" placeholder="Novo departamento" />
+        <button id="btn-add-dep" class="btn btn-inline" type="button">Adicionar</button>
+      </div>
+      <p id="dep-msg" class="msg" role="alert"></p>
+      <div id="dep-lista" class="lista"></div>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
+    </section>
+
+    <!-- VOLUNTÁRIOS -->
+    <section id="tela-voluntarios" class="screen screen--left">
+      <h2 class="titulo">Voluntários</h2>
+      <label class="label" for="vol-nome">Nome completo</label>
+      <input id="vol-nome" class="input" type="text" />
+      <div class="form-row">
+        <div class="form-col">
+          <label class="label" for="vol-matricula">Matrícula</label>
+          <input id="vol-matricula" class="input" type="text" inputmode="numeric" />
+        </div>
+        <div class="form-col">
+          <label class="label" for="vol-status">Status</label>
+          <select id="vol-status" class="input">
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+      <label class="label">Departamentos</label>
+      <div id="vol-deptos" class="checks"><p class="muted">Cadastre um departamento primeiro.</p></div>
+      <input type="hidden" id="vol-id" />
+      <button id="btn-salvar-vol" class="btn" type="button">Adicionar voluntário</button>
+      <a id="vol-cancelar" class="voltar" href="#" hidden>cancelar edição</a>
+      <p id="vol-msg" class="msg" role="alert"></p>
+      <p class="label">Cadastrados</p>
+      <div id="vol-lista" class="lista"></div>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
+    </section>
+
+    <!-- IMPORTAR CSV -->
+    <section id="tela-importar" class="screen screen--left">
+      <h2 class="titulo">Importar voluntários (CSV)</h2>
+      <p class="muted">Colunas: <strong>Codigo, Nome completo, Departamento(s), Status</strong>.
+        Vários departamentos separados por <strong>;</strong> (ex.: Louvor; Staff).
+        A 1ª linha é o cabeçalho.</p>
+      <input id="imp-file" type="file" accept=".csv,.tsv,.txt" class="input" />
+      <p class="muted" style="text-align:center">— ou cole o conteúdo abaixo —</p>
+      <textarea id="imp-texto" class="input" rows="6" placeholder="Codigo,Nome completo,Departamento(s),Status&#10;31,Fulano,Louvor; Staff,Ativo"></textarea>
+      <button id="btn-preview" class="btn btn--ghost" type="button">Pré-visualizar</button>
+      <div id="imp-preview"></div>
+      <button id="btn-importar" class="btn" type="button" hidden>Importar</button>
+      <p id="imp-msg" class="msg" role="alert"></p>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
     </section>
 
   </main>

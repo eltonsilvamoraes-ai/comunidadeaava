@@ -1,4 +1,4 @@
-/* Projeto Escala — frontend Fase 1 (auth + criar igreja) */
+/* Projeto Escala — frontend (Fase 1 auth + Fase 2 voluntários/CSV) */
 (function () {
   'use strict';
 
@@ -7,31 +7,41 @@
     cfg.URL.indexOf('COLE_AQUI') === -1 && cfg.ANON_KEY.indexOf('COLE_AQUI') === -1;
 
   let sb = null;
+  let igrejaId = null;          // igreja do usuário logado
+  let deptosCache = [];          // [{id, nome, ativo}]
 
-  /* ----- Navegação entre telas ----- */
+  /* ----- Navegação ----- */
   function irPara(id) {
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
     const alvo = document.getElementById(id);
     if (alvo) alvo.classList.add('is-active');
   }
+  // Botões que só trocam de tela (data-go).
+  document.querySelectorAll('[data-go]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      const destino = b.getAttribute('data-go');
+      irPara(destino);
+      if (destino === 'tela-departamentos') carregarDepartamentos();
+      if (destino === 'tela-voluntarios') abrirVoluntarios();
+      if (destino === 'tela-importar') resetImport();
+    });
+  });
 
   /* ----- Início ----- */
   async function init() {
     try {
-      // 1) A biblioteca do Supabase carregou? (Brave Shields/adblock/VPN podem bloquear.)
       if (typeof supabase === 'undefined' || !supabase.createClient) {
         irPara('tela-auth');
         msg('auth-msg', 'Não carregou a biblioteca do Supabase. Desative o bloqueador ' +
           '(Brave Shields) para esta página e recarregue (Cmd+R).', true);
         return;
       }
-      // 2) O config.js foi preenchido?
       if (!configOk) {
         irPara('tela-auth');
-        msg('auth-msg', 'Preencha o config.js com a URL e a anon key do Supabase, salve e recarregue.', true);
+        msg('auth-msg', 'Preencha o config.js com a URL e a chave do Supabase, salve e recarregue.', true);
         return;
       }
-      // 3) Tudo certo: cria o cliente e checa a sessão.
       sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
       const { data } = await sb.auth.getSession();
       if (data && data.session) await rotearLogado();
@@ -42,22 +52,25 @@
     }
   }
 
-  /* Decide a tela de quem está logado: tem igreja -> home; senão -> criar igreja. */
   async function rotearLogado() {
     irPara('tela-load');
     const { data: igreja, error } = await sb.from('igrejas').select('id, nome').maybeSingle();
     if (error) { irPara('tela-auth'); msg('auth-msg', traduzErro(error), true); return; }
     if (igreja) {
+      igrejaId = igreja.id;
       document.getElementById('home-igreja').textContent = igreja.nome;
       const { data: u } = await sb.from('usuarios').select('papel').maybeSingle();
       document.getElementById('home-papel').textContent = u ? ('Papel: ' + u.papel) : '';
       irPara('tela-home');
     } else {
+      igrejaId = null;
       irPara('tela-igreja');
     }
   }
 
-  /* ----- Abas login/cadastro ----- */
+  /* ============================================================ */
+  /* AUTH                                                         */
+  /* ============================================================ */
   document.querySelectorAll('#tela-auth .aba').forEach(function (a) {
     a.addEventListener('click', function () {
       document.querySelectorAll('#tela-auth .aba').forEach(function (x) { x.classList.remove('is-on'); });
@@ -69,61 +82,51 @@
     });
   });
 
-  /* ----- Cadastro ----- */
   document.getElementById('btn-cadastro').addEventListener('click', async function () {
     const email = val('cad-email'), senha = val('cad-senha');
     msg('auth-msg', '');
     if (!email || !senha) { msg('auth-msg', 'Preencha e-mail e senha.', true); return; }
-    const btn = this; trava(btn, 'Criando…');
+    trava(this, 'Criando…');
     try {
       const { data, error } = await sb.auth.signUp({ email: email, password: senha });
       if (error) { msg('auth-msg', traduzErro(error), true); return; }
-      if (data.session) {            // confirmação de e-mail desligada -> já entra
-        await rotearLogado();
-      } else {                       // confirmação ligada -> precisa confirmar
-        msg('auth-msg', 'Conta criada! Confirme pelo link enviado ao seu e-mail e depois entre.');
-      }
+      if (data.session) await rotearLogado();
+      else msg('auth-msg', 'Conta criada! Confirme pelo link no seu e-mail e depois entre.');
     } catch (e) { msg('auth-msg', 'Falha de conexão.', true); }
-    finally { destrava(btn, 'Criar conta'); }
+    finally { destrava(this, 'Criar conta'); }
   });
 
-  /* ----- Login ----- */
   document.getElementById('btn-login').addEventListener('click', async function () {
     const email = val('login-email'), senha = val('login-senha');
     msg('auth-msg', '');
     if (!email || !senha) { msg('auth-msg', 'Preencha e-mail e senha.', true); return; }
-    const btn = this; trava(btn, 'Entrando…');
+    trava(this, 'Entrando…');
     try {
       const { error } = await sb.auth.signInWithPassword({ email: email, password: senha });
       if (error) { msg('auth-msg', traduzErro(error), true); return; }
       await rotearLogado();
     } catch (e) { msg('auth-msg', 'Falha de conexão.', true); }
-    finally { destrava(btn, 'Entrar'); }
+    finally { destrava(this, 'Entrar'); }
   });
 
-  /* ----- Criar igreja ----- */
   document.getElementById('btn-criar-igreja').addEventListener('click', async function () {
-    const nome = val('ig-nome');
-    const cnpj = val('ig-cnpj').replace(/\D/g, '');   // só dígitos
-    const admin = val('ig-admin');
+    const nome = val('ig-nome'), cnpj = val('ig-cnpj').replace(/\D/g, ''), admin = val('ig-admin');
     msg('igreja-msg', '');
     if (!nome || !cnpj || !admin) { msg('igreja-msg', 'Preencha todos os campos.', true); return; }
     if (cnpj.length !== 14) { msg('igreja-msg', 'CNPJ deve ter 14 dígitos.', true); return; }
-    const btn = this; trava(btn, 'Criando…');
+    trava(this, 'Criando…');
     try {
-      const { error } = await sb.rpc('criar_igreja', {
-        p_cnpj: cnpj, p_nome_igreja: nome, p_nome_admin: admin
-      });
+      const { error } = await sb.rpc('criar_igreja', { p_cnpj: cnpj, p_nome_igreja: nome, p_nome_admin: admin });
       if (error) { msg('igreja-msg', traduzErro(error), true); return; }
       await rotearLogado();
     } catch (e) { msg('igreja-msg', 'Falha de conexão.', true); }
-    finally { destrava(btn, 'Criar igreja'); }
+    finally { destrava(this, 'Criar igreja'); }
   });
 
-  /* ----- Sair ----- */
   function sair(e) {
     if (e) e.preventDefault();
     sb.auth.signOut().then(function () {
+      igrejaId = null; deptosCache = [];
       ['login-email','login-senha','cad-email','cad-senha','ig-nome','ig-cnpj','ig-admin']
         .forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
       msg('auth-msg', ''); irPara('tela-auth');
@@ -132,8 +135,276 @@
   document.getElementById('btn-sair-1').addEventListener('click', sair);
   document.getElementById('btn-sair-2').addEventListener('click', sair);
 
+  /* ============================================================ */
+  /* DEPARTAMENTOS                                                */
+  /* ============================================================ */
+  async function carregarDepartamentos() {
+    const div = document.getElementById('dep-lista');
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const { data, error } = await sb.from('departamentos').select('id, nome, ativo').order('nome');
+    if (error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(error)) + '</p>'; return; }
+    deptosCache = data || [];
+    if (!deptosCache.length) { div.innerHTML = '<p class="muted">Nenhum departamento ainda.</p>'; return; }
+    div.innerHTML = deptosCache.map(function (d) {
+      return '<div class="item"><span>' + esc(d.nome) + '</span>' +
+             '<button class="link-acao link-excluir" data-del-dep="' + d.id + '">excluir</button></div>';
+    }).join('');
+    div.querySelectorAll('[data-del-dep]').forEach(function (b) {
+      b.addEventListener('click', function () { excluirDepartamento(b.getAttribute('data-del-dep')); });
+    });
+  }
+
+  document.getElementById('btn-add-dep').addEventListener('click', async function () {
+    const nome = val('dep-nome'); msg('dep-msg', '');
+    if (!nome) { msg('dep-msg', 'Informe o nome.', true); return; }
+    trava(this, '…');
+    try {
+      const { error } = await sb.from('departamentos').insert({ igreja_id: igrejaId, nome: nome });
+      if (error) { msg('dep-msg', error.code === '23505' ? 'Esse departamento já existe.' : traduzErro(error), true); return; }
+      document.getElementById('dep-nome').value = '';
+      msg('dep-msg', '✓ Adicionado.'); carregarDepartamentos();
+    } catch (e) { msg('dep-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Adicionar'); }
+  });
+
+  async function excluirDepartamento(id) {
+    if (!confirm('Excluir este departamento? (os voluntários continuam, só perdem este vínculo)')) return;
+    const { error } = await sb.from('departamentos').delete().eq('id', id);
+    if (error) { msg('dep-msg', traduzErro(error), true); return; }
+    carregarDepartamentos();
+  }
+
+  /* ============================================================ */
+  /* VOLUNTÁRIOS                                                  */
+  /* ============================================================ */
+  async function abrirVoluntarios() {
+    limparFormVol();
+    // carrega departamentos (para os checkboxes) e a lista.
+    const { data } = await sb.from('departamentos').select('id, nome').order('nome');
+    deptosCache = data || [];
+    renderChecksDeptos([]);
+    carregarVoluntarios();
+  }
+
+  function renderChecksDeptos(marcados) {
+    const div = document.getElementById('vol-deptos');
+    if (!deptosCache.length) { div.innerHTML = '<p class="muted">Cadastre um departamento primeiro.</p>'; return; }
+    const sel = {}; (marcados || []).forEach(function (id) { sel[id] = true; });
+    div.innerHTML = deptosCache.map(function (d) {
+      return '<label class="check"><input type="checkbox" value="' + d.id + '"' + (sel[d.id] ? ' checked' : '') + '>' +
+             '<span>' + esc(d.nome) + '</span></label>';
+    }).join('');
+  }
+
+  async function carregarVoluntarios() {
+    const div = document.getElementById('vol-lista');
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const { data, error } = await sb.from('voluntarios')
+      .select('id, matricula, nome, status, voluntario_departamento(departamentos(nome))')
+      .order('nome');
+    if (error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(error)) + '</p>'; return; }
+    if (!data.length) { div.innerHTML = '<p class="muted">Nenhum voluntário ainda.</p>'; return; }
+    div.innerHTML = '<table class="tabela"><thead><tr><th>Matríc.</th><th>Nome</th><th>Deptos</th><th></th></tr></thead><tbody>' +
+      data.map(function (v) {
+        const deps = (v.voluntario_departamento || [])
+          .map(function (x) { return x.departamentos ? x.departamentos.nome : ''; })
+          .filter(Boolean).join(', ');
+        const inativo = (v.status || '') === 'inativo';
+        const dados = encodeURIComponent(JSON.stringify(v));
+        return '<tr' + (inativo ? ' style="opacity:.5"' : '') + '><td>' + esc(v.matricula || '–') + '</td>' +
+               '<td>' + esc(v.nome) + '</td><td>' + esc(deps || '–') + '</td>' +
+               '<td><button class="link-acao" data-edit-vol="' + dados + '">editar</button></td></tr>';
+      }).join('') + '</tbody></table>';
+    div.querySelectorAll('[data-edit-vol]').forEach(function (b) {
+      b.addEventListener('click', function () { editarVol(JSON.parse(decodeURIComponent(b.getAttribute('data-edit-vol')))); });
+    });
+  }
+
+  function editarVol(v) {
+    document.getElementById('vol-id').value = v.id;
+    document.getElementById('vol-nome').value = v.nome || '';
+    document.getElementById('vol-matricula').value = v.matricula || '';
+    document.getElementById('vol-status').value = v.status || 'ativo';
+    // marca os checkboxes pelos nomes dos departamentos vinculados.
+    const nomes = {}; (v.voluntario_departamento || []).forEach(function (x) { if (x.departamentos) nomes[x.departamentos.nome] = true; });
+    const marcados = deptosCache.filter(function (d) { return nomes[d.nome]; }).map(function (d) { return d.id; });
+    renderChecksDeptos(marcados);
+    document.getElementById('btn-salvar-vol').textContent = 'Salvar alterações';
+    document.getElementById('vol-cancelar').hidden = false;
+    msg('vol-msg', '');
+    document.getElementById('vol-nome').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function limparFormVol() {
+    document.getElementById('vol-id').value = '';
+    document.getElementById('vol-nome').value = '';
+    document.getElementById('vol-matricula').value = '';
+    document.getElementById('vol-status').value = 'ativo';
+    document.getElementById('btn-salvar-vol').textContent = 'Adicionar voluntário';
+    document.getElementById('vol-cancelar').hidden = true;
+    msg('vol-msg', '');
+    renderChecksDeptos([]);
+  }
+  document.getElementById('vol-cancelar').addEventListener('click', function (e) { e.preventDefault(); limparFormVol(); });
+
+  document.getElementById('btn-salvar-vol').addEventListener('click', async function () {
+    const id = val('vol-id'), nome = val('vol-nome'), matricula = val('vol-matricula'), status = val('vol-status');
+    msg('vol-msg', '');
+    if (!nome) { msg('vol-msg', 'Informe o nome.', true); return; }
+    const deptosSel = Array.prototype.slice
+      .call(document.querySelectorAll('#vol-deptos input:checked')).map(function (c) { return c.value; });
+    trava(this, 'Salvando…');
+    try {
+      let volId = id;
+      if (id) {
+        const { error } = await sb.from('voluntarios')
+          .update({ nome: nome, matricula: matricula || null, status: status }).eq('id', id);
+        if (error) { msg('vol-msg', erroVol(error), true); return; }
+        await sb.from('voluntario_departamento').delete().eq('voluntario_id', id);
+      } else {
+        const { data, error } = await sb.from('voluntarios')
+          .insert({ igreja_id: igrejaId, nome: nome, matricula: matricula || null, status: status })
+          .select('id').single();
+        if (error) { msg('vol-msg', erroVol(error), true); return; }
+        volId = data.id;
+      }
+      if (deptosSel.length) {
+        const links = deptosSel.map(function (depId) {
+          return { igreja_id: igrejaId, voluntario_id: volId, departamento_id: depId };
+        });
+        await sb.from('voluntario_departamento').upsert(links, { onConflict: 'voluntario_id,departamento_id', ignoreDuplicates: true });
+      }
+      limparFormVol();
+      msg('vol-msg', '✓ Salvo.'); carregarVoluntarios();
+    } catch (e) { msg('vol-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Adicionar voluntário'); }
+  });
+
+  function erroVol(error) {
+    return error.code === '23505' ? 'Já existe um voluntário com essa matrícula.' : traduzErro(error);
+  }
+
+  /* ============================================================ */
+  /* IMPORTAR CSV                                                 */
+  /* ============================================================ */
+  let linhasImport = [];
+
+  function resetImport() {
+    linhasImport = [];
+    document.getElementById('imp-texto').value = '';
+    document.getElementById('imp-file').value = '';
+    document.getElementById('imp-preview').innerHTML = '';
+    document.getElementById('btn-importar').hidden = true;
+    msg('imp-msg', '');
+  }
+
+  document.getElementById('imp-file').addEventListener('change', function () {
+    const f = this.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = function () { document.getElementById('imp-texto').value = r.result; };
+    r.readAsText(f, 'utf-8');
+  });
+
+  document.getElementById('btn-preview').addEventListener('click', function () {
+    msg('imp-msg', '');
+    const texto = document.getElementById('imp-texto').value.trim();
+    if (!texto) { msg('imp-msg', 'Cole o conteúdo ou escolha um arquivo.', true); return; }
+    const linhas = parseCSV(texto);
+    if (linhas.length < 2) { msg('imp-msg', 'Não encontrei dados (só o cabeçalho?).', true); return; }
+    // ignora cabeçalho (linha 0). Colunas: 0=Codigo 1=Nome 2=Deptos 3=Status
+    linhasImport = [];
+    for (let i = 1; i < linhas.length; i++) {
+      const c = linhas[i];
+      const nome = (c[1] || '').trim();
+      if (!nome) continue;
+      linhasImport.push({
+        codigo: (c[0] || '').trim(),
+        nome: nome,
+        deptos: String(c[2] || '').split(/[;,\/]/).map(function (x) { return x.trim(); }).filter(Boolean),
+        status: /inativ/i.test(c[3] || '') ? 'inativo' : 'ativo'
+      });
+    }
+    const deptos = [].concat.apply([], linhasImport.map(function (r) { return r.deptos; }));
+    const uniqDep = deptos.filter(function (v, i) { return deptos.indexOf(v) === i; });
+    document.getElementById('imp-preview').innerHTML =
+      '<div class="aviso">Encontrados <strong>' + linhasImport.length + ' voluntário(s)</strong> e <strong>' +
+      uniqDep.length + ' departamento(s)</strong>:<br><span class="muted">' + esc(uniqDep.join(', ')) + '</span></div>';
+    document.getElementById('btn-importar').hidden = linhasImport.length === 0;
+  });
+
+  document.getElementById('btn-importar').addEventListener('click', async function () {
+    if (!linhasImport.length) return;
+    msg('imp-msg', ''); trava(this, 'Importando…');
+    try {
+      // 1) departamentos únicos -> upsert
+      const todos = [].concat.apply([], linhasImport.map(function (r) { return r.deptos; }));
+      const uniq = todos.filter(function (v, i) { return todos.indexOf(v) === i; });
+      if (uniq.length) {
+        const payload = uniq.map(function (n) { return { igreja_id: igrejaId, nome: n }; });
+        const up = await sb.from('departamentos').upsert(payload, { onConflict: 'igreja_id,nome', ignoreDuplicates: true });
+        if (up.error) { msg('imp-msg', traduzErro(up.error), true); return; }
+      }
+      const depRes = await sb.from('departamentos').select('id, nome');
+      if (depRes.error) { msg('imp-msg', traduzErro(depRes.error), true); return; }
+      const depMap = {}; depRes.data.forEach(function (d) { depMap[d.nome] = d.id; });
+
+      // 2) voluntários -> upsert por (igreja_id, matrícula)
+      const volPayload = linhasImport.map(function (r) {
+        return { igreja_id: igrejaId, matricula: r.codigo || null, nome: r.nome, status: r.status };
+      });
+      const volRes = await sb.from('voluntarios')
+        .upsert(volPayload, { onConflict: 'igreja_id,matricula' }).select('id, matricula');
+      if (volRes.error) { msg('imp-msg', traduzErro(volRes.error), true); return; }
+      const volMap = {}; volRes.data.forEach(function (v) { volMap[v.matricula] = v.id; });
+
+      // 3) vínculos voluntário-departamento
+      const links = [];
+      linhasImport.forEach(function (r) {
+        const vid = volMap[r.codigo];
+        if (!vid) return;
+        r.deptos.forEach(function (dn) {
+          if (depMap[dn]) links.push({ igreja_id: igrejaId, voluntario_id: vid, departamento_id: depMap[dn] });
+        });
+      });
+      if (links.length) {
+        const lr = await sb.from('voluntario_departamento')
+          .upsert(links, { onConflict: 'voluntario_id,departamento_id', ignoreDuplicates: true });
+        if (lr.error) { msg('imp-msg', traduzErro(lr.error), true); return; }
+      }
+      msg('imp-msg', '✓ Importados ' + volRes.data.length + ' voluntário(s), ' + uniq.length +
+        ' departamento(s) e ' + links.length + ' vínculo(s).');
+      document.getElementById('btn-importar').hidden = true;
+    } catch (e) { msg('imp-msg', 'Falha ao importar. Tente de novo.', true); }
+    finally { destrava(this, 'Importar'); }
+  });
+
+  /** Parser simples de CSV/TSV com suporte a aspas. Detecta , ou tab. */
+  function parseCSV(texto) {
+    const sep = texto.split('\n')[0].indexOf('\t') >= 0 ? '\t' : ',';
+    const linhas = []; let campo = '', linha = [], aspas = false;
+    for (let i = 0; i < texto.length; i++) {
+      const ch = texto[i];
+      if (aspas) {
+        if (ch === '"') { if (texto[i + 1] === '"') { campo += '"'; i++; } else aspas = false; }
+        else campo += ch;
+      } else if (ch === '"') aspas = true;
+      else if (ch === sep) { linha.push(campo); campo = ''; }
+      else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && texto[i + 1] === '\n') i++;
+        linha.push(campo); linhas.push(linha); campo = ''; linha = [];
+      } else campo += ch;
+    }
+    if (campo.length || linha.length) { linha.push(campo); linhas.push(linha); }
+    return linhas.filter(function (l) { return l.some(function (c) { return (c || '').trim(); }); });
+  }
+
   /* ----- Utilidades ----- */
   function val(id) { return (document.getElementById(id).value || '').trim(); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
   function msg(id, texto, erro) {
     const el = document.getElementById(id);
     el.textContent = texto || '';

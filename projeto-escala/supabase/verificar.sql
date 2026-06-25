@@ -2,25 +2,23 @@
 -- PROJETO ESCALA — Verificação pós-schema
 -- Rode DEPOIS do schema.sql, no SQL Editor do Supabase.
 -- Serve para conferir que tudo foi criado e a RLS está LIGADA.
+--
+-- IMPORTANTE: o SQL Editor só mostra o resultado da ÚLTIMA consulta.
+-- Por isso a verificação abaixo é UMA consulta só (com UNION), que
+-- devolve tabelas + políticas + funções juntas num resultado único.
+-- Esperado: ~22 linhas (10 TABELA com detalhe=true, 10 POLITICA, 2 FUNCAO).
 -- =====================================================================
 
--- 1) Devem aparecer 10 tabelas, todas com rowsecurity = true.
-select tablename, rowsecurity as rls_ligada
-from pg_tables
-where schemaname = 'public'
-order by tablename;
-
--- 2) Deve listar uma política "tenant_..." para cada tabela.
-select tablename, policyname, cmd
-from pg_policies
-where schemaname = 'public'
-order by tablename;
-
--- 3) As duas funções devem existir.
-select proname as funcao
-from pg_proc
-where proname in ('auth_igreja_id', 'criar_igreja')
-order by proname;
+select 'TABELA (rls)' as tipo, tablename as nome,
+       rowsecurity::text as detalhe
+from pg_tables where schemaname = 'public'
+union all
+select 'POLITICA', tablename || ' · ' || policyname, cmd
+from pg_policies where schemaname = 'public'
+union all
+select 'FUNCAO', proname, ''
+from pg_proc where proname in ('auth_igreja_id','criar_igreja')
+order by tipo, nome;
 
 -- =====================================================================
 -- TESTE REAL DE ISOLAMENTO (feito pelo APP, não aqui):

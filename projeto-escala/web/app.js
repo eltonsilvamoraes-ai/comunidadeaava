@@ -25,6 +25,9 @@
       if (destino === 'tela-departamentos') carregarDepartamentos();
       if (destino === 'tela-voluntarios') abrirVoluntarios();
       if (destino === 'tela-importar') resetImport();
+      if (destino === 'tela-cultos-fixos') carregarCultosFixos();
+      if (destino === 'tela-cultos') abrirCultos();
+      if (destino === 'tela-escala') abrirEscala();
     });
   });
 
@@ -398,7 +401,212 @@
     return linhas.filter(function (l) { return l.some(function (c) { return (c || '').trim(); }); });
   }
 
+  /* ============================================================ */
+  /* CULTOS FIXOS DA IGREJA                                       */
+  /* ============================================================ */
+  const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+  async function carregarCultosFixos() {
+    const div = document.getElementById('cf-lista');
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const { data, error } = await sb.from('cultos_fixos')
+      .select('id, dia_semana, horario, descricao').order('dia_semana');
+    if (error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(error)) + '</p>'; return; }
+    if (!data.length) { div.innerHTML = '<p class="muted">Nenhum culto fixo definido ainda.</p>'; return; }
+    div.innerHTML = data.map(function (c) {
+      const rotulo = DIAS[c.dia_semana] + (c.horario ? ' · ' + c.horario : '') +
+                     (c.descricao ? ' · ' + c.descricao : '');
+      return '<div class="item"><span>' + esc(rotulo) + '</span>' +
+             '<button class="link-acao link-excluir" data-del-cf="' + c.id + '">excluir</button></div>';
+    }).join('');
+    div.querySelectorAll('[data-del-cf]').forEach(function (b) {
+      b.addEventListener('click', async function () {
+        if (!confirm('Excluir este culto fixo?')) return;
+        await sb.from('cultos_fixos').delete().eq('id', b.getAttribute('data-del-cf'));
+        carregarCultosFixos();
+      });
+    });
+  }
+
+  document.getElementById('btn-add-cf').addEventListener('click', async function () {
+    const dia = document.getElementById('cf-dia').value;
+    const hora = val('cf-hora'), desc = val('cf-desc');
+    msg('cf-msg', '');
+    if (!hora) { msg('cf-msg', 'Informe o horário.', true); return; }
+    trava(this, '…');
+    try {
+      const { error } = await sb.from('cultos_fixos').insert({
+        igreja_id: igrejaId, dia_semana: Number(dia), horario: hora, descricao: desc || null
+      });
+      if (error) { msg('cf-msg', traduzErro(error), true); return; }
+      document.getElementById('cf-hora').value = ''; document.getElementById('cf-desc').value = '';
+      msg('cf-msg', '✓ Adicionado.'); carregarCultosFixos();
+    } catch (e) { msg('cf-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Adicionar culto fixo'); }
+  });
+
+  /* ============================================================ */
+  /* CULTOS DO MÊS                                                */
+  /* ============================================================ */
+  function abrirCultos() {
+    const el = document.getElementById('cul-mes');
+    if (!el.value) { const h = new Date(); el.value = h.getFullYear() + '-' + pad(h.getMonth() + 1); }
+    carregarCultosMes();
+  }
+  document.getElementById('cul-mes').addEventListener('change', carregarCultosMes);
+
+  async function carregarCultosMes() {
+    const div = document.getElementById('cul-lista');
+    const mv = document.getElementById('cul-mes').value;
+    if (!mv) return;
+    const p = mv.split('-'), ano = Number(p[0]), mes = Number(p[1]);
+    const ini = ano + '-' + pad(mes) + '-01';
+    const fim = ano + '-' + pad(mes) + '-' + pad(new Date(ano, mes, 0).getDate());
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const { data, error } = await sb.from('cultos')
+      .select('id, data, horario, descricao').gte('data', ini).lte('data', fim).order('data');
+    if (error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(error)) + '</p>'; return; }
+    if (!data.length) { div.innerHTML = '<p class="muted">Nenhum culto neste mês. Use "Gerar fixos" ou adicione um avulso.</p>'; return; }
+    div.innerHTML = '<table class="tabela"><thead><tr><th>Data</th><th>Hora</th><th>Culto</th><th></th></tr></thead><tbody>' +
+      data.map(function (c) {
+        return '<tr><td>' + dataBR(c.data) + '</td><td>' + esc(c.horario || '–') + '</td>' +
+               '<td>' + esc(c.descricao || '–') + '</td>' +
+               '<td><button class="link-acao link-excluir" data-del-cul="' + c.id + '">excluir</button></td></tr>';
+      }).join('') + '</tbody></table>';
+    div.querySelectorAll('[data-del-cul]').forEach(function (b) {
+      b.addEventListener('click', async function () {
+        if (!confirm('Excluir este culto? (a escala dele também sai)')) return;
+        await sb.from('cultos').delete().eq('id', b.getAttribute('data-del-cul'));
+        carregarCultosMes();
+      });
+    });
+  }
+
+  document.getElementById('btn-gerar-fixos').addEventListener('click', async function () {
+    const mv = document.getElementById('cul-mes').value; msg('cul-msg', '');
+    if (!mv) { msg('cul-msg', 'Escolha o mês.', true); return; }
+    const p = mv.split('-'), ano = Number(p[0]), mes = Number(p[1]);
+    trava(this, 'Gerando…');
+    try {
+      const { data: fixos, error } = await sb.from('cultos_fixos').select('dia_semana, horario, descricao');
+      if (error) { msg('cul-msg', traduzErro(error), true); return; }
+      if (!fixos.length) { msg('cul-msg', 'Defina os cultos fixos da igreja primeiro.', true); return; }
+      const novos = [];
+      const ultimo = new Date(ano, mes, 0).getDate();
+      for (let d = 1; d <= ultimo; d++) {
+        const dow = new Date(ano, mes - 1, d).getDay();
+        fixos.forEach(function (f) {
+          if (f.dia_semana === dow) {
+            novos.push({ igreja_id: igrejaId, data: ano + '-' + pad(mes) + '-' + pad(d),
+                         horario: f.horario || null, descricao: f.descricao || null });
+          }
+        });
+      }
+      if (!novos.length) { msg('cul-msg', 'Nenhuma data corresponde aos cultos fixos neste mês.', true); return; }
+      const up = await sb.from('cultos').upsert(novos, { onConflict: 'igreja_id,data,horario', ignoreDuplicates: true });
+      if (up.error) { msg('cul-msg', traduzErro(up.error), true); return; }
+      msg('cul-msg', '✓ ' + novos.length + ' culto(s) processado(s) (repetidos são ignorados).');
+      carregarCultosMes();
+    } catch (e) { msg('cul-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Gerar fixos'); }
+  });
+
+  document.getElementById('btn-add-culto').addEventListener('click', async function () {
+    const data = val('cul-data'), hora = val('cul-hora'), desc = val('cul-desc'); msg('cul-msg', '');
+    if (!data) { msg('cul-msg', 'Escolha a data.', true); return; }
+    trava(this, '…');
+    try {
+      const { error } = await sb.from('cultos').insert({
+        igreja_id: igrejaId, data: data, horario: hora || null, descricao: desc || null
+      });
+      if (error) { msg('cul-msg', error.code === '23505' ? 'Esse culto já existe.' : traduzErro(error), true); return; }
+      document.getElementById('cul-data').value = ''; document.getElementById('cul-hora').value = '';
+      document.getElementById('cul-desc').value = '';
+      msg('cul-msg', '✓ Culto adicionado.');
+      // se o avulso cair no mês exibido, recarrega.
+      carregarCultosMes();
+    } catch (e) { msg('cul-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Adicionar avulso'); }
+  });
+
+  /* ============================================================ */
+  /* MONTAR ESCALA                                                */
+  /* ============================================================ */
+  async function abrirEscala() {
+    msg('esc-msg', '');
+    document.getElementById('esc-vols').innerHTML = '<p class="muted">Escolha culto e departamento.</p>';
+    const selCul = document.getElementById('esc-culto'), selDep = document.getElementById('esc-dep');
+    selCul.innerHTML = '<option value="">Carregando…</option>';
+    selDep.innerHTML = '<option value="">Carregando…</option>';
+    const culRes = await sb.from('cultos').select('id, data, horario, descricao').order('data');
+    selCul.innerHTML = '<option value="">Selecione…</option>' + (culRes.data || []).map(function (c) {
+      return '<option value="' + c.id + '">' + esc(dataBR(c.data) + (c.horario ? ' ' + c.horario : '') +
+             (c.descricao ? ' · ' + c.descricao : '')) + '</option>';
+    }).join('');
+    const depRes = await sb.from('departamentos').select('id, nome').order('nome');
+    selDep.innerHTML = '<option value="">Selecione…</option>' + (depRes.data || []).map(function (d) {
+      return '<option value="' + d.id + '">' + esc(d.nome) + '</option>';
+    }).join('');
+  }
+  document.getElementById('esc-culto').addEventListener('change', carregarEscalaVols);
+  document.getElementById('esc-dep').addEventListener('change', carregarEscalaVols);
+
+  async function carregarEscalaVols() {
+    const culId = document.getElementById('esc-culto').value;
+    const depId = document.getElementById('esc-dep').value;
+    const div = document.getElementById('esc-vols');
+    msg('esc-msg', '');
+    if (!culId || !depId) { div.innerHTML = '<p class="muted">Escolha culto e departamento.</p>'; return; }
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    // voluntários do departamento (ativos)
+    const vdRes = await sb.from('voluntario_departamento')
+      .select('voluntarios(id, nome, status)').eq('departamento_id', depId);
+    let vols = (vdRes.data || []).map(function (x) { return x.voluntarios; })
+      .filter(function (v) { return v && v.status !== 'inativo'; });
+    vols.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    if (!vols.length) { div.innerHTML = '<p class="muted">Nenhum voluntário ativo neste departamento.</p>'; return; }
+    // escala existente (para pré-marcar)
+    const escRes = await sb.from('escalas')
+      .select('id, escala_itens(voluntario_id)').eq('culto_id', culId).eq('departamento_id', depId).maybeSingle();
+    const marc = {};
+    if (escRes.data && escRes.data.escala_itens) escRes.data.escala_itens.forEach(function (i) { marc[i.voluntario_id] = true; });
+    div.innerHTML = vols.map(function (v) {
+      return '<label class="check"><input type="checkbox" value="' + v.id + '"' + (marc[v.id] ? ' checked' : '') + '>' +
+             '<span>' + esc(v.nome) + '</span></label>';
+    }).join('');
+  }
+
+  document.getElementById('btn-salvar-escala').addEventListener('click', async function () {
+    const culId = document.getElementById('esc-culto').value;
+    const depId = document.getElementById('esc-dep').value;
+    msg('esc-msg', '');
+    if (!culId || !depId) { msg('esc-msg', 'Escolha culto e departamento.', true); return; }
+    const ids = Array.prototype.slice
+      .call(document.querySelectorAll('#esc-vols input:checked')).map(function (c) { return c.value; });
+    trava(this, 'Salvando…');
+    try {
+      const escRes = await sb.from('escalas')
+        .upsert({ igreja_id: igrejaId, culto_id: culId, departamento_id: depId }, { onConflict: 'culto_id,departamento_id' })
+        .select('id').single();
+      if (escRes.error) { msg('esc-msg', traduzErro(escRes.error), true); return; }
+      const escalaId = escRes.data.id;
+      await sb.from('escala_itens').delete().eq('escala_id', escalaId);
+      if (ids.length) {
+        const itens = ids.map(function (vid) { return { escala_id: escalaId, voluntario_id: vid }; });
+        const ir = await sb.from('escala_itens').insert(itens);
+        if (ir.error) { msg('esc-msg', traduzErro(ir.error), true); return; }
+      }
+      msg('esc-msg', '✓ Escala salva: ' + ids.length + ' voluntário(s).');
+    } catch (e) { msg('esc-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Salvar escala'); }
+  });
+
   /* ----- Utilidades ----- */
+  function pad(n) { return ('0' + n).slice(-2); }
+  function dataBR(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? (m[3] + '/' + m[2] + '/' + m[1]) : esc(iso);
+  }
   function val(id) { return (document.getElementById(id).value || '').trim(); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {

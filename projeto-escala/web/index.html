@@ -64,6 +64,9 @@
       <button class="menu-btn" type="button" data-go="tela-departamentos">📋 Departamentos</button>
       <button class="menu-btn" type="button" data-go="tela-voluntarios">🙋 Voluntários</button>
       <button class="menu-btn" type="button" data-go="tela-importar">⬆️ Importar voluntários (CSV)</button>
+      <button class="menu-btn" type="button" data-go="tela-cultos-fixos">⚙️ Cultos fixos da igreja</button>
+      <button class="menu-btn" type="button" data-go="tela-cultos">📅 Cultos do mês</button>
+      <button class="menu-btn" type="button" data-go="tela-escala">🗓️ Montar escala</button>
       <a id="btn-sair-2" class="voltar" href="#">sair</a>
     </section>
 
@@ -121,6 +124,77 @@
       <div id="imp-preview"></div>
       <button id="btn-importar" class="btn" type="button" hidden>Importar</button>
       <p id="imp-msg" class="msg" role="alert"></p>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
+    </section>
+
+    <!-- CULTOS FIXOS DA IGREJA -->
+    <section id="tela-cultos-fixos" class="screen screen--left">
+      <h2 class="titulo">Cultos fixos da igreja</h2>
+      <p class="muted">Defina os cultos que se repetem toda semana. São usados para
+        gerar os cultos do mês automaticamente.</p>
+      <div class="form-row">
+        <div class="form-col">
+          <label class="label" for="cf-dia">Dia</label>
+          <select id="cf-dia" class="input">
+            <option value="0">Domingo</option>
+            <option value="1">Segunda</option>
+            <option value="2">Terça</option>
+            <option value="3">Quarta</option>
+            <option value="4">Quinta</option>
+            <option value="5">Sexta</option>
+            <option value="6">Sábado</option>
+          </select>
+        </div>
+        <div class="form-col">
+          <label class="label" for="cf-hora">Horário</label>
+          <input id="cf-hora" class="input" type="time" />
+        </div>
+      </div>
+      <label class="label" for="cf-desc">Nome do culto</label>
+      <input id="cf-desc" class="input" type="text" placeholder="ex.: Culto da Família" />
+      <button id="btn-add-cf" class="btn" type="button">Adicionar culto fixo</button>
+      <p id="cf-msg" class="msg" role="alert"></p>
+      <div id="cf-lista" class="lista"></div>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
+    </section>
+
+    <!-- CULTOS DO MÊS -->
+    <section id="tela-cultos" class="screen screen--left">
+      <h2 class="titulo">Cultos do mês</h2>
+      <div class="form-row">
+        <div class="form-col">
+          <label class="label" for="cul-mes">Mês</label>
+          <input id="cul-mes" class="input" type="month" />
+        </div>
+        <button id="btn-gerar-fixos" class="btn btn-inline" type="button">Gerar fixos</button>
+      </div>
+      <p class="muted">Gera os cultos fixos da igreja no mês escolhido.</p>
+
+      <label class="label">Adicionar culto avulso</label>
+      <div class="form-row">
+        <div class="form-col"><input id="cul-data" class="input" type="date" /></div>
+        <div class="form-col"><input id="cul-hora" class="input" type="time" /></div>
+      </div>
+      <input id="cul-desc" class="input" type="text" placeholder="Descrição (ex.: Encontro especial)" />
+      <button id="btn-add-culto" class="btn btn--ghost" type="button">Adicionar avulso</button>
+      <p id="cul-msg" class="msg" role="alert"></p>
+
+      <p class="label">Cultos do mês</p>
+      <div id="cul-lista" class="lista"></div>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
+    </section>
+
+    <!-- MONTAR ESCALA -->
+    <section id="tela-escala" class="screen screen--left">
+      <h2 class="titulo">Montar escala</h2>
+      <label class="label" for="esc-culto">Culto</label>
+      <select id="esc-culto" class="input"></select>
+      <label class="label" for="esc-dep">Departamento</label>
+      <select id="esc-dep" class="input"></select>
+      <p class="label">Voluntários escalados</p>
+      <div id="esc-vols" class="checks"><p class="muted">Escolha culto e departamento.</p></div>
+      <button id="btn-salvar-escala" class="btn" type="button">Salvar escala</button>
+      <p id="esc-msg" class="msg" role="alert"></p>
       <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
     </section>
 

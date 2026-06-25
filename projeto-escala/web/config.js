@@ -15,5 +15,5 @@ window.SUPA_CONFIG = {
   URL: 'https://zkfjyllgewcvlvqyhsyp.supabase.co',
 
   // COLE AQUI a "Publishable key" (sb_publishable_...):
-  ANON_KEY: 'COLE_AQUI_A_PUBLISHABLE_KEY'
+  ANON_KEY: 'sb_publishable_XbtD-QLlwQQvbWnRudFgPQ_iTy71oMQ'
 };

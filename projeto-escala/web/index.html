@@ -116,11 +116,13 @@
 
     <!-- IMPORTAR CSV -->
     <section id="tela-importar" class="screen screen--left">
-      <h2 class="titulo">Importar voluntários (CSV)</h2>
+      <h2 class="titulo">Importar voluntários</h2>
       <p class="muted">Colunas: <strong>Codigo, Nome completo, Departamento(s), Status</strong>.
         Vários departamentos separados por <strong>;</strong> (ex.: Louvor; Staff).
         A 1ª linha é o cabeçalho.</p>
-      <input id="imp-file" type="file" accept=".csv,.tsv,.txt" class="input" />
+      <button id="btn-modelo" class="btn btn--ghost" type="button">⬇ Baixar planilha modelo</button>
+      <label class="label" for="imp-file">Arquivo (.xlsx, .csv ou .tsv)</label>
+      <input id="imp-file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" class="input" />
       <p class="muted" style="text-align:center">— ou cole o conteúdo abaixo —</p>
       <textarea id="imp-texto" class="input" rows="6" placeholder="Codigo,Nome completo,Departamento(s),Status&#10;31,Fulano,Louvor; Staff,Ativo"></textarea>
       <button id="btn-preview" class="btn btn--ghost" type="button">Pré-visualizar</button>
@@ -258,6 +260,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

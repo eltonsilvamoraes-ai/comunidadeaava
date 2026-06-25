@@ -156,11 +156,25 @@
     if (!deptosCache.length) { div.innerHTML = '<p class="muted">Nenhum departamento ainda.</p>'; return; }
     div.innerHTML = deptosCache.map(function (d) {
       return '<div class="item"><span>' + esc(d.nome) + '</span>' +
-             '<button class="link-acao link-excluir" data-del-dep="' + d.id + '">excluir</button></div>';
+             '<span class="item-acoes">' +
+               '<button class="link-acao" data-edit-dep="' + d.id + '" data-nome="' + esc(d.nome) + '">renomear</button>' +
+               '<button class="link-acao link-excluir" data-del-dep="' + d.id + '">excluir</button>' +
+             '</span></div>';
     }).join('');
+    div.querySelectorAll('[data-edit-dep]').forEach(function (b) {
+      b.addEventListener('click', function () { renomearDepartamento(b.getAttribute('data-edit-dep'), b.getAttribute('data-nome')); });
+    });
     div.querySelectorAll('[data-del-dep]').forEach(function (b) {
       b.addEventListener('click', function () { excluirDepartamento(b.getAttribute('data-del-dep')); });
     });
+  }
+
+  async function renomearDepartamento(id, nomeAtual) {
+    const novo = (prompt('Novo nome do departamento:', nomeAtual) || '').trim();
+    if (!novo || novo === nomeAtual) return;
+    const { error } = await sb.from('departamentos').update({ nome: novo }).eq('id', id);
+    if (error) { msg('dep-msg', error.code === '23505' ? 'Já existe um departamento com esse nome.' : traduzErro(error), true); return; }
+    msg('dep-msg', '✓ Renomeado.'); carregarDepartamentos();
   }
 
   document.getElementById('btn-add-dep').addEventListener('click', async function () {
@@ -309,9 +323,41 @@
 
   document.getElementById('imp-file').addEventListener('change', function () {
     const f = this.files[0]; if (!f) return;
-    const r = new FileReader();
-    r.onload = function () { document.getElementById('imp-texto').value = r.result; };
-    r.readAsText(f, 'utf-8');
+    msg('imp-msg', '');
+    const ehExcel = /\.(xlsx|xls)$/i.test(f.name);
+    if (ehExcel) {
+      if (typeof XLSX === 'undefined') { msg('imp-msg', 'Leitor de Excel não carregou. Verifique a internet.', true); return; }
+      const r = new FileReader();
+      r.onload = function () {
+        try {
+          const wb = XLSX.read(new Uint8Array(r.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          // converte para CSV e reaproveita o mesmo fluxo de pré-visualização.
+          document.getElementById('imp-texto').value = XLSX.utils.sheet_to_csv(ws);
+          msg('imp-msg', '✓ Planilha lida. Toque em "Pré-visualizar".');
+        } catch (e) { msg('imp-msg', 'Não consegui ler a planilha. Salve como .xlsx ou .csv.', true); }
+      };
+      r.readAsArrayBuffer(f);
+    } else {
+      const r = new FileReader();
+      r.onload = function () { document.getElementById('imp-texto').value = r.result; msg('imp-msg', '✓ Arquivo lido. Toque em "Pré-visualizar".'); };
+      r.readAsText(f, 'utf-8');
+    }
+  });
+
+  // Baixar planilha modelo (CSV que abre no Excel/Sheets).
+  document.getElementById('btn-modelo').addEventListener('click', function () {
+    const modelo =
+      'Codigo,Nome completo,Departamento(s),Status\n' +
+      '101,Maria Oliveira,Louvor; Staff,Ativo\n' +
+      '102,João Pereira,Recepção,Ativo\n' +
+      '103,Ana Souza,Kids,Inativo\n';
+    const blob = new Blob(['﻿' + modelo], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'modelo-voluntarios.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   });
 
   document.getElementById('btn-preview').addEventListener('click', function () {

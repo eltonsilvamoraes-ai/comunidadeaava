@@ -92,9 +92,16 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 .voltar:hover{color:var(--azul)}
 
 /* Mensagens */
-.msg{margin-top:14px; font-size:14px; min-height:18px; text-align:center}
+.msg{margin-top:12px; font-size:14px; min-height:18px; text-align:center}
+.msg:empty{min-height:0; margin:0}            /* vazio não ocupa espaço (evita "buracos") */
 .msg.erro{color:var(--erro)}
 .msg.ok{color:var(--ok)}
+
+/* Espaçamento mais enxuto em telas de formulário */
+#cul-desc{margin-top:10px}
+.item-acoes{display:flex; gap:14px; flex-shrink:0}
+#tela-dashboard #btn-pdf{margin-top:2px}
+#tela-dashboard #dash-kpis{margin-top:6px}
 
 /* Abas (login/cadastro, etc.) */
 .abas{display:flex; gap:6px; margin-bottom:14px}

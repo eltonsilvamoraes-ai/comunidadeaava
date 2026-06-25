@@ -11,10 +11,14 @@
   let deptosCache = [];          // [{id, nome, ativo}]
 
   /* ----- Navegação ----- */
+  // Telas com tabelas/dados ficam mais largas no desktop.
+  const TELAS_LARGAS = { 'tela-voluntarios': 1, 'tela-cultos': 1, 'tela-escala': 1, 'tela-dashboard': 1 };
   function irPara(id) {
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
     const alvo = document.getElementById(id);
     if (alvo) alvo.classList.add('is-active');
+    const card = document.querySelector('.card');
+    if (card) card.classList.toggle('is-wide', !!TELAS_LARGAS[id]);
   }
   // Botões que só trocam de tela (data-go).
   document.querySelectorAll('[data-go]').forEach(function (b) {
@@ -63,7 +67,7 @@
     if (igreja) {
       igrejaId = igreja.id;
       document.getElementById('home-igreja').textContent = igreja.nome;
-      document.getElementById('home-presenca').href = 'presenca.html?igreja=' + igrejaId;
+      document.getElementById('home-presenca').href = 'voluntario.html?igreja=' + igrejaId;
       const { data: u } = await sb.from('usuarios').select('papel').maybeSingle();
       document.getElementById('home-papel').textContent = u ? ('Papel: ' + u.papel) : '';
       irPara('tela-home');

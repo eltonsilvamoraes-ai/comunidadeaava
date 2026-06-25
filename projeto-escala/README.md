@@ -14,11 +14,16 @@ projeto-escala/
     schema.sql      -> cria o banco multi-tenant (tabelas + RLS + cadastro 1/CNPJ)
     verificar.sql   -> confere que tudo subiu e a RLS está ligada
   web/
-    index.html      -> telas: login/cadastro, criar igreja, home
-    config.js       -> URL + anon key do Supabase (preencher)
-    app.js          -> auth (Supabase) + RPC criar_igreja
-    styles.css
+    index.html        -> painel do líder (login, igreja, voluntários, escalas, dashboard)
+    app.js            -> lógica do painel (Supabase)
+    voluntario.html   -> portal do voluntário (presença + minhas escalas), sem login
+    voluntario.js
+    config.js         -> URL + chave do Supabase (preencher)
+    styles.css        -> visual responsivo (celular e desktop)
 ```
+
+Migrações SQL (rode na ordem no SQL Editor): `schema.sql`, depois
+`03_cultos_fixos.sql`, `04_presenca.sql`, `05_minhas_escalas.sql`.
 
 ## Como rodar o frontend (Fase 1)
 

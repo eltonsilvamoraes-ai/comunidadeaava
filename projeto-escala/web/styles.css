@@ -1,99 +1,134 @@
 :root{
-  --preto:#111111; --texto:#1f2937; --cinza:#6b7280;
-  --borda:#d1d5db; --fundo:#f3f4f6; --ok:#15803d; --erro:#b91c1c;
+  --azul:#2D9CDB; --azul-escuro:#2484bd;
+  --preto:#1b1d21; --texto:#2b2b2b; --cinza:#8a8f98;
+  --campo:#eef0f2; --borda:#e3e6ea; --linha:#eef0f2;
+  --erro:#e0564b; --ok:#27ae60; --fundo:#f4f6f8;
+  --sombra:0 10px 40px rgba(20,30,50,.07);
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; min-height:100%}
 body{
-  margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   background:var(--fundo); color:var(--texto);
-  font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  padding:16px;
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; min-height:100vh; line-height:1.45;
 }
+
+/* Cartão central — cresce no desktop em telas com dados */
 .card{
-  width:100%; max-width:380px; background:#fff; border-radius:16px;
-  box-shadow:0 8px 30px rgba(0,0,0,.08); padding:28px 24px;
+  background:#fff; width:100%; max-width:460px;
+  border-radius:20px; padding:36px 30px 40px; box-shadow:var(--sombra);
+  transition:max-width .2s ease;
 }
-.brand{text-align:center; margin-bottom:18px}
-.brand__nome{font-size:22px; font-weight:800; margin:0; color:var(--preto)}
+.card.is-wide{max-width:840px}
+
+/* Marca */
+.brand{text-align:center; margin-bottom:26px}
+.brand__nome{font-size:24px; font-weight:800; margin:0; color:var(--preto); letter-spacing:-.3px}
 .brand__sub{font-size:13px; color:var(--cinza); margin:4px 0 0}
 
+/* Telas */
 .screen{display:none}
-.screen.is-active{display:block}
+.screen.is-active{display:block; animation:aparece .2s ease}
+@keyframes aparece{from{opacity:0; transform:translateY(4px)}to{opacity:1; transform:none}}
 
-.titulo{font-size:18px; font-weight:700; margin:0 0 6px; color:var(--preto)}
+.titulo{font-size:20px; font-weight:800; margin:0 0 6px; color:var(--preto); letter-spacing:-.2px}
 .muted{color:var(--cinza); font-size:14px; margin:6px 0 14px}
-.destaque{font-size:18px; font-weight:700; color:var(--preto); margin:4px 0}
+.destaque{font-size:19px; font-weight:700; color:var(--preto); margin:4px 0}
 
-.label{display:block; font-size:13px; font-weight:600; color:var(--cinza); margin:12px 0 6px}
+/* Rótulos e campos */
+.label{display:block; font-size:12px; font-weight:700; letter-spacing:.6px; color:var(--cinza); margin:14px 0 7px; text-transform:uppercase}
 .input{
-  width:100%; border:1.5px solid var(--borda); border-radius:10px;
-  padding:12px 14px; font-size:16px; outline:none;
+  width:100%; border:1.5px solid transparent; background:var(--campo);
+  border-radius:12px; padding:14px 16px; font-size:16px; outline:none; color:var(--texto);
+  transition:border-color .15s ease, background .15s ease;
 }
-.input:focus{border-color:var(--preto)}
+.input:focus{border-color:var(--azul); background:#fff}
+select.input{appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat:no-repeat; background-position:right 14px center; padding-right:38px}
+textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height:1.5}
 
+/* Botões — pílula */
 .btn{
-  width:100%; margin-top:18px; padding:13px; border:0; border-radius:10px;
-  background:var(--preto); color:#fff; font-size:16px; font-weight:600; cursor:pointer;
+  display:block; width:100%; margin-top:20px; border:none; background:var(--azul);
+  color:#fff; font-size:16px; font-weight:700; padding:15px; border-radius:999px;
+  cursor:pointer; transition:background .15s ease, transform .05s ease, box-shadow .15s ease;
 }
+.btn:hover{background:var(--azul-escuro)}
+.btn:active{transform:scale(.99)}
 .btn:disabled{opacity:.6; cursor:default}
+.btn--ghost{background:#fff; color:var(--azul); border:1.5px solid var(--azul)}
+.btn--ghost:hover{background:rgba(45,156,219,.08)}
+.btn-inline{width:auto; margin-top:0; padding:13px 20px; white-space:nowrap}
 
-.abas{display:flex; gap:8px; margin-bottom:8px}
-.aba{
-  flex:1; padding:10px; border:1.5px solid var(--borda); background:#fff;
-  border-radius:10px; font-size:14px; font-weight:600; color:var(--cinza); cursor:pointer;
+/* Menu da home — cartões clicáveis */
+.menu-btn{
+  display:block; width:100%; margin-top:10px; padding:16px 18px; text-align:left;
+  border:1.5px solid var(--borda); background:#fff; border-radius:14px;
+  font-size:15px; font-weight:600; color:var(--texto); cursor:pointer; text-decoration:none;
+  transition:border-color .15s ease, transform .05s ease, box-shadow .15s ease;
 }
-.aba.is-on{background:var(--preto); color:#fff; border-color:var(--preto)}
+.menu-btn:hover{border-color:var(--azul); box-shadow:0 4px 14px rgba(45,156,219,.10)}
+.menu-btn:active{transform:scale(.995)}
 
-.voltar{display:inline-block; margin-top:16px; color:var(--cinza); font-size:14px; text-decoration:none}
-.voltar:hover{color:var(--preto)}
+/* Voltar / link */
+.voltar{display:inline-block; margin-top:18px; color:var(--cinza); font-size:14px; text-decoration:none; cursor:pointer}
+.voltar:hover{color:var(--azul)}
 
-.msg{margin-top:14px; font-size:14px; min-height:18px}
+/* Mensagens */
+.msg{margin-top:14px; font-size:14px; min-height:18px; text-align:center}
 .msg.erro{color:var(--erro)}
 .msg.ok{color:var(--ok)}
 
-/* ---- Fase 2: menu, listas, voluntários, importação ---- */
+/* Abas (login/cadastro, etc.) */
+.abas{display:flex; gap:8px; margin-bottom:14px}
+.aba{flex:1; padding:11px; border:1.5px solid var(--borda); background:#fff; border-radius:999px; font-size:14px; font-weight:700; color:var(--cinza); cursor:pointer}
+.aba.is-on{background:var(--preto); color:#fff; border-color:var(--preto)}
+
+/* Telas com formulário alinhado à esquerda */
 .screen--left{text-align:left}
-
-.menu-btn{
-  display:block; width:100%; margin-top:10px; padding:14px; text-align:left;
-  border:1.5px solid var(--borda); background:#fff; border-radius:12px;
-  font-size:15px; font-weight:600; color:var(--texto); cursor:pointer;
-}
-.menu-btn:hover{border-color:var(--preto)}
-
-.form-row{display:flex; gap:8px; align-items:flex-end}
+.form-row{display:flex; gap:10px; align-items:flex-end}
 .form-col{flex:1}
-.btn-inline{width:auto; margin-top:0; white-space:nowrap; padding:12px 16px}
-.btn--ghost{background:#fff; color:var(--preto); border:1.5px solid var(--borda)}
 
-.lista{margin-top:10px}
-.item{
-  display:flex; justify-content:space-between; align-items:center;
-  padding:10px 12px; border:1px solid var(--borda); border-radius:8px; margin-bottom:6px;
-}
-.link-acao{background:none; border:0; color:var(--cinza); cursor:pointer; font-size:13px; text-decoration:underline}
-.link-acao:hover{color:var(--preto)}
+/* Listas e itens */
+.lista{margin-top:10px; overflow-x:auto}
+.item{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--borda); border-radius:12px; margin-bottom:8px}
+.link-acao{background:none; border:0; color:var(--cinza); cursor:pointer; font-size:13px; text-decoration:underline; padding:0}
+.link-acao:hover{color:var(--azul)}
 .link-excluir{color:var(--erro)}
+.link-excluir:hover{color:var(--erro)}
 
+/* Chips de seleção (departamentos) */
 .checks{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px}
-.check{
-  display:flex; align-items:center; gap:6px; padding:7px 10px;
-  border:1.5px solid var(--borda); border-radius:20px; font-size:14px; cursor:pointer;
-}
-.check input{margin:0}
+.check{display:flex; align-items:center; gap:7px; padding:9px 13px; border:1.5px solid var(--borda); border-radius:999px; font-size:14px; cursor:pointer; user-select:none}
+.check input{margin:0; accent-color:var(--azul)}
+.check:hover{border-color:var(--azul)}
 
-.tabela{width:100%; border-collapse:collapse; margin-top:8px; font-size:14px}
-.tabela th{text-align:left; color:var(--cinza); font-weight:600; padding:6px 8px; border-bottom:1.5px solid var(--borda)}
-.tabela td{padding:8px; border-bottom:1px solid #eee}
+/* Tabelas */
+.tabela{width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; min-width:340px}
+.tabela th{text-align:left; color:var(--cinza); font-weight:700; padding:8px; border-bottom:1.5px solid var(--borda); white-space:nowrap}
+.tabela td{padding:9px 8px; border-bottom:1px solid var(--linha); vertical-align:top}
 
-textarea.input{resize:vertical; font-family:inherit; font-size:14px}
-.aviso{margin-top:12px; padding:12px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; font-size:14px}
+/* Aviso/realce */
+.aviso{margin-top:12px; padding:13px 15px; background:#f0fbff; border:1px solid #cdeafd; border-radius:12px; font-size:14px}
 
 /* Dashboard */
-.kpis{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
-.kpi{flex:1; min-width:68px; border:1px solid var(--borda); border-radius:10px; padding:10px 8px; text-align:center}
-.kpi-num{font-size:20px; font-weight:800; color:var(--preto)}
-.kpi-lb{font-size:11px; color:var(--cinza); margin-top:2px}
+.kpis{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px}
+.kpi{flex:1; min-width:74px; border:1px solid var(--borda); border-radius:14px; padding:14px 10px; text-align:center}
+.kpi-num{font-size:22px; font-weight:800; color:var(--preto)}
+.kpi-lb{font-size:11px; color:var(--cinza); margin-top:2px; text-transform:uppercase; letter-spacing:.4px}
 .rank{margin:6px 0 0; padding-left:18px; font-size:14px}
-.rank li{margin:3px 0}
+.rank li{margin:4px 0}
 
+/* ---- Responsivo ---- */
+@media (max-width:520px){
+  body{padding:14px}
+  .card{padding:26px 20px 30px; border-radius:18px}
+  .brand__nome{font-size:22px}
+  .form-row{gap:8px}
+  .btn-inline{padding:13px 14px}
+}
+@media (min-width:760px){
+  .card{padding:44px 40px 48px}
+  /* No desktop, em telas largas, dados em 2 colunas quando fizer sentido */
+  .card.is-wide .dash-cols{display:flex; gap:24px}
+}

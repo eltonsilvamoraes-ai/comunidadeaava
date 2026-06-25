@@ -288,6 +288,7 @@ create policy tenant_cultos_fixos on public.cultos_fixos
 -- =====================================================================
 -- PRONTO. A fundação está de pé.
 -- Migrações adicionais (rode na ordem, no SQL Editor):
---   03_cultos_fixos.sql  -> cultos recorrentes por igreja
---   04_presenca.sql      -> função pública de presença do voluntário
+--   03_cultos_fixos.sql    -> cultos recorrentes por igreja
+--   04_presenca.sql        -> função pública de presença do voluntário
+--   05_minhas_escalas.sql  -> função pública: voluntário consulta suas escalas
 -- =====================================================================

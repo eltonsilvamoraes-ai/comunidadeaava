@@ -7,6 +7,6 @@
  *  é a RLS, não o segredo da chave.)
  * ===================================================================== */
 window.SUPA_CONFIG = {
-  URL:      'COLE_AQUI_O_PROJECT_URL',
-  ANON_KEY: 'COLE_AQUI_A_ANON_PUBLIC_KEY'
+  URL:      'zkfjyllgewcvlvqyhsyp',
+  ANON_KEY: 'sa-east-1'
 };

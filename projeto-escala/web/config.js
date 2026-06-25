@@ -1,18 +1,19 @@
 /* =====================================================================
  * CONFIGURAÇÃO DO SUPABASE
- * Onde achar: Supabase > Settings > API
+ * Onde achar: Supabase > Settings > API Keys
  *
- *  - URL      = "Project URL"  -> a URL COMPLETA (https://....supabase.co)
- *  - ANON_KEY = "Project API keys" > "anon public"  -> um texto LONGO que
- *               começa com "eyJ..." (clique no botão de copiar ao lado dela)
+ *  - URL       = "Project URL"  -> a URL COMPLETA (https://....supabase.co)
+ *  - CHAVE     = a "Publishable key" (começa com "sb_publishable_...")
+ *                -> é a chave segura para usar no navegador (a RLS protege).
+ *                NUNCA use a "Secret key" (sb_secret_...) aqui!
  *
- * (A anon key pode ficar no frontend — é pública. Quem protege os dados é a
- *  RLS, não o segredo da chave.)
+ *  Obs.: em projetos antigos a chave do navegador é a "anon public"
+ *  (um JWT que começa com "eyJ..."). Qualquer uma das duas serve aqui.
  * ===================================================================== */
 window.SUPA_CONFIG = {
   // Já preenchido com o SEU projeto:
   URL: 'https://zkfjyllgewcvlvqyhsyp.supabase.co',
 
-  // COLE AQUI a chave "anon public" (começa com eyJ...):
-  ANON_KEY: 'COLE_AQUI_A_ANON_PUBLIC'
+  // COLE AQUI a "Publishable key" (sb_publishable_...):
+  ANON_KEY: 'COLE_AQUI_A_PUBLISHABLE_KEY'
 };

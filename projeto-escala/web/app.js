@@ -7,7 +7,6 @@
     cfg.URL.indexOf('COLE_AQUI') === -1 && cfg.ANON_KEY.indexOf('COLE_AQUI') === -1;
 
   let sb = null;
-  if (configOk) sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
 
   /* ----- Navegação entre telas ----- */
   function irPara(id) {
@@ -18,14 +17,29 @@
 
   /* ----- Início ----- */
   async function init() {
-    if (!configOk) {
+    try {
+      // 1) A biblioteca do Supabase carregou? (Brave Shields/adblock/VPN podem bloquear.)
+      if (typeof supabase === 'undefined' || !supabase.createClient) {
+        irPara('tela-auth');
+        msg('auth-msg', 'Não carregou a biblioteca do Supabase. Desative o bloqueador ' +
+          '(Brave Shields) para esta página e recarregue (Cmd+R).', true);
+        return;
+      }
+      // 2) O config.js foi preenchido?
+      if (!configOk) {
+        irPara('tela-auth');
+        msg('auth-msg', 'Preencha o config.js com a URL e a anon key do Supabase, salve e recarregue.', true);
+        return;
+      }
+      // 3) Tudo certo: cria o cliente e checa a sessão.
+      sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
+      const { data } = await sb.auth.getSession();
+      if (data && data.session) await rotearLogado();
+      else irPara('tela-auth');
+    } catch (e) {
       irPara('tela-auth');
-      msg('auth-msg', 'Configure o config.js com a URL e a anon key do Supabase.', true);
-      return;
+      msg('auth-msg', 'Erro ao iniciar: ' + (e && e.message ? e.message : e), true);
     }
-    const { data } = await sb.auth.getSession();
-    if (data && data.session) await rotearLogado();
-    else irPara('tela-auth');
   }
 
   /* Decide a tela de quem está logado: tem igreja -> home; senão -> criar igreja. */

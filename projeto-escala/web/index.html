@@ -58,17 +58,18 @@
     </section>
 
     <!-- HOME / MENU -->
-    <section id="tela-home" class="screen">
-      <h2 id="home-igreja" class="titulo"></h2>
+    <section id="tela-home" class="screen screen--center">
+      <p id="home-igreja" class="destaque"></p>
+      <h2 class="titulo">Área do Líder</h2>
       <p id="home-papel" class="muted"></p>
-      <button class="menu-btn" type="button" data-go="tela-departamentos">📋 Departamentos</button>
-      <button class="menu-btn" type="button" data-go="tela-voluntarios">🙋 Voluntários</button>
-      <button class="menu-btn" type="button" data-go="tela-importar">⬆️ Importar voluntários (CSV)</button>
-      <button class="menu-btn" type="button" data-go="tela-cultos-fixos">⚙️ Cultos fixos da igreja</button>
-      <button class="menu-btn" type="button" data-go="tela-cultos">📅 Cultos do mês</button>
-      <button class="menu-btn" type="button" data-go="tela-escala">🗓️ Montar escala</button>
-      <button class="menu-btn" type="button" data-go="tela-dashboard">📊 Dashboard de frequência</button>
-      <a id="home-presenca" class="menu-btn" target="_blank" rel="noopener" href="#">📲 Área do voluntário (link para compartilhar)</a>
+      <button class="menu-btn menu-btn--primary" type="button" data-go="tela-escala">Montar escala</button>
+      <button class="menu-btn" type="button" data-go="tela-voluntarios">Voluntários</button>
+      <button class="menu-btn" type="button" data-go="tela-cultos">Cultos do mês</button>
+      <button class="menu-btn" type="button" data-go="tela-cultos-fixos">Cultos fixos da igreja</button>
+      <button class="menu-btn" type="button" data-go="tela-departamentos">Departamentos</button>
+      <button class="menu-btn" type="button" data-go="tela-dashboard">Dashboard de frequência</button>
+      <button class="menu-btn" type="button" data-go="tela-importar">Importar voluntários (CSV)</button>
+      <a id="home-presenca" class="menu-btn" target="_blank" rel="noopener" href="#">Área do voluntário (link)</a>
       <a id="btn-sair-2" class="voltar" href="#">sair</a>
     </section>
 
@@ -202,30 +203,61 @@
 
     <!-- DASHBOARD -->
     <section id="tela-dashboard" class="screen screen--left">
-      <h2 class="titulo">Dashboard de frequência</h2>
+      <h2 class="titulo">Dashboard de Frequência</h2>
       <div class="form-row">
-        <div class="form-col">
-          <label class="label" for="dash-mes">Mês</label>
-          <input id="dash-mes" class="input" type="month" />
-        </div>
+        <div class="form-col"><input id="dash-mes" class="input" type="month" /></div>
         <button id="btn-dash" class="btn btn-inline" type="button">Atualizar</button>
       </div>
-      <p id="dash-msg" class="msg" role="alert"></p>
-      <div id="dash-kpis" class="kpis"></div>
-      <p class="label">Participação por culto</p>
-      <div id="dash-cultos" class="lista"></div>
-      <div class="form-row" style="gap:16px; align-items:flex-start">
-        <div class="form-col"><p class="label">Maior frequência</p><div id="dash-maior" class="lista"></div></div>
-        <div class="form-col"><p class="label">Menor frequência</p><div id="dash-menor" class="lista"></div></div>
+
+      <div class="abas">
+        <button class="aba is-on" type="button" data-aba="geral">Geral</button>
+        <button class="aba" type="button" data-aba="culto">Por Culto</button>
+        <button class="aba" type="button" data-aba="depto">Departamento</button>
+        <button class="aba" type="button" data-aba="alertas">Alertas</button>
       </div>
-      <p class="label">Alertas de afastamento 💚</p>
-      <div id="dash-alertas" class="lista"></div>
+
+      <button id="btn-pdf" class="btn btn--ghost" type="button">⬇ Baixar PDF</button>
+      <p id="dash-msg" class="msg" role="alert"></p>
+
+      <!-- Geral -->
+      <div id="painel-geral" class="painel">
+        <div id="dash-kpis" class="kpis"></div>
+        <p class="label">Participação por culto</p>
+        <div id="dash-cultos" class="lista"></div>
+        <div class="dash-cols">
+          <div class="form-col"><p class="label">Maior frequência</p><div id="dash-maior" class="lista"></div></div>
+          <div class="form-col"><p class="label">Menor frequência</p><div id="dash-menor" class="lista"></div></div>
+        </div>
+      </div>
+
+      <!-- Por Culto -->
+      <div id="painel-culto" class="painel" hidden>
+        <p class="muted">Toque em um culto para ver quem compareceu e quem faltou.</p>
+        <div id="culto-lista" class="lista"></div>
+        <div id="culto-detalhe"></div>
+      </div>
+
+      <!-- Departamento -->
+      <div id="painel-depto" class="painel" hidden>
+        <label class="label" for="dep-rel">Departamento</label>
+        <select id="dep-rel" class="input"></select>
+        <div id="depto-conteudo"></div>
+      </div>
+
+      <!-- Alertas -->
+      <div id="painel-alertas" class="painel" hidden>
+        <p class="muted">Voluntários que faltaram a cultos seguidos (para cuidar 💚).</p>
+        <div id="dash-alertas" class="lista"></div>
+      </div>
+
       <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
     </section>
 
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

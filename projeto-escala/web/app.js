@@ -608,16 +608,42 @@
   });
 
   /* ============================================================ */
-  /* DASHBOARD                                                    */
+  /* DASHBOARD (4 abas: Geral / Por Culto / Departamento / Alertas + PDF) */
   /* ============================================================ */
   const LIMITE_FALTAS = 2;
+  let abaDash = 'geral';
+  let dadosDash = null;       // dados do mês carregados
+  let dadosAlertas = null;    // alertas (histórico) — carregados sob demanda
+  let deptosDash = [];
 
   function abrirDashboard() {
     const el = document.getElementById('dash-mes');
     if (!el.value) { const h = new Date(); el.value = h.getFullYear() + '-' + pad(h.getMonth() + 1); }
+    mostrarAbaDash(abaDash);
     carregarDashboard();
   }
   document.getElementById('btn-dash').addEventListener('click', carregarDashboard);
+  document.getElementById('btn-pdf').addEventListener('click', exportarPDF);
+  document.getElementById('dep-rel').addEventListener('change', renderDepto);
+  document.querySelectorAll('#tela-dashboard .aba').forEach(function (a) {
+    a.addEventListener('click', function () { mostrarAbaDash(a.getAttribute('data-aba')); });
+  });
+
+  function mostrarAbaDash(nome) {
+    abaDash = nome;
+    document.querySelectorAll('#tela-dashboard .aba').forEach(function (a) {
+      a.classList.toggle('is-on', a.getAttribute('data-aba') === nome);
+    });
+    document.getElementById('painel-geral').hidden = nome !== 'geral';
+    document.getElementById('painel-culto').hidden = nome !== 'culto';
+    document.getElementById('painel-depto').hidden = nome !== 'depto';
+    document.getElementById('painel-alertas').hidden = nome !== 'alertas';
+    if (!dadosDash) return;
+    if (nome === 'geral') renderGeral();
+    else if (nome === 'culto') renderCulto();
+    else if (nome === 'depto') renderDepto();
+    else if (nome === 'alertas') renderAlertas();
+  }
 
   async function carregarDashboard() {
     const mv = document.getElementById('dash-mes').value;
@@ -629,78 +655,146 @@
     msg('dash-msg', 'Carregando…');
     const culR = await sb.from('cultos').select('id, data, descricao').gte('data', ini).lte('data', fim).order('data');
     const regR = await sb.from('registros').select('voluntario_id, data').gte('data', ini).lte('data', fim);
-    const volR = await sb.from('voluntarios').select('id, nome, status');
-    if (culR.error || regR.error || volR.error) { msg('dash-msg', 'Erro ao carregar.', true); return; }
+    const volR = await sb.from('voluntarios').select('id, nome, status, voluntario_departamento(departamentos(id, nome))');
+    const depR = await sb.from('departamentos').select('id, nome').order('nome');
+    if (culR.error || regR.error || volR.error || depR.error) { msg('dash-msg', 'Erro ao carregar.', true); return; }
     msg('dash-msg', '');
 
     const cultos = culR.data || [];
-    const vols = (volR.data || []).filter(function (v) { return v.status !== 'inativo'; });
-    const nVol = vols.length, nCultos = cultos.length;
+    const vols = (volR.data || []).filter(function (v) { return v.status !== 'inativo'; }).map(function (v) {
+      const ds = (v.voluntario_departamento || []).map(function (x) { return x.departamentos; }).filter(Boolean);
+      return { id: v.id, nome: v.nome, deptoIds: ds.map(function (d) { return d.id; }), deptoNomes: ds.map(function (d) { return d.nome; }) };
+    });
+    deptosDash = depR.data || [];
 
-    if (!nCultos) {
-      renderKpis(0, 0, 0, 0, nVol, 0);
-      document.getElementById('dash-cultos').innerHTML = '<p class="muted">Nenhum culto neste mês.</p>';
+    const ehCulto = {}; cultos.forEach(function (c) { ehCulto[c.data] = true; });
+    const presPorData = {}; cultos.forEach(function (c) { presPorData[c.data] = {}; });
+    const volCount = {}; vols.forEach(function (v) { volCount[v.id] = 0; });
+    const vistos = {};
+    (regR.data || []).forEach(function (r) {
+      if (ehCulto[r.data] && volCount[r.voluntario_id] !== undefined) {
+        const k = r.voluntario_id + '|' + r.data;
+        if (!vistos[k]) { vistos[k] = true; volCount[r.voluntario_id]++; presPorData[r.data][r.voluntario_id] = true; }
+      }
+    });
+
+    dadosDash = { ano: ano, mes: mes, cultos: cultos, vols: vols, presPorData: presPorData,
+                  volCount: volCount, nVol: vols.length, nCultos: cultos.length };
+    dadosAlertas = null;
+
+    const sel = document.getElementById('dep-rel');
+    sel.innerHTML = '<option value="">Selecione…</option>' + deptosDash.map(function (d) {
+      return '<option value="' + d.id + '">' + esc(d.nome) + '</option>';
+    }).join('');
+
+    mostrarAbaDash(abaDash);
+  }
+
+  /* --- Aba Geral --- */
+  function renderGeral() {
+    const d = dadosDash;
+    if (!d.nCultos) {
+      document.getElementById('dash-kpis').innerHTML = '<p class="muted">Nenhum culto neste mês. Gere os cultos primeiro.</p>';
+      document.getElementById('dash-cultos').innerHTML = '';
       document.getElementById('dash-maior').innerHTML = '';
       document.getElementById('dash-menor').innerHTML = '';
-    } else {
-      const ehCulto = {}; cultos.forEach(function (c) { ehCulto[c.data] = true; });
-      const volMap = {}; vols.forEach(function (v) { volMap[v.id] = { nome: v.nome, count: 0 }; });
-      const presPorData = {}; cultos.forEach(function (c) { presPorData[c.data] = {}; });
-      const vistos = {};
-      (regR.data || []).forEach(function (r) {
-        if (ehCulto[r.data] && volMap[r.voluntario_id]) {
-          const k = r.voluntario_id + '|' + r.data;
-          if (!vistos[k]) { vistos[k] = true; volMap[r.voluntario_id].count++; presPorData[r.data][r.voluntario_id] = true; }
-        }
-      });
-      const possiveis = nVol * nCultos;
-      let presentes = 0; Object.keys(volMap).forEach(function (id) { presentes += volMap[id].count; });
-      const faltas = Math.max(possiveis - presentes, 0);
-      const taxaP = possiveis ? Math.round(presentes / possiveis * 1000) / 10 : 0;
-      renderKpis(taxaP, possiveis ? Math.round((100 - taxaP) * 10) / 10 : 0, presentes, faltas, nVol, nCultos);
-
-      document.getElementById('dash-cultos').innerHTML =
-        '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Pres.</th><th>%</th></tr></thead><tbody>' +
-        cultos.map(function (c) {
-          const pp = Object.keys(presPorData[c.data]).length;
-          const pct = nVol ? Math.round(pp / nVol * 1000) / 10 : 0;
-          return '<tr><td>' + dataBR(c.data) + '</td><td>' + esc(c.descricao || '–') + '</td><td>' + pp + '</td><td>' + pct + '%</td></tr>';
-        }).join('') + '</tbody></table>';
-
-      const lista = Object.keys(volMap).map(function (id) {
-        return { nome: volMap[id].nome, c: volMap[id].count, pct: nCultos ? Math.round(volMap[id].count / nCultos * 1000) / 10 : 0 };
-      });
-      const maior = lista.slice().sort(function (a, b) { return b.c - a.c || a.nome.localeCompare(b.nome); }).slice(0, 8);
-      const menor = lista.slice().sort(function (a, b) { return a.c - b.c || a.nome.localeCompare(b.nome); }).slice(0, 8);
-      document.getElementById('dash-maior').innerHTML = rankHtml(maior);
-      document.getElementById('dash-menor').innerHTML = rankHtml(menor);
+      return;
     }
-
-    carregarAlertas();
-  }
-
-  function renderKpis(tp, tf, pres, falt, nVol, nCultos) {
+    const possiveis = d.nVol * d.nCultos;
+    let pres = 0; Object.keys(d.volCount).forEach(function (id) { pres += d.volCount[id]; });
+    const taxaP = possiveis ? Math.round(pres / possiveis * 1000) / 10 : 0;
     document.getElementById('dash-kpis').innerHTML =
-      kpiBox(tp + '%', 'Presença') + kpiBox(tf + '%', 'Falta') + kpiBox(pres, 'Presenças') + kpiBox(falt, 'Faltas') +
-      '<p class="muted" style="width:100%;margin:6px 0 0">' + nVol + ' voluntário(s) · ' + nCultos + ' culto(s)</p>';
+      kpiBox(taxaP + '%', 'Presença') + kpiBox((possiveis ? Math.round((100 - taxaP) * 10) / 10 : 0) + '%', 'Falta') +
+      kpiBox(pres, 'Presenças') + kpiBox(Math.max(possiveis - pres, 0), 'Faltas') +
+      '<p class="muted" style="width:100%;margin:6px 0 0">' + d.nVol + ' voluntário(s) · ' + d.nCultos + ' culto(s)</p>';
+    document.getElementById('dash-cultos').innerHTML =
+      '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Pres.</th><th>%</th></tr></thead><tbody>' +
+      d.cultos.map(function (c) {
+        const pp = Object.keys(d.presPorData[c.data]).length;
+        return '<tr><td>' + dataBR(c.data) + '</td><td>' + esc(c.descricao || '–') + '</td><td>' + pp + '</td><td>' +
+               (d.nVol ? Math.round(pp / d.nVol * 1000) / 10 : 0) + '%</td></tr>';
+      }).join('') + '</tbody></table>';
+    const lista = listaFreq(d);
+    document.getElementById('dash-maior').innerHTML = rankHtml(lista.slice().sort(function (a, b) { return b.c - a.c || a.nome.localeCompare(b.nome); }).slice(0, 8));
+    document.getElementById('dash-menor').innerHTML = rankHtml(lista.slice().sort(function (a, b) { return a.c - b.c || a.nome.localeCompare(b.nome); }).slice(0, 8));
   }
-  function kpiBox(num, label) { return '<div class="kpi"><div class="kpi-num">' + num + '</div><div class="kpi-lb">' + label + '</div></div>'; }
-  function rankHtml(arr) {
-    if (!arr.length) return '<p class="muted">—</p>';
-    return '<ol class="rank">' + arr.map(function (v) {
-      return '<li>' + esc(v.nome) + ' <span class="muted">' + v.c + ' (' + v.pct + '%)</span></li>';
-    }).join('') + '</ol>';
+  function listaFreq(d) {
+    return d.vols.map(function (v) {
+      return { nome: v.nome, c: d.volCount[v.id], pct: d.nCultos ? Math.round(d.volCount[v.id] / d.nCultos * 1000) / 10 : 0 };
+    });
   }
 
-  // Alerta pastoral: voluntários com faltas seguidas (em todos os cultos já realizados).
-  async function carregarAlertas() {
+  /* --- Aba Por Culto --- */
+  function renderCulto() {
+    const d = dadosDash;
+    document.getElementById('culto-detalhe').innerHTML = '';
+    if (!d.nCultos) { document.getElementById('culto-lista').innerHTML = '<p class="muted">Nenhum culto neste mês.</p>'; return; }
+    document.getElementById('culto-lista').innerHTML =
+      '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Pres.</th><th>Faltas</th><th></th></tr></thead><tbody>' +
+      d.cultos.map(function (c) {
+        const pp = Object.keys(d.presPorData[c.data]).length;
+        return '<tr><td>' + dataBR(c.data) + '</td><td>' + esc(c.descricao || '–') + '</td><td>' + pp + '</td>' +
+               '<td>' + Math.max(d.nVol - pp, 0) + '</td><td><button class="link-acao" data-ver="' + c.data + '">ver</button></td></tr>';
+      }).join('') + '</tbody></table>';
+    document.querySelectorAll('#culto-lista [data-ver]').forEach(function (b) {
+      b.addEventListener('click', function () { verDetalheCulto(b.getAttribute('data-ver')); });
+    });
+  }
+  function verDetalheCulto(data) {
+    const d = dadosDash, pres = d.presPorData[data] || {};
+    const presentes = [], ausentes = [];
+    d.vols.forEach(function (v) {
+      const item = { nome: v.nome, dep: v.deptoNomes.join(', ') };
+      if (pres[v.id]) presentes.push(item); else ausentes.push(item);
+    });
+    presentes.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    ausentes.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    document.getElementById('culto-detalhe').innerHTML =
+      '<p class="label">Culto de ' + dataBR(data) + '</p>' +
+      '<p class="sub-ok">✓ Compareceram (' + presentes.length + ')</p>' + nomesHtml(presentes) +
+      '<p class="sub-falta">✗ Faltaram (' + ausentes.length + ')</p>' + nomesHtml(ausentes);
+    document.getElementById('culto-detalhe').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function nomesHtml(arr) {
+    if (!arr.length) return '<p class="muted">—</p>';
+    return '<ul class="nomes">' + arr.map(function (v) {
+      return '<li>' + esc(v.nome) + (v.dep ? ' <span class="dep-tag">' + esc(v.dep) + '</span>' : '') + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  /* --- Aba Departamento --- */
+  function renderDepto() {
+    const d = dadosDash, div = document.getElementById('depto-conteudo');
+    if (!d) { return; }
+    const depId = document.getElementById('dep-rel').value;
+    if (!depId) { div.innerHTML = '<p class="muted">Selecione um departamento.</p>'; return; }
+    if (!d.nCultos) { div.innerHTML = '<p class="muted">Nenhum culto neste mês.</p>'; return; }
+    const membros = d.vols.filter(function (v) { return v.deptoIds.indexOf(depId) >= 0; });
+    if (!membros.length) { div.innerHTML = '<p class="muted">Nenhum voluntário neste departamento.</p>'; return; }
+    const lista = membros.map(function (v) {
+      const c = d.volCount[v.id], pct = d.nCultos ? Math.round(c / d.nCultos * 1000) / 10 : 0;
+      return { nome: v.nome, c: c, faltas: Math.max(d.nCultos - c, 0), pct: pct, alerta: pct < 50 };
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    const alertas = lista.filter(function (v) { return v.alerta; }).map(function (v) { return v.nome; });
+    let html = '';
+    if (alertas.length) html += '<div class="aviso">⚠️ Atenção: <strong>' + alertas.map(esc).join(', ') + '</strong> com alto índice de falta.</div>';
+    html += '<p class="label">Frequência · ' + d.nCultos + ' culto(s)</p>';
+    html += '<table class="tabela"><thead><tr><th>Voluntário</th><th>Pres.</th><th>Faltas</th><th>%</th></tr></thead><tbody>' +
+      lista.map(function (v) {
+        return '<tr' + (v.alerta ? ' class="linha-alerta"' : '') + '><td>' + esc(v.nome) + '</td><td>' + v.c + '</td><td>' + v.faltas + '</td><td>' + v.pct + '%</td></tr>';
+      }).join('') + '</tbody></table>';
+    div.innerHTML = html;
+  }
+
+  /* --- Aba Alertas (histórico de faltas seguidas) --- */
+  async function renderAlertas() {
+    if (dadosAlertas) { pintarAlertas(dadosAlertas); return; }
     const div = document.getElementById('dash-alertas');
     div.innerHTML = '<p class="muted">Carregando…</p>';
     const h = new Date();
     const hojeISO = h.getFullYear() + '-' + pad(h.getMonth() + 1) + '-' + pad(h.getDate());
     const culR = await sb.from('cultos').select('data').lte('data', hojeISO).order('data');
     const datas = (culR.data || []).map(function (c) { return c.data; });
-    if (!datas.length) { div.innerHTML = '<p class="muted">Sem histórico ainda.</p>'; return; }
     const volR = await sb.from('voluntarios').select('id, nome, status');
     const vols = (volR.data || []).filter(function (v) { return v.status !== 'inativo'; });
     const regR = await sb.from('registros').select('voluntario_id, data');
@@ -711,19 +805,80 @@
     });
     const alertas = [];
     vols.forEach(function (v) {
-      if (!totalPres[v.id]) return;             // só quem já tem histórico
+      if (!totalPres[v.id]) return;
       let streak = 0;
-      for (let i = datas.length - 1; i >= 0; i--) {
-        if (presSet[datas[i] + '|' + v.id]) break;
-        streak++;
-      }
+      for (let i = datas.length - 1; i >= 0; i--) { if (presSet[datas[i] + '|' + v.id]) break; streak++; }
       if (streak >= LIMITE_FALTAS) alertas.push({ nome: v.nome, faltas: streak });
     });
     alertas.sort(function (a, b) { return b.faltas - a.faltas || a.nome.localeCompare(b.nome); });
+    dadosAlertas = alertas;
+    pintarAlertas(alertas);
+  }
+  function pintarAlertas(alertas) {
+    const div = document.getElementById('dash-alertas');
     if (!alertas.length) { div.innerHTML = '<p class="muted">Ninguém com faltas seguidas. 🎉</p>'; return; }
     div.innerHTML = '<table class="tabela"><thead><tr><th>Voluntário</th><th>Faltas seguidas</th></tr></thead><tbody>' +
-      alertas.map(function (a) { return '<tr><td>' + esc(a.nome) + '</td><td>' + a.faltas + '</td></tr>'; }).join('') +
-      '</tbody></table>';
+      alertas.map(function (a) { return '<tr class="linha-alerta"><td>' + esc(a.nome) + '</td><td>' + a.faltas + '</td></tr>'; }).join('') + '</tbody></table>';
+  }
+
+  function kpiBox(num, label) { return '<div class="kpi"><div class="kpi-num">' + num + '</div><div class="kpi-lb">' + label + '</div></div>'; }
+  function rankHtml(arr) {
+    if (!arr.length) return '<p class="muted">—</p>';
+    return '<ol class="rank">' + arr.map(function (v) {
+      return '<li>' + esc(v.nome) + ' <span class="muted">' + v.c + ' (' + v.pct + '%)</span></li>';
+    }).join('') + '</ol>';
+  }
+
+  /* --- Exportar PDF da aba ativa --- */
+  function exportarPDF() {
+    if (!window.jspdf || !window.jspdf.jsPDF) { msg('dash-msg', 'Gerador de PDF não carregou. Verifique a internet.', true); return; }
+    if (!dadosDash) { msg('dash-msg', 'Toque em Atualizar antes de baixar.', true); return; }
+    const d = dadosDash;
+    const doc = new window.jspdf.jsPDF('p', 'pt', 'a4');
+    const margin = 40, AZUL = [45, 156, 219];
+    let y = margin;
+    const titulos = { geral: 'Visão Geral', culto: 'Por Culto', depto: 'Por Departamento', alertas: 'Alertas de Afastamento' };
+    const mesTxt = pad(d.mes) + '/' + d.ano;
+    const igreja = document.getElementById('home-igreja').textContent || 'Igreja';
+
+    function quebra(min) { if (y > doc.internal.pageSize.getHeight() - (min || 60)) { doc.addPage(); y = margin; } }
+    function tituloPdf(t) { quebra(); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(60); doc.text(t, margin, y); y += 15; doc.setTextColor(0); doc.setFont('helvetica', 'normal'); }
+    function textoPdf(t) { quebra(); doc.setFontSize(10); const ls = doc.splitTextToSize(t, doc.internal.pageSize.getWidth() - margin * 2); doc.text(ls, margin, y); y += ls.length * 13 + 4; }
+    function tabelaPdf(head, body) { quebra(80); doc.autoTable({ head: [head], body: body, startY: y, margin: { left: margin, right: margin }, styles: { fontSize: 9, cellPadding: 4 }, headStyles: { fillColor: AZUL }, theme: 'grid' }); y = doc.lastAutoTable.finalY + 14; }
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+    doc.text(igreja + ' — Relatório de Frequência', margin, y); y += 20;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text(titulos[abaDash] + '   ·   ' + mesTxt, margin, y); y += 14;
+    doc.setFontSize(9); doc.setTextColor(120); doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), margin, y); y += 18; doc.setTextColor(0);
+
+    if (abaDash === 'geral') {
+      const possiveis = d.nVol * d.nCultos; let pres = 0; Object.keys(d.volCount).forEach(function (id) { pres += d.volCount[id]; });
+      const taxaP = possiveis ? Math.round(pres / possiveis * 1000) / 10 : 0;
+      textoPdf('Taxa de presença: ' + taxaP + '%   |   Faltas: ' + Math.max(possiveis - pres, 0) + '   |   ' + d.nVol + ' voluntário(s) · ' + d.nCultos + ' culto(s)');
+      tituloPdf('Participação por culto');
+      tabelaPdf(['Data', 'Culto', 'Pres.', '%'], d.cultos.map(function (c) { const pp = Object.keys(d.presPorData[c.data]).length; return [dataBR(c.data), c.descricao || '-', pp, (d.nVol ? Math.round(pp / d.nVol * 1000) / 10 : 0) + '%']; }));
+      const lista = listaFreq(d);
+      tituloPdf('Maior frequência'); tabelaPdf(['Voluntário', 'Pres.', '%'], lista.slice().sort(function (a, b) { return b.c - a.c; }).slice(0, 12).map(function (v) { return [v.nome, v.c, v.pct + '%']; }));
+      tituloPdf('Menor frequência'); tabelaPdf(['Voluntário', 'Pres.', '%'], lista.slice().sort(function (a, b) { return a.c - b.c; }).slice(0, 12).map(function (v) { return [v.nome, v.c, v.pct + '%']; }));
+    } else if (abaDash === 'culto') {
+      tabelaPdf(['Data', 'Culto', 'Pres.', 'Faltas'], d.cultos.map(function (c) { const pp = Object.keys(d.presPorData[c.data]).length; return [dataBR(c.data), c.descricao || '-', pp, Math.max(d.nVol - pp, 0)]; }));
+    } else if (abaDash === 'depto') {
+      const depId = document.getElementById('dep-rel').value;
+      if (!depId) { textoPdf('Selecione um departamento na tela antes de baixar.'); }
+      else {
+        const dep = deptosDash.filter(function (x) { return x.id === depId; })[0] || {};
+        const membros = d.vols.filter(function (v) { return v.deptoIds.indexOf(depId) >= 0; });
+        tituloPdf('Departamento: ' + (dep.nome || ''));
+        tabelaPdf(['Voluntário', 'Pres.', 'Faltas', '%'], membros.map(function (v) { const c = d.volCount[v.id], pct = d.nCultos ? Math.round(c / d.nCultos * 1000) / 10 : 0; return [v.nome, c, Math.max(d.nCultos - c, 0), pct + '%']; }));
+      }
+    } else if (abaDash === 'alertas') {
+      if (!dadosAlertas) { textoPdf('Abra a aba "Alertas" na tela para carregar os dados antes de baixar.'); }
+      else { tabelaPdf(['Voluntário', 'Faltas seguidas'], dadosAlertas.map(function (a) { return [a.nome, a.faltas]; })); }
+    }
+    doc.save('relatorio-' + abaDash + '-' + d.mes + '-' + d.ano + '.pdf');
+    msg('dash-msg', '✓ PDF gerado.');
+    setTimeout(function () { msg('dash-msg', ''); }, 4000);
   }
 
   /* ----- Utilidades ----- */

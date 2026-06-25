@@ -62,6 +62,7 @@
     if (igreja) {
       igrejaId = igreja.id;
       document.getElementById('home-igreja').textContent = igreja.nome;
+      document.getElementById('home-presenca').href = 'presenca.html?igreja=' + igrejaId;
       const { data: u } = await sb.from('usuarios').select('papel').maybeSingle();
       document.getElementById('home-papel').textContent = u ? ('Papel: ' + u.papel) : '';
       irPara('tela-home');

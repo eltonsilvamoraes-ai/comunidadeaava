@@ -287,6 +287,7 @@ create policy tenant_cultos_fixos on public.cultos_fixos
 
 -- =====================================================================
 -- PRONTO. A fundação está de pé.
--- Próximo (a fazer depois): RPC pública de PRESENÇA do voluntário
--- (sem login) via SECURITY DEFINER, recebendo igreja_id + matrícula.
+-- Migrações adicionais (rode na ordem, no SQL Editor):
+--   03_cultos_fixos.sql  -> cultos recorrentes por igreja
+--   04_presenca.sql      -> função pública de presença do voluntário
 -- =====================================================================

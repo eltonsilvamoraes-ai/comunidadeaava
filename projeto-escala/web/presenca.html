@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Registrar presença</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="card" role="main">
+
+    <header class="brand">
+      <h1 id="pr-igreja" class="brand__nome">Presença</h1>
+      <p class="brand__sub">Registre sua presença no culto</p>
+    </header>
+
+    <!-- Entrada -->
+    <section id="pr-form" class="screen is-active">
+      <label class="label" for="pr-cod">Sua matrícula</label>
+      <input id="pr-cod" class="input" type="text" inputmode="numeric" autocomplete="off" />
+      <button id="pr-btn" class="btn" type="button">Confirmar presença</button>
+      <p id="pr-msg" class="msg" role="alert"></p>
+    </section>
+
+    <!-- Confirmação -->
+    <section id="pr-ok" class="screen">
+      <h2 class="titulo">Presença registrada! ✅</h2>
+      <p id="pr-nome" class="destaque"></p>
+      <p id="pr-escala" class="muted"></p>
+      <p id="pr-rec" class="msg ok"></p>
+      <button id="pr-novo" class="btn btn--ghost" type="button">Registrar outro</button>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="presenca.js"></script>
+</body>
+</html>

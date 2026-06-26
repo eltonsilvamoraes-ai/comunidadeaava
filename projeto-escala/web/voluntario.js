@@ -96,8 +96,13 @@
   async function carregarArea() {
     irPara('v-load');
     const { data, error } = await sb.rpc('minhas_escalas_eu');
-    if (error || !data || !data.ok) {
-      // conta logada mas sem vínculo (ex.: cadastro de líder, ou e-mail confirmado agora)
+    if (error) {
+      // mostra o erro REAL do banco (ex.: função não publicada).
+      irPara('v-auth');
+      msg('v-auth-msg', 'Erro ao ler a escala: ' + (error.message || error.code || JSON.stringify(error)), true);
+      return;
+    }
+    if (!data || !data.ok) {
       irPara('v-auth');
       msg('v-auth-msg', (data && data.erro) || 'Conta sem voluntário vinculado.', true);
       return;

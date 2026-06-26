@@ -45,6 +45,10 @@
 - Voluntários criados com **senha padrão** (ex.: o próprio Código ou uma definida pela igreja),
   com recomendação de **trocar no primeiro acesso**.
 
+## Troca de senha (todos os papéis)
+- **Qualquer login** (Admin, Líder, Voluntário) pode **alterar a própria senha** a qualquer
+  momento (via `auth.updateUser`), além do fluxo de “esqueci minha senha” por e-mail.
+
 ## Segurança — RLS por papel (travado no banco, não só na tela)
 - **Admin:** tudo da própria igreja.
 - **Líder:** apenas os **seus departamentos**.

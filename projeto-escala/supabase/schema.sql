@@ -291,4 +291,5 @@ create policy tenant_cultos_fixos on public.cultos_fixos
 --   03_cultos_fixos.sql    -> cultos recorrentes por igreja
 --   04_presenca.sql        -> função pública de presença do voluntário
 --   05_minhas_escalas.sql  -> função pública: voluntário consulta suas escalas
+--   06_acesso.sql          -> papéis (admin/lider/voluntario/kiosk) + RLS por papel
 -- =====================================================================

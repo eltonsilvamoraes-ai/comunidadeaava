@@ -23,7 +23,8 @@
   if (!cfg.URL || cfg.URL.indexOf('COLE_AQUI') >= 0) {
     irPara('v-auth'); msg('v-auth-msg', 'Configuração ausente (config.js).', true); return;
   }
-  sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
+  // storageKey próprio: a sessão do voluntário não interfere na do painel do líder.
+  sb = supabase.createClient(cfg.URL, cfg.ANON_KEY, { auth: { storageKey: 'pe-voluntario' } });
 
   /* ----- Abas ----- */
   document.querySelectorAll('#v-auth .aba').forEach(function (a) {

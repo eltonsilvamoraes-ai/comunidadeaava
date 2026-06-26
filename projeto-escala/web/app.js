@@ -50,7 +50,8 @@
         msg('auth-msg', 'Preencha o config.js com a URL e a chave do Supabase, salve e recarregue.', true);
         return;
       }
-      sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
+      // storageKey próprio: separa a sessão do painel (líder/admin) da Área do Voluntário.
+      sb = supabase.createClient(cfg.URL, cfg.ANON_KEY, { auth: { storageKey: 'pe-painel' } });
       const { data } = await sb.auth.getSession();
       if (data && data.session) await rotearLogado();
       else irPara('tela-auth');

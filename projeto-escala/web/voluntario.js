@@ -64,14 +64,26 @@
     if (!cod || !email || !senha) { msg('v-auth-msg', 'Preencha código, e-mail e senha.', true); return; }
     trava(this, 'Criando…');
     try {
+      // 1) cria a conta; se o e-mail já existe (tentativa anterior travada), entra para concluir.
+      let session = null;
       const up = await sb.auth.signUp({ email: email, password: senha });
-      if (up.error) { msg('v-auth-msg', erroAuth(up.error), true); return; }
-      if (!up.data.session) {
-        // Confirmação de e-mail ligada: não dá pra vincular agora.
-        msg('v-auth-msg', 'Conta criada! Confirme o e-mail e depois entre para concluir.'); return;
+      if (up.error) {
+        if (/already|registered|exists/i.test(up.error.message || '')) {
+          const si = await sb.auth.signInWithPassword({ email: email, password: senha });
+          if (si.error) { msg('v-auth-msg', 'Este e-mail já tem conta, mas a senha não confere. Use "Entrar" ou recupere a senha.', true); return; }
+          session = si.data.session;
+        } else { msg('v-auth-msg', erroAuth(up.error), true); return; }
+      } else {
+        session = up.data.session;
       }
+      if (!session) {
+        msg('v-auth-msg', 'Conta criada! Desligue "Confirm email" no Supabase (ou confirme o e-mail) e use "Criar acesso" de novo para concluir.', true); return;
+      }
+      // 2) vincula o login à ficha do voluntário pelo código.
       const rv = await sb.rpc('reivindicar_voluntario', { p_igreja_id: igrejaId, p_codigo: cod });
-      if (rv.error || !rv.data || !rv.data.ok) {
+      if (rv.error) { msg('v-auth-msg', 'Erro ao vincular: ' + (rv.error.message || ''), true); return; }
+      if (!rv.data || !rv.data.ok) {
+        if (rv.data && /vinculada/i.test(rv.data.erro || '')) { carregarArea(); return; } // já estava vinculada
         msg('v-auth-msg', (rv.data && rv.data.erro) || 'Não consegui vincular o código.', true); return;
       }
       carregarArea();

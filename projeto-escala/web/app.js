@@ -8,6 +8,7 @@
 
   let sb = null;
   let igrejaId = null;          // igreja do usuário logado
+  let papelAtual = null;         // 'admin' | 'lider'
   let deptosCache = [];          // [{id, nome, ativo}]
 
   /* ----- Navegação ----- */
@@ -63,18 +64,43 @@
 
   async function rotearLogado() {
     irPara('tela-load');
-    const { data: igreja, error } = await sb.from('igrejas').select('id, nome').maybeSingle();
-    if (error) { irPara('tela-auth'); msg('auth-msg', traduzErro(error), true); return; }
-    if (igreja) {
-      igrejaId = igreja.id;
-      document.getElementById('home-igreja').textContent = igreja.nome;
-      document.getElementById('home-presenca').href = 'voluntario.html?igreja=' + igrejaId;
-      const { data: u } = await sb.from('usuarios').select('papel').maybeSingle();
-      document.getElementById('home-papel').textContent = u ? ('Papel: ' + u.papel) : '';
-      irPara('tela-home');
+    // 1) Quem é o usuário logado? (papel define o que ele vê)
+    const { data: u, error: ue } = await sb.from('usuarios').select('papel, igreja_id').maybeSingle();
+    if (ue) { irPara('tela-auth'); msg('auth-msg', traduzErro(ue), true); return; }
+    if (!u) {
+      // conta logada sem registro de usuário -> ainda não tem igreja (fluxo admin novo)
+      igrejaId = null; irPara('tela-igreja'); return;
+    }
+    papelAtual = u.papel;
+    // 2) Este painel é só para ADMIN e LÍDER. Voluntário/kiosk são barrados.
+    if (papelAtual !== 'admin' && papelAtual !== 'lider') {
+      await sb.auth.signOut();
+      irPara('tela-auth');
+      msg('auth-msg', 'Esta área é da liderança. Use a Área do Voluntário (link da sua igreja).', true);
+      return;
+    }
+    // 3) Dados da igreja + adapta a tela ao papel.
+    const { data: igreja } = await sb.from('igrejas').select('id, nome').maybeSingle();
+    igrejaId = igreja ? igreja.id : u.igreja_id;
+    document.getElementById('home-igreja').textContent = igreja ? igreja.nome : '';
+    document.getElementById('home-presenca').href = 'voluntario.html?igreja=' + igrejaId;
+    await adaptarPainel(papelAtual);
+    irPara('tela-home');
+  }
+
+  // Mostra/esconde itens conforme o papel e ajusta título/subtítulo.
+  async function adaptarPainel(papel) {
+    const ehAdmin = papel === 'admin';
+    document.getElementById('home-titulo').textContent = ehAdmin ? 'Painel da Igreja' : 'Área do Líder';
+    document.querySelectorAll('[data-role="admin"]').forEach(function (el) { el.hidden = !ehAdmin; });
+    const sub = document.getElementById('home-papel');
+    if (ehAdmin) {
+      sub.textContent = 'Pastor / Administrador';
     } else {
-      igrejaId = null;
-      irPara('tela-igreja');
+      // líder: lista os departamentos que ele gerencia (a RLS já devolve só os dele)
+      const { data: deps } = await sb.from('departamentos').select('nome').order('nome');
+      const nomes = (deps || []).map(function (d) { return d.nome; });
+      sub.textContent = 'Líder' + (nomes.length ? ' · ' + nomes.join(', ') : '');
     }
   }
 

@@ -6,6 +6,44 @@
 
 ---
 
+## 0. Status atual (jun/2026)
+
+**Resumo:** Fase 1 ✅ concluída · Fase 2 ~90% (falta config da igreja/white-label
+e papéis refinados). Já temos um **MVP funcional** ponta a ponta.
+
+| Fase | Status |
+|---|---|
+| Sprint 0 — setup | 🟡 Supabase ✅ · codinome "Projeto Escala" ✅ · marca em verificação (**Diakun**) · repo ainda em subpasta |
+| Fase 1 — fundação multi-tenant | ✅ **concluída** (auth, papéis, RLS, cadastro 1/CNPJ, isolamento testado) |
+| Fase 2 — telas core | 🟢 **quase completa** (ver checklist) |
+| Fase 3 — self-service/cobrança | ⬜ não iniciada |
+| Fase 4 — cobrança | ⬜ não iniciada |
+| Fase 5 — retenção | ⬜ não iniciada |
+
+### Feito (Fase 2) ✅
+- Departamentos (criar / renomear / excluir)
+- Voluntários (multi-departamento) + edição
+- Importação **CSV e XLSX** + **planilha modelo** para baixar
+- Cultos fixos **por igreja** + Cultos do mês (gerar + avulsos)
+- Montar escala (culto + departamento)
+- **Presença do voluntário** (GPS, sem login) via RPC pública
+- **Área do voluntário** (consultar minhas escalas)
+- **Dashboard** completo: Geral · Por Culto · Departamento · Alertas + **PDF**
+- Visual responsivo (celular e desktop)
+
+### Falta para fechar a Fase 2 ⬜
+- **Configuração da igreja (white-label):** logo, cores, **GPS + raio**, editar dados
+- **Papéis refinados:** líder enxergar só o(s) seu(s) departamento(s) (hoje o acesso é no nível da igreja)
+- **Convite de líder** por link
+
+### Pendências paralelas
+- **Marca:** decidir (Diakun em verificação no INPI/@)
+- **Repositório:** mover de `comunidadeaava/projeto-escala` para repo próprio
+- **Hospedagem:** publicar numa URL real (KingHost/Vercel) para usar no celular
+- **AAVA (app atual):** KingHost estava fora do ar (rever quando voltar)
+
+---
+
 ## 1. Mindmap do produto
 
 ```mermaid

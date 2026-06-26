@@ -65,7 +65,11 @@
   async function rotearLogado() {
     irPara('tela-load');
     // 1) Quem é o usuário logado? (papel define o que ele vê)
-    const { data: u, error: ue } = await sb.from('usuarios').select('papel, igreja_id').maybeSingle();
+    //    Filtra pelo PRÓPRIO id — admin/líder enxergam vários usuários, então
+    //    sem o filtro a consulta volta mais de uma linha.
+    const { data: auth } = await sb.auth.getUser();
+    const uid = auth && auth.user ? auth.user.id : null;
+    const { data: u, error: ue } = await sb.from('usuarios').select('papel, igreja_id').eq('id', uid).maybeSingle();
     if (ue) { irPara('tela-auth'); msg('auth-msg', traduzErro(ue), true); return; }
     if (!u) {
       // conta logada sem registro de usuário -> ainda não tem igreja (fluxo admin novo)

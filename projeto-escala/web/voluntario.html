@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Área do Voluntário</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -11,39 +11,65 @@
 
     <header class="brand">
       <h1 class="brand__nome">Área do Voluntário</h1>
-      <p class="brand__sub">Registre presença e veja suas escalas</p>
+      <p class="brand__sub">Veja onde você vai servir</p>
     </header>
 
-    <!-- Entrada: matrícula -->
-    <section id="v-entrada" class="screen is-active">
-      <label class="label" for="v-cod">Sua matrícula</label>
-      <input id="v-cod" class="input" type="text" inputmode="numeric" autocomplete="off"
-             style="text-align:center; letter-spacing:2px; font-size:20px" />
-      <button id="v-presenca" class="btn" type="button">Registrar presença</button>
-      <button id="v-escalas" class="btn btn--ghost" type="button">Ver minhas escalas</button>
-      <p id="v-msg" class="msg" role="alert"></p>
+    <section id="v-load" class="screen is-active"><p class="muted">Carregando…</p></section>
+
+    <!-- ENTRAR / CRIAR ACESSO -->
+    <section id="v-auth" class="screen">
+      <div class="abas">
+        <button class="aba is-on" type="button" data-aba="entrar">Entrar</button>
+        <button class="aba" type="button" data-aba="criar">Criar acesso</button>
+      </div>
+
+      <div id="v-painel-entrar" class="painel">
+        <label class="label" for="v-login-email">E-mail</label>
+        <input id="v-login-email" class="input" type="email" autocomplete="email" />
+        <label class="label" for="v-login-senha">Senha</label>
+        <input id="v-login-senha" class="input" type="password" autocomplete="current-password" />
+        <button id="v-btn-login" class="btn" type="button">Entrar</button>
+      </div>
+
+      <div id="v-painel-criar" class="painel" hidden>
+        <p class="muted">Use o link enviado pela sua igreja. Informe seu código, e-mail e crie uma senha.</p>
+        <label class="label" for="v-cad-cod">Seu código (matrícula ou CPF)</label>
+        <input id="v-cad-cod" class="input" type="text" inputmode="numeric" />
+        <label class="label" for="v-cad-email">E-mail</label>
+        <input id="v-cad-email" class="input" type="email" autocomplete="email" />
+        <label class="label" for="v-cad-senha">Crie uma senha (mín. 6)</label>
+        <input id="v-cad-senha" class="input" type="password" autocomplete="new-password" />
+        <button id="v-btn-cad" class="btn" type="button">Criar acesso</button>
+      </div>
+
+      <p id="v-auth-msg" class="msg" role="alert"></p>
     </section>
 
-    <!-- Presença confirmada -->
-    <section id="v-ok" class="screen">
-      <h2 class="titulo">Presença registrada! ✅</h2>
-      <p id="v-ok-nome" class="destaque"></p>
-      <p id="v-ok-escala" class="muted"></p>
-      <p id="v-ok-rec" class="msg ok"></p>
-      <a class="voltar" id="v-volta-1">‹ Voltar</a>
-    </section>
+    <!-- ÁREA PESSOAL -->
+    <section id="v-home" class="screen screen--left">
+      <p id="v-saud" class="destaque"></p>
+      <div class="form-row" style="justify-content:space-between; align-items:center">
+        <p class="label" style="margin:0">Minhas escalas</p>
+        <button id="v-btn-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
+      </div>
+      <div id="v-escalas"></div>
 
-    <!-- Minhas escalas -->
-    <section id="v-lista" class="screen screen--left">
-      <h2 class="titulo">Minhas escalas</h2>
-      <p id="v-saud" class="muted"></p>
-      <div id="v-escalas-conteudo"></div>
-      <a class="voltar" id="v-volta-2">‹ Voltar</a>
+      <details class="bloco">
+        <summary>Trocar minha senha</summary>
+        <label class="label" for="v-nova-senha">Nova senha (mín. 6)</label>
+        <input id="v-nova-senha" class="input" type="password" autocomplete="new-password" />
+        <button id="v-btn-senha" class="btn btn--ghost" type="button">Salvar nova senha</button>
+        <p id="v-senha-msg" class="msg"></p>
+      </details>
+
+      <a id="v-sair" class="voltar" href="#">sair</a>
     </section>
 
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js"></script>
   <script src="voluntario.js"></script>
 </body>

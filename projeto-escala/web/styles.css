@@ -144,6 +144,12 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 .rank{margin:6px 0 0; padding-left:18px; font-size:14px}
 .rank li{margin:4px 0}
 
+/* Bloco "trocar senha" */
+.bloco{margin-top:20px; border-top:1px solid var(--linha); padding-top:14px}
+.bloco summary{cursor:pointer; font-weight:700; color:var(--cinza); font-size:14px; list-style:none}
+.bloco summary::-webkit-details-marker{display:none}
+.bloco[open] summary{margin-bottom:8px}
+
 /* ---- Responsivo ---- */
 @media (max-width:520px){
   body{padding:14px}

@@ -1,115 +1,163 @@
-/* Projeto Escala — Área do Voluntário (presença + minhas escalas, sem login) */
+/* Projeto Escala — Área do Voluntário (login + minhas escalas + PDF + trocar senha) */
 (function () {
   'use strict';
 
   const cfg = window.SUPA_CONFIG || {};
   const igrejaId = new URLSearchParams(location.search).get('igreja');
-  const elCod = document.getElementById('v-cod');
-  const elMsg = document.getElementById('v-msg');
-  const btnP = document.getElementById('v-presenca');
-  const btnE = document.getElementById('v-escalas');
   let sb = null;
+  let ultimaEscala = null;   // guarda os dados para o PDF
 
   function irPara(id) {
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
     document.getElementById(id).classList.add('is-active');
   }
-  function msg(t, erro) { elMsg.textContent = t || ''; elMsg.className = 'msg' + (erro ? ' erro' : ''); }
+  function msg(id, t, erro) { const el = document.getElementById(id); el.textContent = t || ''; el.className = 'msg' + (erro ? ' erro' : (t ? ' ok' : '')); }
+  function val(id) { return (document.getElementById(id).value || '').trim(); }
+  function trava(b, t) { b.disabled = true; b.dataset.l = b.textContent; b.textContent = t; }
+  function destrava(b) { b.disabled = false; b.textContent = b.dataset.l || b.textContent; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   if (typeof supabase === 'undefined' || !supabase.createClient) {
-    msg('Não carregou a biblioteca. Desative o bloqueador (Brave Shields) e recarregue.', true); desativa();
-  } else if (!cfg.URL || cfg.URL.indexOf('COLE_AQUI') >= 0) {
-    msg('Configuração ausente (config.js).', true); desativa();
-  } else if (!igrejaId) {
-    msg('Link inválido: falta o identificador da igreja (?igreja=...).', true); desativa();
-  } else {
-    sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
+    irPara('v-auth'); msg('v-auth-msg', 'Não carregou a biblioteca. Desative o bloqueador (Brave Shields) e recarregue.', true); return;
   }
-  function desativa() { btnP.disabled = true; btnE.disabled = true; }
-
-  elCod.addEventListener('input', function () { msg(''); });
-  btnP.addEventListener('click', registrarPresenca);
-  btnE.addEventListener('click', verEscalas);
-  document.getElementById('v-volta-1').addEventListener('click', voltar);
-  document.getElementById('v-volta-2').addEventListener('click', voltar);
-  function voltar() { msg(''); irPara('v-entrada'); elCod.focus(); }
-
-  // QR Code: ?codigo=143 já registra presença.
-  const qr = new URLSearchParams(location.search).get('codigo');
-  if (qr && sb) { elCod.value = qr.trim(); registrarPresenca(); }
-
-  async function registrarPresenca() {
-    const cod = elCod.value.trim(); msg('');
-    if (!cod) { msg('Digite sua matrícula.', true); return; }
-    trava(btnP, 'Localizando…');
-    try {
-      const coords = await obterLocalizacao();
-      btnP.textContent = 'Registrando…';
-      const { data, error } = await sb.rpc('registrar_presenca', {
-        p_igreja_id: igrejaId, p_matricula: cod,
-        p_lat: coords ? coords.lat : null, p_lng: coords ? coords.lng : null
-      });
-      if (error) { msg('Não foi possível registrar. Tente de novo.', true); return; }
-      if (!data || !data.ok) { msg((data && data.erro) || 'Não foi possível registrar.', true); return; }
-      document.getElementById('v-ok-nome').textContent = data.nome || '';
-      document.getElementById('v-ok-escala').textContent = data.escalado ? '✓ Você está na escala de hoje' : 'Você não estava escalado(a) hoje';
-      document.getElementById('v-ok-rec').textContent = reconhecimento(data.total);
-      irPara('v-ok');
-    } catch (e) { msg('Falha de conexão. Verifique a internet.', true); }
-    finally { destrava(btnP, 'Registrar presença'); }
+  if (!cfg.URL || cfg.URL.indexOf('COLE_AQUI') >= 0) {
+    irPara('v-auth'); msg('v-auth-msg', 'Configuração ausente (config.js).', true); return;
   }
+  sb = supabase.createClient(cfg.URL, cfg.ANON_KEY);
 
-  async function verEscalas() {
-    const cod = elCod.value.trim(); msg('');
-    if (!cod) { msg('Digite sua matrícula.', true); return; }
-    trava(btnE, 'Buscando…');
+  /* ----- Abas ----- */
+  document.querySelectorAll('#v-auth .aba').forEach(function (a) {
+    a.addEventListener('click', function () {
+      document.querySelectorAll('#v-auth .aba').forEach(function (x) { x.classList.remove('is-on'); });
+      a.classList.add('is-on');
+      const aba = a.getAttribute('data-aba');
+      document.getElementById('v-painel-entrar').hidden = aba !== 'entrar';
+      document.getElementById('v-painel-criar').hidden = aba !== 'criar';
+      msg('v-auth-msg', '');
+    });
+  });
+
+  /* ----- Início ----- */
+  (async function init() {
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) carregarArea();
+    else irPara('v-auth');
+  })();
+
+  /* ----- Entrar ----- */
+  document.getElementById('v-btn-login').addEventListener('click', async function () {
+    const email = val('v-login-email'), senha = val('v-login-senha'); msg('v-auth-msg', '');
+    if (!email || !senha) { msg('v-auth-msg', 'Preencha e-mail e senha.', true); return; }
+    trava(this, 'Entrando…');
     try {
-      const { data, error } = await sb.rpc('minhas_escalas', { p_igreja_id: igrejaId, p_matricula: cod });
-      if (error) { msg('Não foi possível buscar. Tente de novo.', true); return; }
-      if (!data || !data.ok) { msg((data && data.erro) || 'Não encontrado.', true); return; }
-      document.getElementById('v-saud').textContent = 'Graça e Paz, ' + (data.nome || '') + '! 🙏 Veja onde você vai servir:';
-      const esc = data.escalas || [];
-      const div = document.getElementById('v-escalas-conteudo');
-      if (!esc.length) {
-        div.innerHTML = '<p class="muted">Você não tem escalas futuras no momento.</p>';
-      } else {
-        div.innerHTML = '<table class="tabela"><thead><tr><th>Data</th><th>Dia</th><th>Culto</th><th>Departamento</th></tr></thead><tbody>' +
-          esc.map(function (e) {
-            return '<tr><td>' + dataBR(e.data) + '</td><td>' + diaSemana(e.data) + '</td>' +
-                   '<td>' + escHtml(e.descricao || '–') + '</td><td>' + escHtml(e.departamento || '–') + '</td></tr>';
-          }).join('') + '</tbody></table>';
+      const { error } = await sb.auth.signInWithPassword({ email: email, password: senha });
+      if (error) { msg('v-auth-msg', erroAuth(error), true); return; }
+      carregarArea();
+    } catch (e) { msg('v-auth-msg', 'Falha de conexão.', true); }
+    finally { destrava(this); }
+  });
+
+  /* ----- Criar acesso (reivindica a ficha pelo código) ----- */
+  document.getElementById('v-btn-cad').addEventListener('click', async function () {
+    const cod = val('v-cad-cod'), email = val('v-cad-email'), senha = val('v-cad-senha'); msg('v-auth-msg', '');
+    if (!igrejaId) { msg('v-auth-msg', 'Link sem a igreja. Peça o link de cadastro à sua liderança.', true); return; }
+    if (!cod || !email || !senha) { msg('v-auth-msg', 'Preencha código, e-mail e senha.', true); return; }
+    trava(this, 'Criando…');
+    try {
+      const up = await sb.auth.signUp({ email: email, password: senha });
+      if (up.error) { msg('v-auth-msg', erroAuth(up.error), true); return; }
+      if (!up.data.session) {
+        // Confirmação de e-mail ligada: não dá pra vincular agora.
+        msg('v-auth-msg', 'Conta criada! Confirme o e-mail e depois entre para concluir.'); return;
       }
-      irPara('v-lista');
-    } catch (e) { msg('Falha de conexão. Verifique a internet.', true); }
-    finally { destrava(btnE, 'Ver minhas escalas'); }
+      const rv = await sb.rpc('reivindicar_voluntario', { p_igreja_id: igrejaId, p_codigo: cod });
+      if (rv.error || !rv.data || !rv.data.ok) {
+        msg('v-auth-msg', (rv.data && rv.data.erro) || 'Não consegui vincular o código.', true); return;
+      }
+      carregarArea();
+    } catch (e) { msg('v-auth-msg', 'Falha de conexão.', true); }
+    finally { destrava(this); }
+  });
+
+  /* ----- Área pessoal ----- */
+  async function carregarArea() {
+    irPara('v-load');
+    const { data, error } = await sb.rpc('minhas_escalas_eu');
+    if (error || !data || !data.ok) {
+      // conta logada mas sem vínculo (ex.: cadastro de líder, ou e-mail confirmado agora)
+      irPara('v-auth');
+      msg('v-auth-msg', (data && data.erro) || 'Conta sem voluntário vinculado.', true);
+      return;
+    }
+    ultimaEscala = data;
+    document.getElementById('v-saud').textContent = 'Graça e Paz, ' + (data.nome || '') + '! 🙏';
+    const esc_ = data.escalas || [];
+    const div = document.getElementById('v-escalas');
+    if (!esc_.length) {
+      div.innerHTML = '<p class="muted">Você não tem escalas futuras no momento.</p>';
+    } else {
+      div.innerHTML = '<table class="tabela"><thead><tr><th>Data</th><th>Dia</th><th>Culto</th><th>Departamento</th></tr></thead><tbody>' +
+        esc_.map(function (e) {
+          return '<tr><td>' + dataBR(e.data) + '</td><td>' + diaSemana(e.data) + '</td>' +
+                 '<td>' + esc(e.descricao || '–') + '</td><td>' + esc(e.departamento || '–') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }
+    irPara('v-home');
   }
+
+  /* ----- Baixar PDF da minha escala ----- */
+  document.getElementById('v-btn-pdf').addEventListener('click', function () {
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert('Gerador de PDF não carregou. Verifique a internet.'); return; }
+    if (!ultimaEscala) return;
+    const doc = new window.jspdf.jsPDF('p', 'pt', 'a4');
+    const margin = 40; let y = margin;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+    doc.text((ultimaEscala.igreja || 'Minha escala'), margin, y); y += 20;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text('Escala de ' + (ultimaEscala.nome || ''), margin, y); y += 14;
+    doc.setFontSize(9); doc.setTextColor(120); doc.text('Gerado em ' + new Date().toLocaleString('pt-BR'), margin, y); y += 16; doc.setTextColor(0);
+    const linhas = (ultimaEscala.escalas || []).map(function (e) { return [dataBR(e.data), diaSemana(e.data), e.descricao || '-', e.departamento || '-']; });
+    doc.autoTable({ head: [['Data', 'Dia', 'Culto', 'Departamento']], body: linhas.length ? linhas : [['—', '', 'Sem escalas futuras', '']],
+      startY: y, margin: { left: margin, right: margin }, styles: { fontSize: 10, cellPadding: 5 }, headStyles: { fillColor: [45, 156, 219] }, theme: 'grid' });
+    doc.save('minha-escala.pdf');
+  });
+
+  /* ----- Trocar senha ----- */
+  document.getElementById('v-btn-senha').addEventListener('click', async function () {
+    const nova = val('v-nova-senha'); msg('v-senha-msg', '');
+    if (nova.length < 6) { msg('v-senha-msg', 'A senha precisa ter ao menos 6 caracteres.', true); return; }
+    trava(this, 'Salvando…');
+    try {
+      const { error } = await sb.auth.updateUser({ password: nova });
+      if (error) { msg('v-senha-msg', erroAuth(error), true); return; }
+      document.getElementById('v-nova-senha').value = '';
+      msg('v-senha-msg', '✓ Senha alterada.');
+    } catch (e) { msg('v-senha-msg', 'Falha de conexão.', true); }
+    finally { destrava(this); }
+  });
+
+  /* ----- Sair ----- */
+  document.getElementById('v-sair').addEventListener('click', function (e) {
+    e.preventDefault();
+    sb.auth.signOut().then(function () {
+      ['v-login-email', 'v-login-senha', 'v-cad-cod', 'v-cad-email', 'v-cad-senha'].forEach(function (id) { document.getElementById(id).value = ''; });
+      msg('v-auth-msg', ''); irPara('v-auth');
+    });
+  });
 
   /* ----- utilidades ----- */
-  function reconhecimento(total) {
-    const marcos = { 1: 'Bem-vindo(a) ao time! 🎉 Sua 1ª presença.', 5: '5 presenças! Que constância. 🙌',
-      10: '10ª presença! Você faz diferença. 💙', 25: '25 presenças! Servo(a) fiel. 👏',
-      50: '50ª presença! Inspirador(a). 🌟', 100: '100 presenças! Que legado. 🏆' };
-    if (marcos[total]) return marcos[total];
-    const frases = ['Obrigado por servir! 💙', 'Sua presença abençoa. 🙏', 'Que bom ter você aqui!', 'Deus recompense o seu servir. 🌟'];
-    return frases[(total || 0) % frases.length];
-  }
-  function obterLocalizacao() {
-    return new Promise(function (resolve) {
-      if (!navigator.geolocation) { resolve(null); return; }
-      navigator.geolocation.getCurrentPosition(
-        function (pos) { resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }); },
-        function () { resolve(null); },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      );
-    });
-  }
-  function dataBR(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (m[3] + '/' + m[2] + '/' + m[1]) : escHtml(iso); }
+  function dataBR(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (m[3] + '/' + m[2] + '/' + m[1]) : esc(iso); }
   function diaSemana(iso) {
     const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return '–';
     const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     return dias[new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()];
   }
-  function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function trava(b, t) { b.disabled = true; b.textContent = t; }
-  function destrava(b, t) { b.disabled = false; b.textContent = t; }
+  function erroAuth(error) {
+    const m = (error && error.message ? error.message : String(error)).toLowerCase();
+    if (m.indexOf('invalid login') >= 0) return 'E-mail ou senha incorretos.';
+    if (m.indexOf('already registered') >= 0) return 'Este e-mail já tem conta. Use "Entrar".';
+    if (m.indexOf('password') >= 0) return 'Senha muito curta (mínimo 6).';
+    if (m.indexOf('email not confirmed') >= 0) return 'Confirme seu e-mail antes de entrar.';
+    return (error && error.message) ? error.message : 'Algo deu errado. Tente de novo.';
+  }
 })();

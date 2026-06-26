@@ -10,6 +10,7 @@
   function irPara(id) {
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
     document.getElementById(id).classList.add('is-active');
+    document.body.classList.toggle('modo-login', id === 'v-load' || id === 'v-auth');
   }
   function msg(id, t, erro) { const el = document.getElementById(id); el.textContent = t || ''; el.className = 'msg' + (erro ? ' erro' : (t ? ' ok' : '')); }
   function val(id) { return (document.getElementById(id).value || '').trim(); }

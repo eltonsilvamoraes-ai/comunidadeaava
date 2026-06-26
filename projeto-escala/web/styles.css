@@ -15,6 +15,9 @@ body{
   padding:24px; min-height:100vh; line-height:1.45;
 }
 
+/* Wrapper que centraliza (e, no login desktop, vira painel duplo) */
+.shell{display:flex; justify-content:center; width:100%}
+
 /* Cartão central — cresce no desktop em telas com dados */
 .card{
   background:#fff; width:100%; max-width:460px;
@@ -22,6 +25,33 @@ body{
   transition:max-width .2s ease;
 }
 .card.is-wide{max-width:840px}
+
+/* Painel azul da marca (só aparece no login, no desktop) */
+.brand-side{display:none}
+.brand-side__nome{font-size:30px; font-weight:800; margin:0 0 10px}
+.brand-side__txt{font-size:15px; line-height:1.5; opacity:.92; margin:0; max-width:300px}
+
+@media (min-width:860px){
+  /* Na tela de login, junta marca (esquerda) + formulário (direita) num cartão só */
+  body.modo-login .shell{
+    max-width:860px; border-radius:24px; overflow:hidden; box-shadow:var(--sombra); background:#fff;
+  }
+  body.modo-login .brand-side{
+    display:flex; flex:1 1 0; min-width:0; align-items:center;
+    background:linear-gradient(155deg,#33a3e0 0%, #1d6fa5 100%); color:#fff;
+    padding:54px 44px; position:relative; overflow:hidden;
+  }
+  body.modo-login .brand-side::after{
+    content:""; position:absolute; right:-90px; bottom:-90px; width:240px; height:240px;
+    border:2px solid rgba(255,255,255,.18); border-radius:50%;
+  }
+  body.modo-login .card{
+    flex:1 1 0; max-width:none; border-radius:0; box-shadow:none; padding:54px 48px;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  /* no desktop+login, o título dentro do formulário some (a marca já está à esquerda) */
+  body.modo-login .card .brand{display:none}
+}
 
 /* Marca */
 .brand{text-align:center; margin-bottom:26px}

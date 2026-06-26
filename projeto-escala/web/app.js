@@ -20,6 +20,8 @@
     if (alvo) alvo.classList.add('is-active');
     const card = document.querySelector('.card');
     if (card) card.classList.toggle('is-wide', !!TELAS_LARGAS[id]);
+    // "modo login" mostra o painel azul da marca ao lado (desktop).
+    document.body.classList.toggle('modo-login', id === 'tela-load' || id === 'tela-auth' || id === 'tela-igreja');
   }
   // Botões que só trocam de tela (data-go).
   document.querySelectorAll('[data-go]').forEach(function (b) {

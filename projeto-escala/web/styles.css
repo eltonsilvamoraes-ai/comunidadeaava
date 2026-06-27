@@ -1,12 +1,13 @@
 :root{
-  --azul:#2D9CDB; --azul-escuro:#2484bd;
-  --preto:#1b1d21; --texto:#2b2b2b; --cinza:#8a8f98;
-  --campo:#eef0f2; --borda:#e3e6ea; --linha:#eef0f2;
-  --erro:#e0564b; --ok:#27ae60; --fundo:#f4f6f8;
+  --amarelo:#FFC400; --amarelo-escuro:#E6A700; --amarelo-suave:#FFF6D6;
+  --preto:#16171B; --preto-2:#1E2026;
+  --texto:#23252b; --cinza:#8a8f98;
+  --campo:#f1f2f4; --borda:#e6e8ec; --linha:#eef0f2;
+  --erro:#e0564b; --ok:#2e9e5b; --fundo:#f6f7f9;
   --sombra:0 10px 40px rgba(20,30,50,.07);
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-[hidden]{display:none !important}   /* garante que itens ocultos (ex.: menu por papel) somem */
+[hidden]{display:none !important}
 html,body{margin:0; min-height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -14,51 +15,114 @@ body{
   display:flex; align-items:center; justify-content:center;
   padding:24px; min-height:100vh; line-height:1.45;
 }
+/* No app (logado) o body para de centralizar e o layout ocupa a tela toda. */
+body.modo-app{display:block; padding:0; align-items:stretch}
 
-/* Wrapper que centraliza (e, no login desktop, vira painel duplo) */
+/* ===================================================================== */
+/* VISÃO LOGIN (cartão central / duas colunas no desktop)                */
+/* ===================================================================== */
 .shell{display:flex; justify-content:center; width:100%}
-
-/* Cartão central — cresce no desktop em telas com dados */
 .card{
   background:#fff; width:100%; max-width:460px;
   border-radius:20px; padding:36px 30px 40px; box-shadow:var(--sombra);
-  transition:max-width .2s ease;
 }
-.card.is-wide{max-width:840px}
-
-/* Painel azul da marca (só aparece no login, no desktop) */
 .brand-side{display:none}
-.brand-side__nome{font-size:30px; font-weight:800; margin:0 0 10px}
+.brand-side__nome{font-size:30px; font-weight:800; margin:0 0 10px; color:var(--amarelo)}
 .brand-side__txt{font-size:15px; line-height:1.5; opacity:.92; margin:0; max-width:300px}
 
 @media (min-width:860px){
-  /* Na tela de login, junta marca (esquerda) + formulário (direita) num cartão só */
   body.modo-login .shell{
     max-width:860px; border-radius:24px; overflow:hidden; box-shadow:var(--sombra); background:#fff;
   }
   body.modo-login .brand-side{
     display:flex; flex:1 1 0; min-width:0; align-items:center;
-    background:linear-gradient(155deg,#33a3e0 0%, #1d6fa5 100%); color:#fff;
+    background:linear-gradient(155deg,#23252d 0%, #0f1013 100%); color:#fff;
     padding:54px 44px; position:relative; overflow:hidden;
   }
   body.modo-login .brand-side::after{
     content:""; position:absolute; right:-90px; bottom:-90px; width:240px; height:240px;
-    border:2px solid rgba(255,255,255,.18); border-radius:50%;
+    border:2px solid rgba(255,196,0,.25); border-radius:50%;
   }
   body.modo-login .card{
     flex:1 1 0; max-width:none; border-radius:0; box-shadow:none; padding:54px 48px;
     display:flex; flex-direction:column; justify-content:center;
   }
-  /* no desktop+login, o título dentro do formulário some (a marca já está à esquerda) */
   body.modo-login .card .brand{display:none}
 }
 
-/* Marca */
 .brand{text-align:center; margin-bottom:26px}
 .brand__nome{font-size:24px; font-weight:800; margin:0; color:var(--preto); letter-spacing:-.3px}
 .brand__sub{font-size:13px; color:var(--cinza); margin:4px 0 0}
 
-/* Telas */
+/* ===================================================================== */
+/* VISÃO APP — menu lateral (preto) + conteúdo                           */
+/* ===================================================================== */
+.app{display:flex; min-height:100vh; width:100%}
+
+.sidebar{
+  width:262px; flex-shrink:0; background:var(--preto); color:#e8e9ec;
+  display:flex; flex-direction:column; padding:18px 14px;
+  position:sticky; top:0; height:100vh;
+}
+.sidebar__brand{display:flex; gap:11px; align-items:center; padding:6px 8px 16px}
+.sidebar__logo{
+  width:40px; height:40px; border-radius:12px; background:var(--amarelo); color:var(--preto);
+  font-weight:900; display:flex; align-items:center; justify-content:center; font-size:15px; letter-spacing:-.5px;
+}
+.sidebar__nome{font-weight:800; font-size:15px; color:#fff}
+.sidebar__tag{font-size:11px; color:#9a9ea7}
+
+.sidebar__nav{flex:1; overflow-y:auto; margin-top:4px}
+.nav-group{margin-bottom:14px}
+.nav-group__title{font-size:10.5px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:#71757e; margin:0 0 6px; padding:0 10px}
+.nav-item{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  border:0; background:none; color:#cfd1d6; font-size:14px; font-weight:600;
+  padding:10px 11px; border-radius:10px; cursor:pointer; text-decoration:none;
+  transition:background .12s ease, color .12s ease;
+}
+.nav-item:hover{background:rgba(255,255,255,.06); color:#fff}
+.nav-item.is-active{background:var(--amarelo); color:var(--preto); font-weight:800}
+.nav-ic{font-size:15px; width:20px; text-align:center; flex-shrink:0}
+
+.sidebar__foot{border-top:1px solid rgba(255,255,255,.08); padding-top:12px; margin-top:6px; display:flex; align-items:center; justify-content:space-between; gap:8px}
+.sidebar__user-nome{font-size:13px; font-weight:700; color:#fff; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.sidebar__user-papel{font-size:11px; color:#9a9ea7; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.sidebar__sair{color:#cfd1d6; font-size:13px; font-weight:700; text-decoration:none; flex-shrink:0}
+.sidebar__sair:hover{color:var(--amarelo)}
+
+.content{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow-y:auto; background:var(--fundo)}
+.topbar{display:flex; align-items:center; gap:14px; padding:22px 30px 10px; position:sticky; top:0; background:linear-gradient(var(--fundo) 70%, rgba(246,247,249,0)); z-index:5}
+.topbar__menu{display:none; border:1px solid var(--borda); background:#fff; border-radius:10px; width:42px; height:42px; font-size:18px; cursor:pointer; flex-shrink:0}
+.topbar__titulo{font-size:23px; font-weight:800; color:var(--preto); margin:0; letter-spacing:-.4px}
+.topbar__sub{font-size:13px; color:var(--cinza); margin:2px 0 0}
+.content__body{padding:10px 30px 44px; max-width:1000px; width:100%}
+
+.nav-backdrop{display:none}
+
+/* Cada tela vira um cartão branco (exceto a Home, que tem KPIs próprios). */
+.content__body .screen.is-active{
+  background:#fff; border:1px solid var(--borda); border-radius:18px;
+  padding:26px 26px 30px; box-shadow:var(--sombra); animation:aparece .2s ease;
+}
+.content__body #tela-home.is-active{background:none; border:0; box-shadow:none; padding:0}
+
+/* KPIs da Home */
+.kpis--cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr)); gap:16px; margin:0 0 16px}
+.kpi-card{background:#fff; border:1px solid var(--borda); border-radius:16px; padding:20px; box-shadow:var(--sombra)}
+.kpi-card__ic{width:44px; height:44px; border-radius:12px; background:var(--amarelo-suave); display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:14px}
+.kpi-card__num{font-size:28px; font-weight:800; color:var(--preto); line-height:1}
+.kpi-card__lb{font-size:13px; color:var(--cinza); margin-top:4px}
+.painel-vazio{background:#fff; border:1px solid var(--borda); border-radius:16px; padding:22px}
+
+/* Planos */
+.plano-card{border:1px solid var(--borda); border-radius:16px; padding:20px; margin-bottom:14px}
+.plano-card--soft{background:var(--amarelo-suave); border-color:#f2e3a8}
+.plano-nome{font-size:18px; font-weight:800; color:var(--preto); margin:10px 0 6px}
+
+/* ===================================================================== */
+/* COMPONENTES                                                           */
+/* ===================================================================== */
 .screen{display:none}
 .screen.is-active{display:block; animation:aparece .2s ease}
 @keyframes aparece{from{opacity:0; transform:translateY(4px)}to{opacity:1; transform:none}}
@@ -67,49 +131,37 @@ body{
 .muted{color:var(--cinza); font-size:14px; margin:6px 0 14px}
 .destaque{font-size:19px; font-weight:700; color:var(--preto); margin:4px 0}
 
-/* Rótulos e campos */
 .label{display:block; font-size:12px; font-weight:700; letter-spacing:.6px; color:var(--cinza); margin:14px 0 7px; text-transform:uppercase}
 .input{
   width:100%; border:1.5px solid transparent; background:var(--campo);
   border-radius:12px; padding:14px 16px; font-size:16px; outline:none; color:var(--texto);
   transition:border-color .15s ease, background .15s ease;
 }
-.input:focus{border-color:var(--azul); background:#fff}
+.input:focus{border-color:var(--amarelo); background:#fff}
+.input:disabled{opacity:.6}
 select.input{appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat:no-repeat; background-position:right 14px center; padding-right:38px}
 textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height:1.5}
 
-/* Botões — pílula */
+/* Botões — pílula amarela */
 .btn{
-  display:block; width:100%; margin-top:20px; border:none; background:var(--azul);
-  color:#fff; font-size:16px; font-weight:700; padding:15px; border-radius:999px;
+  display:block; width:100%; margin-top:20px; border:none; background:var(--amarelo);
+  color:var(--preto); font-size:16px; font-weight:800; padding:15px; border-radius:999px;
   cursor:pointer; transition:background .15s ease, transform .05s ease, box-shadow .15s ease;
 }
-.btn:hover{background:var(--azul-escuro)}
+.btn:hover{background:var(--amarelo-escuro)}
 .btn:active{transform:scale(.99)}
 .btn:disabled{opacity:.6; cursor:default}
-.btn--ghost{background:#fff; color:var(--azul); border:1.5px solid var(--azul)}
-.btn--ghost:hover{background:rgba(45,156,219,.08)}
+.btn--ghost{background:#fff; color:var(--preto); border:1.5px solid var(--preto)}
+.btn--ghost:hover{background:#f3f4f6}
 .btn-inline{width:auto; margin-top:0; padding:13px 20px; white-space:nowrap}
 
-/* Menu da home — cartões clicáveis (centralizados, estilo AAVA) */
-.screen--center{text-align:center}
-.menu-btn{
-  display:block; width:100%; margin-top:11px; padding:16px 18px; text-align:center;
-  border:1.5px solid var(--borda); background:#fff; border-radius:999px;
-  font-size:15px; font-weight:700; color:var(--texto); cursor:pointer; text-decoration:none;
-  transition:border-color .15s ease, background .15s ease, transform .05s ease, box-shadow .15s ease;
-}
-.menu-btn:hover{border-color:var(--azul); box-shadow:0 4px 14px rgba(45,156,219,.10)}
-.menu-btn:active{transform:scale(.995)}
-.menu-btn--primary{background:var(--azul); color:#fff; border-color:var(--azul)}
-.menu-btn--primary:hover{background:var(--azul-escuro); border-color:var(--azul-escuro); box-shadow:none}
-#tela-home .destaque{margin-bottom:2px}
-#tela-home .titulo{margin-top:4px; margin-bottom:18px}
+/* Menu antigo (mantido por compatibilidade) */
+.menu-btn{display:block; width:100%; margin-top:11px; padding:16px 18px; text-align:center; border:1.5px solid var(--borda); background:#fff; border-radius:999px; font-size:15px; font-weight:700; color:var(--texto); cursor:pointer; text-decoration:none}
+.menu-btn--primary{background:var(--amarelo); color:var(--preto); border-color:var(--amarelo)}
 
 /* Dashboard: colunas e painéis */
 .dash-cols{margin-top:4px}
 .dash-cols>.form-col+.form-col{margin-top:8px}
-.card.is-wide .dash-cols>.form-col+.form-col{margin-top:0}
 #culto-detalhe{margin-top:14px}
 .sub-ok{color:var(--ok); font-weight:700; font-size:14px; margin:8px 0 4px}
 .sub-falta{color:var(--erro); font-weight:700; font-size:14px; margin:8px 0 4px}
@@ -118,56 +170,47 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 .dep-tag{color:var(--cinza); font-size:12px}
 .linha-alerta{background:#fff7f6}
 
-/* Voltar / link */
 .voltar{display:inline-block; margin-top:18px; color:var(--cinza); font-size:14px; text-decoration:none; cursor:pointer}
-.voltar:hover{color:var(--azul)}
+.voltar:hover{color:var(--amarelo-escuro)}
 
-/* Mensagens */
 .msg{margin-top:12px; font-size:14px; min-height:18px; text-align:center}
-.msg:empty{min-height:0; margin:0}            /* vazio não ocupa espaço (evita "buracos") */
+.msg:empty{min-height:0; margin:0}
 .msg.erro{color:var(--erro)}
 .msg.ok{color:var(--ok)}
 
-/* Espaçamento mais enxuto em telas de formulário */
 #cul-desc{margin-top:10px}
 .item-acoes{display:flex; gap:14px; flex-shrink:0}
 #tela-dashboard #btn-pdf{margin-top:2px}
 #tela-dashboard #dash-kpis{margin-top:6px}
 
-/* Abas (login/cadastro, etc.) */
-.abas{display:flex; gap:6px; margin-bottom:14px}
-.aba{flex:1; padding:10px 4px; border:1.5px solid var(--borda); background:#fff; border-radius:999px; font-size:12.5px; font-weight:700; color:var(--cinza); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.aba.is-on{background:var(--preto); color:#fff; border-color:var(--preto)}
+/* Abas */
+.abas{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap}
+.aba{flex:1; min-width:72px; padding:10px 4px; border:1.5px solid var(--borda); background:#fff; border-radius:999px; font-size:12.5px; font-weight:700; color:var(--cinza); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.aba.is-on{background:var(--preto); color:var(--amarelo); border-color:var(--preto)}
 #btn-pdf{margin-top:0; margin-bottom:6px}
 
-/* Telas com formulário alinhado à esquerda */
 .screen--left{text-align:left}
 .form-row{display:flex; gap:10px; align-items:flex-end}
 .form-col{flex:1}
 
-/* Listas e itens */
 .lista{margin-top:10px; overflow-x:auto}
 .item{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; border:1px solid var(--borda); border-radius:12px; margin-bottom:8px}
 .link-acao{background:none; border:0; color:var(--cinza); cursor:pointer; font-size:13px; text-decoration:underline; padding:0}
-.link-acao:hover{color:var(--azul)}
+.link-acao:hover{color:var(--amarelo-escuro)}
 .link-excluir{color:var(--erro)}
 .link-excluir:hover{color:var(--erro)}
 
-/* Chips de seleção (departamentos) */
 .checks{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px}
 .check{display:flex; align-items:center; gap:7px; padding:9px 13px; border:1.5px solid var(--borda); border-radius:999px; font-size:14px; cursor:pointer; user-select:none}
-.check input{margin:0; accent-color:var(--azul)}
-.check:hover{border-color:var(--azul)}
+.check input{margin:0; accent-color:var(--amarelo-escuro)}
+.check:hover{border-color:var(--amarelo)}
 
-/* Tabelas */
 .tabela{width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; min-width:340px}
 .tabela th{text-align:left; color:var(--cinza); font-weight:700; padding:8px; border-bottom:1.5px solid var(--borda); white-space:nowrap}
 .tabela td{padding:9px 8px; border-bottom:1px solid var(--linha); vertical-align:top}
 
-/* Aviso/realce */
-.aviso{margin-top:12px; padding:13px 15px; background:#f0fbff; border:1px solid #cdeafd; border-radius:12px; font-size:14px}
+.aviso{margin-top:12px; padding:13px 15px; background:var(--amarelo-suave); border:1px solid #f2e3a8; border-radius:12px; font-size:14px}
 
-/* Dashboard */
 .kpis{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px}
 .kpi{flex:1; min-width:74px; border:1px solid var(--borda); border-radius:14px; padding:14px 10px; text-align:center}
 .kpi-num{font-size:22px; font-weight:800; color:var(--preto)}
@@ -175,7 +218,7 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 .rank{margin:6px 0 0; padding-left:18px; font-size:14px}
 .rank li{margin:4px 0}
 
-/* Cartões de líder (gestão de acesso) */
+/* Cartões de líder */
 .lider-card{border:1px solid var(--borda); border-radius:14px; padding:15px 16px; margin-bottom:12px}
 .lider-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px}
 .lider-head strong{font-size:15px; color:var(--preto)}
@@ -184,22 +227,40 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 .pill--ok{background:#e8f7ee; color:#1c8a4b}
 .pill--pend{background:#fff4e5; color:#b9731b}
 
-/* Bloco "trocar senha" */
 .bloco{margin-top:20px; border-top:1px solid var(--linha); padding-top:14px}
 .bloco summary{cursor:pointer; font-weight:700; color:var(--cinza); font-size:14px; list-style:none}
 .bloco summary::-webkit-details-marker{display:none}
 .bloco[open] summary{margin-bottom:8px}
 
-/* ---- Responsivo ---- */
+/* ===================================================================== */
+/* RESPONSIVO                                                            */
+/* ===================================================================== */
+@media (min-width:760px){
+  .card{padding:44px 40px 48px}
+  .dash-cols{display:flex; gap:24px}
+}
+
+@media (max-width:860px){
+  /* menu lateral vira gaveta */
+  .sidebar{
+    position:fixed; left:0; top:0; bottom:0; height:100vh;
+    transform:translateX(-100%); transition:transform .2s ease; z-index:40;
+    box-shadow:0 0 50px rgba(0,0,0,.35);
+  }
+  body.nav-aberto .sidebar{transform:none}
+  .nav-backdrop{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:30; opacity:0; pointer-events:none; transition:opacity .2s ease}
+  body.nav-aberto .nav-backdrop{opacity:1; pointer-events:auto}
+  .topbar__menu{display:block}
+  .topbar{padding:16px 16px 8px}
+  .topbar__titulo{font-size:20px}
+  .content__body{padding:8px 16px 32px}
+  .content__body .screen.is-active{padding:20px 18px 24px; border-radius:16px}
+}
+
 @media (max-width:520px){
   body{padding:14px}
   .card{padding:26px 20px 30px; border-radius:18px}
   .brand__nome{font-size:22px}
   .form-row{gap:8px}
   .btn-inline{padding:13px 14px}
-}
-@media (min-width:760px){
-  .card{padding:44px 40px 48px}
-  /* No desktop, em telas largas, dados em 2 colunas quando fizer sentido */
-  .card.is-wide .dash-cols{display:flex; gap:24px}
 }

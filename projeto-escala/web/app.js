@@ -12,23 +12,49 @@
   let deptosCache = [];          // [{id, nome, ativo}]
 
   /* ----- Navegação ----- */
-  // Telas com tabelas/dados ficam mais largas no desktop.
-  const TELAS_LARGAS = { 'tela-voluntarios': 1, 'tela-cultos': 1, 'tela-escala': 1, 'tela-dashboard': 1 };
+  // Telas de entrada (sem menu lateral). As demais usam o shell do app.
+  const TELAS_LOGIN = { 'tela-load': 1, 'tela-auth': 1, 'tela-igreja': 1 };
+  // Título e subtítulo da barra superior por tela.
+  const TITULOS = {
+    'tela-home': ['Painel', 'Visão geral da sua igreja'],
+    'tela-voluntarios': ['Voluntários', 'Cadastre e gerencie quem serve'],
+    'tela-departamentos': ['Departamentos', 'Áreas de serviço da igreja'],
+    'tela-importar': ['Importar voluntários', 'Suba uma planilha (.xlsx, .csv ou .tsv)'],
+    'tela-cultos-fixos': ['Cultos fixos', 'Os cultos que se repetem toda semana'],
+    'tela-cultos': ['Cultos do mês', 'Gere e ajuste a agenda do mês'],
+    'tela-escala': ['Montar escala', 'Defina quem serve em cada culto'],
+    'tela-lideres': ['Líderes', 'Autorize acessos e defina as equipes'],
+    'tela-dashboard': ['Frequência', 'Relatórios de presença'],
+    'tela-dados-igreja': ['Dados da igreja', 'Informações do cadastro'],
+    'tela-planos': ['Meus planos', 'Seu plano atual']
+  };
   function irPara(id) {
+    const ehLogin = !!TELAS_LOGIN[id];
+    document.getElementById('login-shell').hidden = !ehLogin;
+    document.getElementById('app-shell').hidden = ehLogin;
+    document.body.classList.toggle('modo-login', ehLogin);
+    document.body.classList.toggle('modo-app', !ehLogin);
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
     const alvo = document.getElementById(id);
     if (alvo) alvo.classList.add('is-active');
-    const card = document.querySelector('.card');
-    if (card) card.classList.toggle('is-wide', !!TELAS_LARGAS[id]);
-    // "modo login" mostra o painel azul da marca ao lado (desktop).
-    document.body.classList.toggle('modo-login', id === 'tela-load' || id === 'tela-auth' || id === 'tela-igreja');
+    if (!ehLogin) {
+      document.querySelectorAll('.nav-item').forEach(function (n) {
+        n.classList.toggle('is-active', n.getAttribute('data-go') === id);
+      });
+      const t = TITULOS[id] || ['', ''];
+      document.getElementById('content-titulo').textContent = t[0] || '';
+      document.getElementById('content-sub').textContent = t[1] || '';
+      document.querySelector('.content').scrollTop = 0;
+      fecharNav();   // fecha a gaveta no celular
+    }
   }
-  // Botões que só trocam de tela (data-go).
+  // Botões/itens que trocam de tela (data-go) — inclui o menu lateral.
   document.querySelectorAll('[data-go]').forEach(function (b) {
     b.addEventListener('click', function (e) {
       e.preventDefault();
       const destino = b.getAttribute('data-go');
       irPara(destino);
+      if (destino === 'tela-home') abrirHome();
       if (destino === 'tela-departamentos') carregarDepartamentos();
       if (destino === 'tela-lideres') abrirLideres();
       if (destino === 'tela-voluntarios') abrirVoluntarios();
@@ -37,8 +63,16 @@
       if (destino === 'tela-cultos') abrirCultos();
       if (destino === 'tela-escala') abrirEscala();
       if (destino === 'tela-dashboard') abrirDashboard();
+      if (destino === 'tela-dados-igreja') abrirDadosIgreja();
     });
   });
+
+  /* ----- Menu lateral no celular (gaveta) ----- */
+  function fecharNav() { document.body.classList.remove('nav-aberto'); }
+  const btnMenu = document.getElementById('btn-menu');
+  if (btnMenu) btnMenu.addEventListener('click', function () { document.body.classList.toggle('nav-aberto'); });
+  const navBack = document.getElementById('nav-backdrop');
+  if (navBack) navBack.addEventListener('click', fecharNav);
 
   /* ----- Início ----- */
   async function init() {
@@ -89,26 +123,86 @@
     // 3) Dados da igreja + adapta a tela ao papel.
     const { data: igreja } = await sb.from('igrejas').select('id, nome').maybeSingle();
     igrejaId = igreja ? igreja.id : u.igreja_id;
-    document.getElementById('home-igreja').textContent = igreja ? igreja.nome : '';
+    document.getElementById('sb-igreja').textContent = igreja ? igreja.nome : '—';
     document.getElementById('home-presenca').href = 'voluntario.html?igreja=' + igrejaId;
     await adaptarPainel(papelAtual);
+    abrirHome();
     irPara('tela-home');
   }
 
-  // Mostra/esconde itens conforme o papel e ajusta título/subtítulo.
+  // Mostra/esconde itens do menu conforme o papel e ajusta o rodapé da barra.
   async function adaptarPainel(papel) {
     const ehAdmin = papel === 'admin';
-    document.getElementById('home-titulo').textContent = ehAdmin ? 'Painel da Igreja' : 'Área do Líder';
     document.querySelectorAll('[data-role="admin"]').forEach(function (el) { el.hidden = !ehAdmin; });
-    const sub = document.getElementById('home-papel');
+    // esconde grupos do menu que ficaram sem itens visíveis (ex.: líder)
+    document.querySelectorAll('.sidebar .nav-group[data-grupo]').forEach(function (g) {
+      const algum = Array.prototype.slice.call(g.querySelectorAll('.nav-item'))
+        .some(function (it) { return !it.hidden; });
+      g.hidden = !algum;
+    });
+    const sub = document.getElementById('sb-papel');
     if (ehAdmin) {
-      sub.textContent = 'Pastor / Administrador';
+      sub.textContent = 'Administrador';
     } else {
       // líder: lista os departamentos que ele gerencia (a RLS já devolve só os dele)
       const { data: deps } = await sb.from('departamentos').select('nome').order('nome');
       const nomes = (deps || []).map(function (d) { return d.nome; });
       sub.textContent = 'Líder' + (nomes.length ? ' · ' + nomes.join(', ') : '');
     }
+  }
+
+  /* ============================================================ */
+  /* PAINEL / VISÃO GERAL (KPIs rápidos)                          */
+  /* ============================================================ */
+  async function abrirHome() {
+    const div = document.getElementById('home-kpis');
+    if (!div) return;
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const h = new Date();
+    const ini = h.getFullYear() + '-' + pad(h.getMonth() + 1) + '-01';
+    const fim = h.getFullYear() + '-' + pad(h.getMonth() + 1) + '-' + pad(new Date(h.getFullYear(), h.getMonth() + 1, 0).getDate());
+    const volC = await sb.from('voluntarios').select('id', { count: 'exact', head: true });
+    const depC = await sb.from('departamentos').select('id', { count: 'exact', head: true });
+    const culC = await sb.from('cultos').select('id', { count: 'exact', head: true }).gte('data', ini).lte('data', fim);
+    let cards = cardKpi('🧑‍🤝‍🧑', volC.count || 0, 'Voluntários') +
+                cardKpi('🏷️', depC.count || 0, 'Departamentos') +
+                cardKpi('📅', culC.count || 0, 'Cultos neste mês');
+    if (papelAtual === 'admin') {
+      const ldC = await sb.from('usuarios').select('id', { count: 'exact', head: true }).eq('papel', 'lider');
+      cards += cardKpi('⭐', ldC.count || 0, 'Líderes');
+    }
+    div.innerHTML = cards;
+  }
+  function cardKpi(ic, num, lb) {
+    return '<div class="kpi-card"><div class="kpi-card__ic">' + ic + '</div>' +
+           '<div class="kpi-card__num">' + num + '</div>' +
+           '<div class="kpi-card__lb">' + esc(lb) + '</div></div>';
+  }
+
+  /* ============================================================ */
+  /* DADOS DA IGREJA                                              */
+  /* ============================================================ */
+  async function abrirDadosIgreja() {
+    msg('di-msg', '');
+    const { data } = await sb.from('igrejas').select('nome, cnpj').maybeSingle();
+    document.getElementById('di-nome').value = data ? (data.nome || '') : '';
+    document.getElementById('di-cnpj').value = data ? formatCnpj(data.cnpj) : '';
+  }
+  document.getElementById('btn-salvar-igreja').addEventListener('click', async function () {
+    const nome = val('di-nome'); msg('di-msg', '');
+    if (!nome) { msg('di-msg', 'Informe o nome da igreja.', true); return; }
+    trava(this, 'Salvando…');
+    try {
+      const { error } = await sb.from('igrejas').update({ nome: nome }).eq('id', igrejaId);
+      if (error) { msg('di-msg', traduzErro(error), true); return; }
+      document.getElementById('sb-igreja').textContent = nome;
+      msg('di-msg', '✓ Dados atualizados.');
+    } catch (e) { msg('di-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Salvar alterações'); }
+  });
+  function formatCnpj(c) {
+    c = String(c || '').replace(/\D/g, '');
+    return c.length === 14 ? c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : c;
   }
 
   /* ============================================================ */
@@ -1024,7 +1118,8 @@
     let y = margin;
     const titulos = { geral: 'Visão Geral', culto: 'Por Culto', depto: 'Por Departamento', alertas: 'Alertas de Afastamento' };
     const mesTxt = pad(d.mes) + '/' + d.ano;
-    const igreja = document.getElementById('home-igreja').textContent || 'Igreja';
+    const igrejaEl = document.getElementById('sb-igreja');
+    const igreja = (igrejaEl && igrejaEl.textContent && igrejaEl.textContent !== '—') ? igrejaEl.textContent : 'Igreja';
 
     function quebra(min) { if (y > doc.internal.pageSize.getHeight() - (min || 60)) { doc.addPage(); y = margin; } }
     function tituloPdf(t) { quebra(); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(60); doc.text(t, margin, y); y += 15; doc.setTextColor(0); doc.setFont('helvetica', 'normal'); }

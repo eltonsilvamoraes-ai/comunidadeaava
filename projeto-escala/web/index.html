@@ -7,8 +7,11 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="shell">
 
+  <!-- ===================================================================== -->
+  <!-- VISÃO LOGIN (sem menu lateral) — centralizada / duas colunas no desktop -->
+  <!-- ===================================================================== -->
+  <div class="shell" id="login-shell">
     <aside class="brand-side" aria-hidden="true">
       <div class="brand-side__in">
         <h2 class="brand-side__nome">Projeto Escala</h2>
@@ -16,276 +19,356 @@
       </div>
     </aside>
 
-  <main class="card" role="main">
+    <main class="card" role="main">
+      <header class="brand">
+        <h1 class="brand__nome">Projeto Escala</h1>
+        <p class="brand__sub">Escalas de voluntários para igrejas</p>
+      </header>
 
-    <header class="brand">
-      <h1 class="brand__nome">Projeto Escala</h1>
-      <p class="brand__sub">Escalas de voluntários para igrejas</p>
-    </header>
+      <!-- Carregando -->
+      <section id="tela-load" class="screen is-active">
+        <p class="muted">Carregando…</p>
+      </section>
 
-    <!-- Carregando -->
-    <section id="tela-load" class="screen is-active">
-      <p class="muted">Carregando…</p>
-    </section>
+      <!-- LOGIN / CADASTRO -->
+      <section id="tela-auth" class="screen">
+        <div class="abas">
+          <button class="aba is-on" type="button" data-aba="login">Entrar</button>
+          <button class="aba" type="button" data-aba="cadastro">Criar conta</button>
+        </div>
+        <div id="painel-login" class="painel">
+          <label class="label" for="login-email">E-mail</label>
+          <input id="login-email" class="input" type="email" autocomplete="email" />
+          <label class="label" for="login-senha">Senha</label>
+          <input id="login-senha" class="input" type="password" autocomplete="current-password" />
+          <button id="btn-login" class="btn" type="button">Entrar</button>
+        </div>
+        <div id="painel-cadastro" class="painel" hidden>
+          <label class="label" for="cad-email">E-mail</label>
+          <input id="cad-email" class="input" type="email" autocomplete="email" />
+          <label class="label" for="cad-senha">Senha (mín. 6)</label>
+          <input id="cad-senha" class="input" type="password" autocomplete="new-password" />
+          <button id="btn-cadastro" class="btn" type="button">Criar conta</button>
+        </div>
+        <p id="auth-msg" class="msg" role="alert"></p>
+      </section>
 
-    <!-- LOGIN / CADASTRO -->
-    <section id="tela-auth" class="screen">
-      <div class="abas">
-        <button class="aba is-on" type="button" data-aba="login">Entrar</button>
-        <button class="aba" type="button" data-aba="cadastro">Criar conta</button>
-      </div>
-      <div id="painel-login" class="painel">
-        <label class="label" for="login-email">E-mail</label>
-        <input id="login-email" class="input" type="email" autocomplete="email" />
-        <label class="label" for="login-senha">Senha</label>
-        <input id="login-senha" class="input" type="password" autocomplete="current-password" />
-        <button id="btn-login" class="btn" type="button">Entrar</button>
-      </div>
-      <div id="painel-cadastro" class="painel" hidden>
-        <label class="label" for="cad-email">E-mail</label>
-        <input id="cad-email" class="input" type="email" autocomplete="email" />
-        <label class="label" for="cad-senha">Senha (mín. 6)</label>
-        <input id="cad-senha" class="input" type="password" autocomplete="new-password" />
-        <button id="btn-cadastro" class="btn" type="button">Criar conta</button>
-      </div>
-      <p id="auth-msg" class="msg" role="alert"></p>
-    </section>
+      <!-- CRIAR IGREJA -->
+      <section id="tela-igreja" class="screen">
+        <h2 class="titulo">Criar sua igreja</h2>
+        <p class="muted">Sua conta ainda não tem igreja. Cadastre — uma conta por CNPJ.</p>
+        <label class="label" for="ig-nome">Nome da igreja</label>
+        <input id="ig-nome" class="input" type="text" />
+        <label class="label" for="ig-cnpj">CNPJ</label>
+        <input id="ig-cnpj" class="input" type="text" inputmode="numeric" placeholder="somente números" />
+        <label class="label" for="ig-admin">Seu nome (responsável)</label>
+        <input id="ig-admin" class="input" type="text" />
+        <button id="btn-criar-igreja" class="btn" type="button">Criar igreja</button>
+        <a id="btn-sair-1" class="voltar" href="#">sair</a>
+        <p id="igreja-msg" class="msg" role="alert"></p>
+      </section>
+    </main>
+  </div>
 
-    <!-- CRIAR IGREJA -->
-    <section id="tela-igreja" class="screen">
-      <h2 class="titulo">Criar sua igreja</h2>
-      <p class="muted">Sua conta ainda não tem igreja. Cadastre — uma conta por CNPJ.</p>
-      <label class="label" for="ig-nome">Nome da igreja</label>
-      <input id="ig-nome" class="input" type="text" />
-      <label class="label" for="ig-cnpj">CNPJ</label>
-      <input id="ig-cnpj" class="input" type="text" inputmode="numeric" placeholder="somente números" />
-      <label class="label" for="ig-admin">Seu nome (responsável)</label>
-      <input id="ig-admin" class="input" type="text" />
-      <button id="btn-criar-igreja" class="btn" type="button">Criar igreja</button>
-      <a id="btn-sair-1" class="voltar" href="#">sair</a>
-      <p id="igreja-msg" class="msg" role="alert"></p>
-    </section>
+  <!-- ===================================================================== -->
+  <!-- VISÃO APP (menu lateral + conteúdo central)                            -->
+  <!-- ===================================================================== -->
+  <div class="app" id="app-shell" hidden>
 
-    <!-- HOME / MENU -->
-    <section id="tela-home" class="screen screen--center">
-      <p id="home-igreja" class="destaque"></p>
-      <h2 id="home-titulo" class="titulo">Painel</h2>
-      <p id="home-papel" class="muted"></p>
-      <button class="menu-btn menu-btn--primary" type="button" data-go="tela-escala">Montar escala</button>
-      <button class="menu-btn" type="button" data-go="tela-voluntarios">Voluntários</button>
-      <button class="menu-btn" type="button" data-go="tela-dashboard">Dashboard de frequência</button>
-      <button class="menu-btn" type="button" data-go="tela-cultos" data-role="admin">Cultos do mês</button>
-      <button class="menu-btn" type="button" data-go="tela-cultos-fixos" data-role="admin">Cultos fixos da igreja</button>
-      <button class="menu-btn" type="button" data-go="tela-departamentos" data-role="admin">Departamentos</button>
-      <button class="menu-btn" type="button" data-go="tela-lideres" data-role="admin">Líderes (autorizar / equipes)</button>
-      <button class="menu-btn" type="button" data-go="tela-importar" data-role="admin">Importar voluntários (CSV)</button>
-      <a id="home-presenca" class="menu-btn" target="_blank" rel="noopener" href="#" data-role="admin">Área do voluntário (link)</a>
-      <a id="btn-sair-2" class="voltar" href="#">sair</a>
-    </section>
+    <!-- backdrop do menu no celular -->
+    <div class="nav-backdrop" id="nav-backdrop"></div>
 
-    <!-- LÍDERES (admin autoriza acesso + define os departamentos da equipe) -->
-    <section id="tela-lideres" class="screen screen--left">
-      <h2 class="titulo">Líderes</h2>
-      <p class="muted">Autorize o acesso de cada líder e marque os departamentos que ele cuida.
-        O líder só enxerga as equipes marcadas.</p>
-
-      <div class="aviso">
-        <strong>Link de cadastro de líderes</strong>
-        <p class="muted" style="margin:4px 0 8px">Envie para o líder criar o acesso. Depois ele aparece aqui para você autorizar.</p>
-        <div class="form-row">
-          <input id="lid-link" class="input" type="text" readonly />
-          <button id="btn-copiar-lid" class="btn btn--ghost btn-inline" type="button">Copiar</button>
+    <!-- MENU LATERAL -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">PE</div>
+        <div>
+          <div class="sidebar__nome">Projeto Escala</div>
+          <div class="sidebar__tag">Gestão de voluntários</div>
         </div>
       </div>
 
-      <p id="lid-msg" class="msg" role="alert"></p>
-      <div id="lid-lista" class="lista"></div>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
-
-    <!-- DEPARTAMENTOS -->
-    <section id="tela-departamentos" class="screen screen--left">
-      <h2 class="titulo">Departamentos</h2>
-      <div class="form-row">
-        <input id="dep-nome" class="input" type="text" placeholder="Novo departamento" />
-        <button id="btn-add-dep" class="btn btn-inline" type="button">Adicionar</button>
-      </div>
-      <p id="dep-msg" class="msg" role="alert"></p>
-      <div id="dep-lista" class="lista"></div>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
-
-    <!-- VOLUNTÁRIOS -->
-    <section id="tela-voluntarios" class="screen screen--left">
-      <h2 class="titulo">Voluntários</h2>
-      <label class="label" for="vol-nome">Nome completo</label>
-      <input id="vol-nome" class="input" type="text" />
-      <div class="form-row">
-        <div class="form-col">
-          <label class="label" for="vol-matricula">Matrícula</label>
-          <input id="vol-matricula" class="input" type="text" inputmode="numeric" />
+      <nav class="sidebar__nav">
+        <div class="nav-group">
+          <p class="nav-group__title">Início</p>
+          <button class="nav-item" type="button" data-go="tela-home"><span class="nav-ic">🏠</span>Painel</button>
         </div>
-        <div class="form-col">
-          <label class="label" for="vol-status">Status</label>
-          <select id="vol-status" class="input">
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-          </select>
+
+        <div class="nav-group" data-grupo>
+          <p class="nav-group__title">Cadastro</p>
+          <button class="nav-item" type="button" data-go="tela-voluntarios"><span class="nav-ic">🧑‍🤝‍🧑</span>Voluntários</button>
+          <button class="nav-item" type="button" data-go="tela-departamentos" data-role="admin"><span class="nav-ic">🏷️</span>Departamentos</button>
+          <button class="nav-item" type="button" data-go="tela-importar" data-role="admin"><span class="nav-ic">📥</span>Importar voluntários</button>
         </div>
-      </div>
-      <label class="label">Departamentos</label>
-      <div id="vol-deptos" class="checks"><p class="muted">Cadastre um departamento primeiro.</p></div>
-      <input type="hidden" id="vol-id" />
-      <button id="btn-salvar-vol" class="btn" type="button">Adicionar voluntário</button>
-      <a id="vol-cancelar" class="voltar" href="#" hidden>cancelar edição</a>
-      <p id="vol-msg" class="msg" role="alert"></p>
-      <p class="label">Cadastrados</p>
-      <div id="vol-lista" class="lista"></div>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
 
-    <!-- IMPORTAR CSV -->
-    <section id="tela-importar" class="screen screen--left">
-      <h2 class="titulo">Importar voluntários</h2>
-      <p class="muted">Colunas: <strong>Codigo, Nome completo, Departamento(s), Status</strong>.
-        Vários departamentos separados por <strong>;</strong> (ex.: Louvor; Staff).
-        A 1ª linha é o cabeçalho.</p>
-      <button id="btn-modelo" class="btn btn--ghost" type="button">⬇ Baixar planilha modelo</button>
-      <label class="label" for="imp-file">Arquivo (.xlsx, .csv ou .tsv)</label>
-      <input id="imp-file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" class="input" />
-      <p class="muted" style="text-align:center">— ou cole o conteúdo abaixo —</p>
-      <textarea id="imp-texto" class="input" rows="6" placeholder="Codigo,Nome completo,Departamento(s),Status&#10;31,Fulano,Louvor; Staff,Ativo"></textarea>
-      <button id="btn-preview" class="btn btn--ghost" type="button">Pré-visualizar</button>
-      <div id="imp-preview"></div>
-      <button id="btn-importar" class="btn" type="button" hidden>Importar</button>
-      <p id="imp-msg" class="msg" role="alert"></p>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
-
-    <!-- CULTOS FIXOS DA IGREJA -->
-    <section id="tela-cultos-fixos" class="screen screen--left">
-      <h2 class="titulo">Cultos fixos da igreja</h2>
-      <p class="muted">Defina os cultos que se repetem toda semana. São usados para
-        gerar os cultos do mês automaticamente.</p>
-      <div class="form-row">
-        <div class="form-col">
-          <label class="label" for="cf-dia">Dia</label>
-          <select id="cf-dia" class="input">
-            <option value="0">Domingo</option>
-            <option value="1">Segunda</option>
-            <option value="2">Terça</option>
-            <option value="3">Quarta</option>
-            <option value="4">Quinta</option>
-            <option value="5">Sexta</option>
-            <option value="6">Sábado</option>
-          </select>
+        <div class="nav-group" data-grupo>
+          <p class="nav-group__title">Agenda</p>
+          <button class="nav-item" type="button" data-go="tela-cultos-fixos" data-role="admin"><span class="nav-ic">🔁</span>Cultos fixos</button>
+          <button class="nav-item" type="button" data-go="tela-cultos" data-role="admin"><span class="nav-ic">📅</span>Cultos do mês</button>
+          <button class="nav-item" type="button" data-go="tela-escala"><span class="nav-ic">📝</span>Montar escala</button>
         </div>
-        <div class="form-col">
-          <label class="label" for="cf-hora">Horário</label>
-          <input id="cf-hora" class="input" type="time" />
+
+        <div class="nav-group" data-grupo>
+          <p class="nav-group__title">Equipe</p>
+          <button class="nav-item" type="button" data-go="tela-lideres" data-role="admin"><span class="nav-ic">⭐</span>Líderes</button>
         </div>
-      </div>
-      <label class="label" for="cf-desc">Nome do culto</label>
-      <input id="cf-desc" class="input" type="text" placeholder="ex.: Culto da Família" />
-      <button id="btn-add-cf" class="btn" type="button">Adicionar culto fixo</button>
-      <p id="cf-msg" class="msg" role="alert"></p>
-      <div id="cf-lista" class="lista"></div>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
 
-    <!-- CULTOS DO MÊS -->
-    <section id="tela-cultos" class="screen screen--left">
-      <h2 class="titulo">Cultos do mês</h2>
-      <div class="form-row">
-        <div class="form-col">
-          <label class="label" for="cul-mes">Mês</label>
-          <input id="cul-mes" class="input" type="month" />
+        <div class="nav-group" data-grupo>
+          <p class="nav-group__title">Relatórios</p>
+          <button class="nav-item" type="button" data-go="tela-dashboard"><span class="nav-ic">📊</span>Frequência</button>
         </div>
-        <button id="btn-gerar-fixos" class="btn btn-inline" type="button">Gerar fixos</button>
-      </div>
-      <p class="muted">Gera os cultos fixos da igreja no mês escolhido.</p>
 
-      <label class="label">Adicionar culto avulso</label>
-      <div class="form-row">
-        <div class="form-col"><input id="cul-data" class="input" type="date" /></div>
-        <div class="form-col"><input id="cul-hora" class="input" type="time" /></div>
-      </div>
-      <input id="cul-desc" class="input" type="text" placeholder="Descrição (ex.: Encontro especial)" />
-      <button id="btn-add-culto" class="btn btn--ghost" type="button">Adicionar avulso</button>
-      <p id="cul-msg" class="msg" role="alert"></p>
-
-      <p class="label">Cultos do mês</p>
-      <div id="cul-lista" class="lista"></div>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
-
-    <!-- MONTAR ESCALA -->
-    <section id="tela-escala" class="screen screen--left">
-      <h2 class="titulo">Montar escala</h2>
-      <label class="label" for="esc-culto">Culto</label>
-      <select id="esc-culto" class="input"></select>
-      <label class="label" for="esc-dep">Departamento</label>
-      <select id="esc-dep" class="input"></select>
-      <p class="label">Voluntários escalados</p>
-      <div id="esc-vols" class="checks"><p class="muted">Escolha culto e departamento.</p></div>
-      <button id="btn-salvar-escala" class="btn" type="button">Salvar escala</button>
-      <p id="esc-msg" class="msg" role="alert"></p>
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
-
-    <!-- DASHBOARD -->
-    <section id="tela-dashboard" class="screen screen--left">
-      <h2 class="titulo">Dashboard de Frequência</h2>
-      <div class="form-row">
-        <div class="form-col"><input id="dash-mes" class="input" type="month" /></div>
-        <button id="btn-dash" class="btn btn-inline" type="button">Atualizar</button>
-      </div>
-
-      <div class="abas">
-        <button class="aba is-on" type="button" data-aba="geral">Geral</button>
-        <button class="aba" type="button" data-aba="culto">Por Culto</button>
-        <button class="aba" type="button" data-aba="depto">Departamento</button>
-        <button class="aba" type="button" data-aba="alertas">Alertas</button>
-      </div>
-
-      <button id="btn-pdf" class="btn btn--ghost" type="button">⬇ Baixar PDF</button>
-      <p id="dash-msg" class="msg" role="alert"></p>
-
-      <!-- Geral -->
-      <div id="painel-geral" class="painel">
-        <div id="dash-kpis" class="kpis"></div>
-        <p class="label">Participação por culto</p>
-        <div id="dash-cultos" class="lista"></div>
-        <div class="dash-cols">
-          <div class="form-col"><p class="label">Maior frequência</p><div id="dash-maior" class="lista"></div></div>
-          <div class="form-col"><p class="label">Menor frequência</p><div id="dash-menor" class="lista"></div></div>
+        <div class="nav-group" data-grupo>
+          <p class="nav-group__title">Configurações</p>
+          <button class="nav-item" type="button" data-go="tela-dados-igreja" data-role="admin"><span class="nav-ic">⛪</span>Dados da igreja</button>
+          <button class="nav-item" type="button" data-go="tela-planos" data-role="admin"><span class="nav-ic">💳</span>Meus planos</button>
+          <a id="home-presenca" class="nav-item" target="_blank" rel="noopener" href="#" data-role="admin"><span class="nav-ic">🔗</span>Área do voluntário</a>
         </div>
+      </nav>
+
+      <div class="sidebar__foot">
+        <div class="sidebar__user">
+          <div class="sidebar__user-nome" id="sb-igreja">—</div>
+          <div class="sidebar__user-papel" id="sb-papel">—</div>
+        </div>
+        <a id="btn-sair-2" class="sidebar__sair" href="#">Sair</a>
       </div>
+    </aside>
 
-      <!-- Por Culto -->
-      <div id="painel-culto" class="painel" hidden>
-        <p class="muted">Toque em um culto para ver quem compareceu e quem faltou.</p>
-        <div id="culto-lista" class="lista"></div>
-        <div id="culto-detalhe"></div>
+    <!-- CONTEÚDO -->
+    <main class="content" role="main">
+      <header class="topbar">
+        <button class="topbar__menu" id="btn-menu" type="button" aria-label="Abrir menu">☰</button>
+        <div class="topbar__head">
+          <h1 class="topbar__titulo" id="content-titulo">Painel</h1>
+          <p class="topbar__sub" id="content-sub"></p>
+        </div>
+      </header>
+
+      <div class="content__body">
+
+        <!-- PAINEL / VISÃO GERAL -->
+        <section id="tela-home" class="screen">
+          <div id="home-kpis" class="kpis kpis--cards"></div>
+          <div class="painel-vazio">
+            <p class="muted">Use o menu ao lado para gerenciar voluntários, montar escalas e ver os relatórios.</p>
+          </div>
+        </section>
+
+        <!-- LÍDERES -->
+        <section id="tela-lideres" class="screen screen--left">
+          <p class="muted">Autorize o acesso de cada líder e marque os departamentos que ele cuida.
+            O líder só enxerga as equipes marcadas.</p>
+          <div class="aviso">
+            <strong>Link de cadastro de líderes</strong>
+            <p class="muted" style="margin:4px 0 8px">Envie para o líder criar o acesso. Depois ele aparece aqui para você autorizar.</p>
+            <div class="form-row">
+              <input id="lid-link" class="input" type="text" readonly />
+              <button id="btn-copiar-lid" class="btn btn--ghost btn-inline" type="button">Copiar</button>
+            </div>
+          </div>
+          <p id="lid-msg" class="msg" role="alert"></p>
+          <div id="lid-lista" class="lista"></div>
+        </section>
+
+        <!-- DEPARTAMENTOS -->
+        <section id="tela-departamentos" class="screen screen--left">
+          <div class="form-row">
+            <input id="dep-nome" class="input" type="text" placeholder="Novo departamento" />
+            <button id="btn-add-dep" class="btn btn-inline" type="button">Adicionar</button>
+          </div>
+          <p id="dep-msg" class="msg" role="alert"></p>
+          <div id="dep-lista" class="lista"></div>
+        </section>
+
+        <!-- VOLUNTÁRIOS -->
+        <section id="tela-voluntarios" class="screen screen--left">
+          <label class="label" for="vol-nome">Nome completo</label>
+          <input id="vol-nome" class="input" type="text" />
+          <div class="form-row">
+            <div class="form-col">
+              <label class="label" for="vol-matricula">Matrícula</label>
+              <input id="vol-matricula" class="input" type="text" inputmode="numeric" />
+            </div>
+            <div class="form-col">
+              <label class="label" for="vol-status">Status</label>
+              <select id="vol-status" class="input">
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+              </select>
+            </div>
+          </div>
+          <label class="label">Departamentos</label>
+          <div id="vol-deptos" class="checks"><p class="muted">Cadastre um departamento primeiro.</p></div>
+          <input type="hidden" id="vol-id" />
+          <button id="btn-salvar-vol" class="btn" type="button">Adicionar voluntário</button>
+          <a id="vol-cancelar" class="voltar" href="#" hidden>cancelar edição</a>
+          <p id="vol-msg" class="msg" role="alert"></p>
+          <p class="label">Cadastrados</p>
+          <div id="vol-lista" class="lista"></div>
+        </section>
+
+        <!-- IMPORTAR CSV -->
+        <section id="tela-importar" class="screen screen--left">
+          <p class="muted">Colunas: <strong>Codigo, Nome completo, Departamento(s), Status</strong>.
+            Vários departamentos separados por <strong>;</strong> (ex.: Louvor; Staff).
+            A 1ª linha é o cabeçalho.</p>
+          <button id="btn-modelo" class="btn btn--ghost" type="button">⬇ Baixar planilha modelo</button>
+          <label class="label" for="imp-file">Arquivo (.xlsx, .csv ou .tsv)</label>
+          <input id="imp-file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" class="input" />
+          <p class="muted" style="text-align:center">— ou cole o conteúdo abaixo —</p>
+          <textarea id="imp-texto" class="input" rows="6" placeholder="Codigo,Nome completo,Departamento(s),Status&#10;31,Fulano,Louvor; Staff,Ativo"></textarea>
+          <button id="btn-preview" class="btn btn--ghost" type="button">Pré-visualizar</button>
+          <div id="imp-preview"></div>
+          <button id="btn-importar" class="btn" type="button" hidden>Importar</button>
+          <p id="imp-msg" class="msg" role="alert"></p>
+        </section>
+
+        <!-- CULTOS FIXOS DA IGREJA -->
+        <section id="tela-cultos-fixos" class="screen screen--left">
+          <p class="muted">Defina os cultos que se repetem toda semana. São usados para
+            gerar os cultos do mês automaticamente.</p>
+          <div class="form-row">
+            <div class="form-col">
+              <label class="label" for="cf-dia">Dia</label>
+              <select id="cf-dia" class="input">
+                <option value="0">Domingo</option>
+                <option value="1">Segunda</option>
+                <option value="2">Terça</option>
+                <option value="3">Quarta</option>
+                <option value="4">Quinta</option>
+                <option value="5">Sexta</option>
+                <option value="6">Sábado</option>
+              </select>
+            </div>
+            <div class="form-col">
+              <label class="label" for="cf-hora">Horário</label>
+              <input id="cf-hora" class="input" type="time" />
+            </div>
+          </div>
+          <label class="label" for="cf-desc">Nome do culto</label>
+          <input id="cf-desc" class="input" type="text" placeholder="ex.: Culto da Família" />
+          <button id="btn-add-cf" class="btn" type="button">Adicionar culto fixo</button>
+          <p id="cf-msg" class="msg" role="alert"></p>
+          <div id="cf-lista" class="lista"></div>
+        </section>
+
+        <!-- CULTOS DO MÊS -->
+        <section id="tela-cultos" class="screen screen--left">
+          <div class="form-row">
+            <div class="form-col">
+              <label class="label" for="cul-mes">Mês</label>
+              <input id="cul-mes" class="input" type="month" />
+            </div>
+            <button id="btn-gerar-fixos" class="btn btn-inline" type="button">Gerar fixos</button>
+          </div>
+          <p class="muted">Gera os cultos fixos da igreja no mês escolhido.</p>
+
+          <label class="label">Adicionar culto avulso</label>
+          <div class="form-row">
+            <div class="form-col"><input id="cul-data" class="input" type="date" /></div>
+            <div class="form-col"><input id="cul-hora" class="input" type="time" /></div>
+          </div>
+          <input id="cul-desc" class="input" type="text" placeholder="Descrição (ex.: Encontro especial)" />
+          <button id="btn-add-culto" class="btn btn--ghost" type="button">Adicionar avulso</button>
+          <p id="cul-msg" class="msg" role="alert"></p>
+
+          <p class="label">Cultos do mês</p>
+          <div id="cul-lista" class="lista"></div>
+        </section>
+
+        <!-- MONTAR ESCALA -->
+        <section id="tela-escala" class="screen screen--left">
+          <label class="label" for="esc-culto">Culto</label>
+          <select id="esc-culto" class="input"></select>
+          <label class="label" for="esc-dep">Departamento</label>
+          <select id="esc-dep" class="input"></select>
+          <p class="label">Voluntários escalados</p>
+          <div id="esc-vols" class="checks"><p class="muted">Escolha culto e departamento.</p></div>
+          <button id="btn-salvar-escala" class="btn" type="button">Salvar escala</button>
+          <p id="esc-msg" class="msg" role="alert"></p>
+        </section>
+
+        <!-- DASHBOARD -->
+        <section id="tela-dashboard" class="screen screen--left">
+          <div class="form-row">
+            <div class="form-col"><input id="dash-mes" class="input" type="month" /></div>
+            <button id="btn-dash" class="btn btn-inline" type="button">Atualizar</button>
+          </div>
+
+          <div class="abas">
+            <button class="aba is-on" type="button" data-aba="geral">Geral</button>
+            <button class="aba" type="button" data-aba="culto">Por Culto</button>
+            <button class="aba" type="button" data-aba="depto">Departamento</button>
+            <button class="aba" type="button" data-aba="alertas">Alertas</button>
+          </div>
+
+          <button id="btn-pdf" class="btn btn--ghost" type="button">⬇ Baixar PDF</button>
+          <p id="dash-msg" class="msg" role="alert"></p>
+
+          <!-- Geral -->
+          <div id="painel-geral" class="painel">
+            <div id="dash-kpis" class="kpis"></div>
+            <p class="label">Participação por culto</p>
+            <div id="dash-cultos" class="lista"></div>
+            <div class="dash-cols">
+              <div class="form-col"><p class="label">Maior frequência</p><div id="dash-maior" class="lista"></div></div>
+              <div class="form-col"><p class="label">Menor frequência</p><div id="dash-menor" class="lista"></div></div>
+            </div>
+          </div>
+
+          <!-- Por Culto -->
+          <div id="painel-culto" class="painel" hidden>
+            <p class="muted">Toque em um culto para ver quem compareceu e quem faltou.</p>
+            <div id="culto-lista" class="lista"></div>
+            <div id="culto-detalhe"></div>
+          </div>
+
+          <!-- Departamento -->
+          <div id="painel-depto" class="painel" hidden>
+            <label class="label" for="dep-rel">Departamento</label>
+            <select id="dep-rel" class="input"></select>
+            <div id="depto-conteudo"></div>
+          </div>
+
+          <!-- Alertas -->
+          <div id="painel-alertas" class="painel" hidden>
+            <p class="muted">Voluntários que faltaram a cultos seguidos (para cuidar 💚).</p>
+            <div id="dash-alertas" class="lista"></div>
+          </div>
+        </section>
+
+        <!-- DADOS DA IGREJA -->
+        <section id="tela-dados-igreja" class="screen screen--left">
+          <p class="muted">Informações da sua igreja. O CNPJ não pode ser alterado.</p>
+          <label class="label" for="di-nome">Nome da igreja</label>
+          <input id="di-nome" class="input" type="text" />
+          <label class="label" for="di-cnpj">CNPJ</label>
+          <input id="di-cnpj" class="input" type="text" disabled />
+          <button id="btn-salvar-igreja" class="btn" type="button">Salvar alterações</button>
+          <p id="di-msg" class="msg" role="alert"></p>
+        </section>
+
+        <!-- MEUS PLANOS -->
+        <section id="tela-planos" class="screen screen--left">
+          <div class="plano-card">
+            <span class="pill pill--ok">Plano atual</span>
+            <h3 class="plano-nome">Beta gratuito</h3>
+            <p class="muted">Você está usando o Projeto Escala na fase beta — todos os recursos liberados,
+              sem custo. Em breve teremos planos com mais limites e recursos.</p>
+          </div>
+          <div class="plano-card plano-card--soft">
+            <h3 class="plano-nome">Em breve</h3>
+            <ul class="nomes">
+              <li>Confirmação de presença pelo próprio voluntário</li>
+              <li>Notificações por WhatsApp / e-mail</li>
+              <li>Relatórios avançados e exportações</li>
+            </ul>
+          </div>
+        </section>
+
       </div>
-
-      <!-- Departamento -->
-      <div id="painel-depto" class="painel" hidden>
-        <label class="label" for="dep-rel">Departamento</label>
-        <select id="dep-rel" class="input"></select>
-        <div id="depto-conteudo"></div>
-      </div>
-
-      <!-- Alertas -->
-      <div id="painel-alertas" class="painel" hidden>
-        <p class="muted">Voluntários que faltaram a cultos seguidos (para cuidar 💚).</p>
-        <div id="dash-alertas" class="lista"></div>
-      </div>
-
-      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
-    </section>
-
-  </main>
+    </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

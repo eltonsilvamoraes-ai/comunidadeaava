@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastro de Líder</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+
+    <aside class="brand-side" aria-hidden="true">
+      <div class="brand-side__in">
+        <h2 class="brand-side__nome">Cadastro de Líder</h2>
+        <p class="brand-side__txt">Crie seu acesso. O administrador da igreja autoriza e define os departamentos que você cuida.</p>
+      </div>
+    </aside>
+
+  <main class="card" role="main">
+
+    <header class="brand">
+      <h1 class="brand__nome">Cadastro de Líder</h1>
+      <p class="brand__sub">Crie seu acesso à liderança</p>
+    </header>
+
+    <section id="cl-load" class="screen is-active"><p class="muted">Carregando…</p></section>
+
+    <!-- FORMULÁRIO -->
+    <section id="cl-form" class="screen screen--left">
+      <p class="muted">Preencha seus dados. Depois de criar, o <strong>administrador autoriza</strong> seu acesso
+        e você entra na página principal.</p>
+      <label class="label" for="cl-nome">Seu nome completo</label>
+      <input id="cl-nome" class="input" type="text" autocomplete="name" />
+      <label class="label" for="cl-email">E-mail</label>
+      <input id="cl-email" class="input" type="email" autocomplete="email" />
+      <label class="label" for="cl-senha">Crie uma senha (mín. 6)</label>
+      <input id="cl-senha" class="input" type="password" autocomplete="new-password" />
+      <button id="cl-btn" class="btn" type="button">Criar acesso de líder</button>
+      <p id="cl-msg" class="msg" role="alert"></p>
+      <a class="voltar" href="index.html">Já tenho acesso — entrar</a>
+    </section>
+
+    <!-- SUCESSO / PENDENTE -->
+    <section id="cl-ok" class="screen">
+      <h2 class="titulo">Cadastro enviado! ✅</h2>
+      <p class="muted">Sua conta de líder foi criada e está <strong>aguardando autorização</strong> do administrador da igreja.</p>
+      <div class="aviso">Assim que ele autorizar e definir seus departamentos, entre pela
+        <strong>página principal</strong> com o e-mail e a senha que você acabou de criar.</div>
+      <a class="btn" href="index.html" style="text-align:center; text-decoration:none">Ir para a página de login</a>
+    </section>
+
+  </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="cadastro-lider.js"></script>
+</body>
+</html>

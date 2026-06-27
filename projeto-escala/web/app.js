@@ -30,6 +30,7 @@
       const destino = b.getAttribute('data-go');
       irPara(destino);
       if (destino === 'tela-departamentos') carregarDepartamentos();
+      if (destino === 'tela-lideres') abrirLideres();
       if (destino === 'tela-voluntarios') abrirVoluntarios();
       if (destino === 'tela-importar') resetImport();
       if (destino === 'tela-cultos-fixos') carregarCultosFixos();
@@ -228,6 +229,111 @@
     const { error } = await sb.from('departamentos').delete().eq('id', id);
     if (error) { msg('dep-msg', traduzErro(error), true); return; }
     carregarDepartamentos();
+  }
+
+  /* ============================================================ */
+  /* LÍDERES (admin autoriza acesso + define departamentos)       */
+  /* ============================================================ */
+  function abrirLideres() {
+    msg('lid-msg', '');
+    // link absoluto e compartilhável para o líder se cadastrar (carrega a igreja).
+    const base = location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
+    document.getElementById('lid-link').value = base + 'cadastro-lider.html?igreja=' + igrejaId;
+    carregarLideres();
+  }
+
+  document.getElementById('btn-copiar-lid').addEventListener('click', function () {
+    const inp = document.getElementById('lid-link');
+    inp.select(); inp.setSelectionRange(0, 99999);
+    function ok() { msg('lid-msg', '✓ Link copiado.'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inp.value).then(ok, function () { try { document.execCommand('copy'); ok(); } catch (e) {} });
+    } else { try { document.execCommand('copy'); ok(); } catch (e) {} }
+  });
+
+  async function carregarLideres() {
+    const div = document.getElementById('lid-lista');
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    // departamentos da igreja (para os chips de cada líder)
+    const depRes = await sb.from('departamentos').select('id, nome').order('nome');
+    if (depRes.error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(depRes.error)) + '</p>'; return; }
+    const deptos = depRes.data || [];
+    // líderes da igreja (a RLS já limita à própria igreja)
+    const ldRes = await sb.from('usuarios').select('id, nome, email, ativo').eq('papel', 'lider').order('nome');
+    if (ldRes.error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(ldRes.error)) + '</p>'; return; }
+    const lideres = ldRes.data || [];
+    if (!lideres.length) {
+      div.innerHTML = '<p class="muted">Nenhum líder ainda. Compartilhe o link acima para o líder criar o acesso.</p>';
+      return;
+    }
+    // vínculos líder ↔ departamento
+    const udRes = await sb.from('usuario_departamento').select('usuario_id, departamento_id');
+    const porLider = {};
+    (udRes.data || []).forEach(function (r) { (porLider[r.usuario_id] = porLider[r.usuario_id] || {})[r.departamento_id] = true; });
+
+    div.innerHTML = lideres.map(function (l) {
+      const sel = porLider[l.id] || {};
+      const chips = deptos.length ? deptos.map(function (d) {
+        return '<label class="check"><input type="checkbox" value="' + d.id + '"' + (sel[d.id] ? ' checked' : '') +
+               '><span>' + esc(d.nome) + '</span></label>';
+      }).join('') : '<p class="muted">Crie departamentos primeiro.</p>';
+      const pill = l.ativo ? '<span class="pill pill--ok">Ativo</span>' : '<span class="pill pill--pend">Pendente</span>';
+      const acaoStatus = l.ativo
+        ? '<button class="link-acao link-excluir" type="button" data-suspender="' + l.id + '">suspender acesso</button>'
+        : '<button class="btn btn-inline" type="button" data-autorizar="' + l.id + '">Autorizar acesso</button>';
+      return '<div class="lider-card" data-lid="' + l.id + '">' +
+               '<div class="lider-head"><div><strong>' + esc(l.nome || '(sem nome)') + '</strong>' +
+                 '<div class="dep-tag">' + esc(l.email || '') + '</div></div>' + pill + '</div>' +
+               '<p class="label">Departamentos que ele cuida</p>' +
+               '<div class="checks">' + chips + '</div>' +
+               '<div class="lider-acoes">' +
+                 '<button class="btn btn--ghost btn-inline" type="button" data-salvar-deps="' + l.id + '">Salvar departamentos</button>' +
+                 acaoStatus +
+               '</div></div>';
+    }).join('');
+
+    div.querySelectorAll('[data-autorizar]').forEach(function (b) {
+      b.addEventListener('click', function () { mudarAcessoLider(b.getAttribute('data-autorizar'), true); });
+    });
+    div.querySelectorAll('[data-suspender]').forEach(function (b) {
+      b.addEventListener('click', function () { mudarAcessoLider(b.getAttribute('data-suspender'), false); });
+    });
+    div.querySelectorAll('[data-salvar-deps]').forEach(function (b) {
+      b.addEventListener('click', function () { salvarDepsLider(b.getAttribute('data-salvar-deps')); });
+    });
+  }
+
+  // Autoriza (ou suspende) o líder. Ao autorizar, salva também os departamentos marcados.
+  async function mudarAcessoLider(id, ativar) {
+    msg('lid-msg', '');
+    if (!ativar && !confirm('Suspender o acesso deste líder? Ele não conseguirá mais entrar até ser autorizado de novo.')) return;
+    const upd = await sb.from('usuarios').update({ ativo: ativar }).eq('id', id);
+    if (upd.error) { msg('lid-msg', traduzErro(upd.error), true); return; }
+    if (ativar) { const e = await persistirDepsLider(id); if (e) { msg('lid-msg', traduzErro(e), true); return; } }
+    msg('lid-msg', ativar ? '✓ Líder autorizado.' : '✓ Acesso suspenso.');
+    carregarLideres();
+  }
+
+  async function salvarDepsLider(id) {
+    msg('lid-msg', '');
+    const e = await persistirDepsLider(id);
+    if (e) { msg('lid-msg', traduzErro(e), true); return; }
+    msg('lid-msg', '✓ Departamentos atualizados.');
+  }
+
+  // Regrava os vínculos líder↔departamento conforme os checkboxes do cartão.
+  async function persistirDepsLider(id) {
+    const card = document.querySelector('.lider-card[data-lid="' + id + '"]');
+    if (!card) return null;
+    const checked = Array.prototype.slice.call(card.querySelectorAll('input:checked')).map(function (c) { return c.value; });
+    const del = await sb.from('usuario_departamento').delete().eq('usuario_id', id);
+    if (del.error) return del.error;
+    if (checked.length) {
+      const rows = checked.map(function (d) { return { igreja_id: igrejaId, usuario_id: id, departamento_id: d }; });
+      const ins = await sb.from('usuario_departamento').insert(rows);
+      if (ins.error) return ins.error;
+    }
+    return null;
   }
 
   /* ============================================================ */

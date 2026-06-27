@@ -77,9 +77,30 @@
       <button class="menu-btn" type="button" data-go="tela-cultos" data-role="admin">Cultos do mês</button>
       <button class="menu-btn" type="button" data-go="tela-cultos-fixos" data-role="admin">Cultos fixos da igreja</button>
       <button class="menu-btn" type="button" data-go="tela-departamentos" data-role="admin">Departamentos</button>
+      <button class="menu-btn" type="button" data-go="tela-lideres" data-role="admin">Líderes (autorizar / equipes)</button>
       <button class="menu-btn" type="button" data-go="tela-importar" data-role="admin">Importar voluntários (CSV)</button>
       <a id="home-presenca" class="menu-btn" target="_blank" rel="noopener" href="#" data-role="admin">Área do voluntário (link)</a>
       <a id="btn-sair-2" class="voltar" href="#">sair</a>
+    </section>
+
+    <!-- LÍDERES (admin autoriza acesso + define os departamentos da equipe) -->
+    <section id="tela-lideres" class="screen screen--left">
+      <h2 class="titulo">Líderes</h2>
+      <p class="muted">Autorize o acesso de cada líder e marque os departamentos que ele cuida.
+        O líder só enxerga as equipes marcadas.</p>
+
+      <div class="aviso">
+        <strong>Link de cadastro de líderes</strong>
+        <p class="muted" style="margin:4px 0 8px">Envie para o líder criar o acesso. Depois ele aparece aqui para você autorizar.</p>
+        <div class="form-row">
+          <input id="lid-link" class="input" type="text" readonly />
+          <button id="btn-copiar-lid" class="btn btn--ghost btn-inline" type="button">Copiar</button>
+        </div>
+      </div>
+
+      <p id="lid-msg" class="msg" role="alert"></p>
+      <div id="lid-lista" class="lista"></div>
+      <a class="voltar" href="#" data-go="tela-home">‹ Voltar</a>
     </section>
 
     <!-- DEPARTAMENTOS -->

@@ -106,6 +106,7 @@
           <button class="nav-item" type="button" data-go="tela-cultos-fixos" data-role="admin"><span class="nav-ic">🔁</span>Cultos fixos</button>
           <button class="nav-item" type="button" data-go="tela-cultos" data-role="admin"><span class="nav-ic">📅</span>Cultos do mês</button>
           <button class="nav-item" type="button" data-go="tela-escala"><span class="nav-ic">📝</span>Montar escala</button>
+          <button class="nav-item" type="button" data-go="tela-checkin"><span class="nav-ic">✅</span>Check-in</button>
         </div>
 
         <div class="nav-group" data-grupo>
@@ -289,6 +290,24 @@
           <p id="esc-msg" class="msg" role="alert"></p>
         </section>
 
+        <!-- CHECK-IN (o líder marca quem serviu na escala) -->
+        <section id="tela-checkin" class="screen screen--left">
+          <p class="muted">Marque quem <strong>compareceu</strong> em cada escala. Sem controle de ponto —
+            é só o registro de quem serviu, por livre e espontânea vontade.</p>
+          <label class="label" for="chk-culto">Culto</label>
+          <select id="chk-culto" class="input"></select>
+          <label class="label" for="chk-dep">Departamento</label>
+          <select id="chk-dep" class="input"></select>
+          <p class="label">Quem compareceu</p>
+          <div id="chk-vols" class="checks"><p class="muted">Escolha culto e departamento.</p></div>
+          <div class="form-row" style="gap:10px; margin-top:10px">
+            <button id="chk-todos" class="btn btn--ghost btn-inline" type="button" hidden>Marcar todos</button>
+            <button id="chk-limpar" class="btn btn--ghost btn-inline" type="button" hidden>Limpar</button>
+          </div>
+          <button id="btn-salvar-checkin" class="btn" type="button">Salvar check-in</button>
+          <p id="chk-msg" class="msg" role="alert"></p>
+        </section>
+
         <!-- DASHBOARD -->
         <section id="tela-dashboard" class="screen screen--left">
           <div class="form-row">
@@ -360,7 +379,7 @@
           <div class="plano-card plano-card--soft">
             <h3 class="plano-nome">Em breve</h3>
             <ul class="nomes">
-              <li>Confirmação de presença pelo próprio voluntário</li>
+              <li>Termo de adesão do voluntário (PDF)</li>
               <li>Notificações por WhatsApp / e-mail</li>
               <li>Relatórios avançados e exportações</li>
             </ul>

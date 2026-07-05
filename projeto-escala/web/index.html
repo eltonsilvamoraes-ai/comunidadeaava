@@ -107,6 +107,7 @@
           <button class="nav-item" type="button" data-go="tela-cultos" data-role="admin"><span class="nav-ic">📅</span>Cultos do mês</button>
           <button class="nav-item" type="button" data-go="tela-escala"><span class="nav-ic">📝</span>Montar escala</button>
           <button class="nav-item" type="button" data-go="tela-checkin"><span class="nav-ic">✅</span>Check-in</button>
+          <button class="nav-item" type="button" data-go="tela-presenca"><span class="nav-ic">📍</span>Mapa de presença</button>
         </div>
 
         <div class="nav-group" data-grupo>
@@ -306,6 +307,24 @@
           </div>
           <button id="btn-salvar-checkin" class="btn" type="button">Salvar check-in</button>
           <p id="chk-msg" class="msg" role="alert"></p>
+        </section>
+
+        <!-- MAPA DE PRESENÇA (TESTE): quem esteve no culto, mesmo sem escala -->
+        <section id="tela-presenca" class="screen screen--left">
+          <div class="aviso">🧪 <strong>Tela de teste.</strong> Aqui você registra <strong>quem esteve no culto</strong>,
+            mesmo sem estar escalado. (Estamos avaliando se este registro entra no produto final.)</div>
+          <label class="label" for="pr-culto">Culto</label>
+          <select id="pr-culto" class="input"></select>
+          <label class="label" for="pr-dep">Departamento</label>
+          <select id="pr-dep" class="input"></select>
+          <p class="label">Quem esteve presente</p>
+          <div id="pr-vols" class="checks"><p class="muted">Escolha culto e departamento.</p></div>
+          <div class="form-row" style="gap:10px; margin-top:10px">
+            <button id="pr-todos" class="btn btn--ghost btn-inline" type="button" hidden>Marcar todos</button>
+            <button id="pr-limpar" class="btn btn--ghost btn-inline" type="button" hidden>Limpar</button>
+          </div>
+          <button id="btn-salvar-presenca" class="btn" type="button">Salvar presença</button>
+          <p id="pr-msg" class="msg" role="alert"></p>
         </section>
 
         <!-- DASHBOARD -->

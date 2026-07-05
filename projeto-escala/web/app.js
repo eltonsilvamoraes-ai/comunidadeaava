@@ -24,6 +24,7 @@
     'tela-cultos': ['Cultos do mês', 'Gere e ajuste a agenda do mês'],
     'tela-escala': ['Montar escala', 'Defina quem serve em cada culto'],
     'tela-checkin': ['Check-in', 'Marque quem compareceu em cada escala'],
+    'tela-presenca': ['Mapa de presença', 'Quem esteve no culto (mesmo sem escala)'],
     'tela-lideres': ['Líderes', 'Autorize acessos e defina as equipes'],
     'tela-dashboard': ['Relatórios', 'Comparecimento: escalados × check-ins'],
     'tela-dados-igreja': ['Dados da igreja', 'Informações do cadastro'],
@@ -64,6 +65,7 @@
       if (destino === 'tela-cultos') abrirCultos();
       if (destino === 'tela-escala') abrirEscala();
       if (destino === 'tela-checkin') abrirCheckin();
+      if (destino === 'tela-presenca') abrirPresenca();
       if (destino === 'tela-dashboard') abrirDashboard();
       if (destino === 'tela-dados-igreja') abrirDadosIgreja();
     });
@@ -981,6 +983,111 @@
       msg('chk-msg', '✓ Check-in salvo: ' + marcados.length + ' de ' + chkIds.length + ' compareceram.');
     } catch (e) { msg('chk-msg', 'Falha de conexão.', true); }
     finally { destrava(this, 'Salvar check-in'); }
+  });
+
+  /* ============================================================ */
+  /* MAPA DE PRESENÇA (TESTE) — quem esteve no culto, mesmo sem escala */
+  /* ============================================================ */
+  let prVolIds = [];             // voluntários do departamento carregado
+  let prPresentes = {};          // presenças já registradas (voluntario_id -> true)
+  let prEscalado = {};           // quem estava escalado (voluntario_id -> true)
+
+  async function abrirPresenca() {
+    msg('pr-msg', '');
+    prVolIds = []; prPresentes = {}; prEscalado = {};
+    document.getElementById('pr-vols').innerHTML = '<p class="muted">Escolha culto e departamento.</p>';
+    document.getElementById('pr-todos').hidden = true;
+    document.getElementById('pr-limpar').hidden = true;
+    const selCul = document.getElementById('pr-culto'), selDep = document.getElementById('pr-dep');
+    selCul.innerHTML = '<option value="">Carregando…</option>';
+    selDep.innerHTML = '<option value="">Carregando…</option>';
+    const culRes = await sb.from('cultos').select('id, data, horario, descricao').order('data');
+    selCul.innerHTML = '<option value="">Selecione…</option>' + (culRes.data || []).map(function (c) {
+      return '<option value="' + c.id + '" data-data="' + c.data + '">' + esc(dataBR(c.data) +
+             (c.horario ? ' ' + c.horario : '') + (c.descricao ? ' · ' + c.descricao : '')) + '</option>';
+    }).join('');
+    const depRes = await sb.from('departamentos').select('id, nome').order('nome');
+    selDep.innerHTML = '<option value="">Selecione…</option>' + (depRes.data || []).map(function (d) {
+      return '<option value="' + d.id + '">' + esc(d.nome) + '</option>';
+    }).join('');
+  }
+  document.getElementById('pr-culto').addEventListener('change', carregarPresencaVols);
+  document.getElementById('pr-dep').addEventListener('change', carregarPresencaVols);
+
+  async function carregarPresencaVols() {
+    const culId = document.getElementById('pr-culto').value;
+    const depId = document.getElementById('pr-dep').value;
+    const div = document.getElementById('pr-vols');
+    msg('pr-msg', '');
+    prVolIds = []; prPresentes = {}; prEscalado = {};
+    document.getElementById('pr-todos').hidden = true;
+    document.getElementById('pr-limpar').hidden = true;
+    if (!culId || !depId) { div.innerHTML = '<p class="muted">Escolha culto e departamento.</p>'; return; }
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    // voluntários do departamento (todos, escalados ou não)
+    const vdRes = await sb.from('voluntario_departamento')
+      .select('voluntarios(id, nome, status)').eq('departamento_id', depId);
+    if (vdRes.error) { div.innerHTML = '<p class="muted">' + esc(traduzErro(vdRes.error)) + '</p>'; return; }
+    let vols = (vdRes.data || []).map(function (x) { return x.voluntarios; })
+      .filter(function (v) { return v && v.status !== 'inativo'; });
+    vols.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    if (!vols.length) { div.innerHTML = '<p class="muted">Nenhum voluntário ativo neste departamento.</p>'; return; }
+    prVolIds = vols.map(function (v) { return v.id; });
+    // quem estava escalado neste culto/departamento (só para marcar com a tag)
+    const escRes = await sb.from('escalas')
+      .select('escala_itens(voluntario_id)').eq('culto_id', culId).eq('departamento_id', depId).maybeSingle();
+    if (escRes.data && escRes.data.escala_itens) escRes.data.escala_itens.forEach(function (i) { prEscalado[i.voluntario_id] = true; });
+    // presenças já registradas neste culto
+    const regRes = await sb.from('registros').select('voluntario_id').eq('culto_id', culId).in('voluntario_id', prVolIds);
+    (regRes.data || []).forEach(function (r) { prPresentes[r.voluntario_id] = true; });
+    div.innerHTML = vols.map(function (v) {
+      const tag = prEscalado[v.id] ? ' <span class="dep-tag">escalado</span>' : '';
+      return '<label class="check"><input type="checkbox" value="' + v.id + '"' + (prPresentes[v.id] ? ' checked' : '') + '>' +
+             '<span>' + esc(v.nome) + tag + '</span></label>';
+    }).join('');
+    document.getElementById('pr-todos').hidden = false;
+    document.getElementById('pr-limpar').hidden = false;
+  }
+
+  document.getElementById('pr-todos').addEventListener('click', function () {
+    document.querySelectorAll('#pr-vols input[type="checkbox"]').forEach(function (c) { c.checked = true; });
+  });
+  document.getElementById('pr-limpar').addEventListener('click', function () {
+    document.querySelectorAll('#pr-vols input[type="checkbox"]').forEach(function (c) { c.checked = false; });
+  });
+
+  document.getElementById('btn-salvar-presenca').addEventListener('click', async function () {
+    msg('pr-msg', '');
+    const selCul = document.getElementById('pr-culto');
+    const culId = selCul.value;
+    const opt = selCul.options[selCul.selectedIndex];
+    const data = opt ? opt.getAttribute('data-data') : null;
+    if (!culId || !data) { msg('pr-msg', 'Escolha um culto.', true); return; }
+    if (!prVolIds.length) { msg('pr-msg', 'Escolha um departamento com voluntários.', true); return; }
+    const marcados = Array.prototype.slice
+      .call(document.querySelectorAll('#pr-vols input:checked')).map(function (c) { return c.value; });
+    const mSet = {}; marcados.forEach(function (id) { mSet[id] = true; });
+    // insere os novos presentes; remove os que foram desmarcados
+    const inserir = marcados.filter(function (id) { return !prPresentes[id]; }).map(function (id) {
+      return { igreja_id: igrejaId, voluntario_id: id, culto_id: culId, data: data, escalado: !!prEscalado[id] };
+    });
+    const remover = prVolIds.filter(function (id) { return prPresentes[id] && !mSet[id]; });
+    trava(this, 'Salvando…');
+    try {
+      if (inserir.length) {
+        const r = await sb.from('registros').insert(inserir);
+        if (r.error) { msg('pr-msg', traduzErro(r.error), true); return; }
+      }
+      if (remover.length) {
+        const r2 = await sb.from('registros').delete().eq('culto_id', culId).in('voluntario_id', remover);
+        if (r2.error) { msg('pr-msg', traduzErro(r2.error), true); return; }
+      }
+      prPresentes = {}; marcados.forEach(function (id) { prPresentes[id] = true; });
+      const foraDeEscala = marcados.filter(function (id) { return !prEscalado[id]; }).length;
+      msg('pr-msg', '✓ Presença salva: ' + marcados.length + ' presente(s)' +
+        (foraDeEscala ? ' · ' + foraDeEscala + ' fora da escala' : '') + '.');
+    } catch (e) { msg('pr-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Salvar presença'); }
   });
 
   /* ============================================================ */

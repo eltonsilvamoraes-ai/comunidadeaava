@@ -1104,6 +1104,7 @@
     document.getElementById('rp-resumo').innerHTML = '';
     document.getElementById('rp-conteudo').innerHTML = '<p class="muted">Escolha um culto para ver o relatório.</p>';
     document.getElementById('rp-pdf').hidden = true;
+    document.getElementById('rp-xls').hidden = true;
     const sel = document.getElementById('rp-culto');
     sel.innerHTML = '<option value="">Carregando…</option>';
     const culRes = await sb.from('cultos').select('id, data, horario, descricao').order('data');
@@ -1120,7 +1121,7 @@
     const resumo = document.getElementById('rp-resumo');
     const cont = document.getElementById('rp-conteudo');
     msg('rp-msg', '');
-    rpDados = null; document.getElementById('rp-pdf').hidden = true;
+    rpDados = null; document.getElementById('rp-pdf').hidden = true; document.getElementById('rp-xls').hidden = true;
     if (!culId) { resumo.innerHTML = ''; cont.innerHTML = '<p class="muted">Escolha um culto para ver o relatório.</p>'; return; }
     resumo.innerHTML = ''; cont.innerHTML = '<p class="muted">Carregando…</p>';
     // voluntários visíveis (admin = todos; líder = só a equipe dele, via RLS) + presenças do culto
@@ -1165,7 +1166,30 @@
         }).join('') + '</tbody></table></div>';
     }).join('');
     document.getElementById('rp-pdf').hidden = false;
+    document.getElementById('rp-xls').hidden = false;
   }
+
+  // Exportar em Excel (.xlsx) — usa o SheetJS já carregado.
+  document.getElementById('rp-xls').addEventListener('click', function () {
+    if (typeof XLSX === 'undefined') { msg('rp-msg', 'Leitor de Excel não carregou. Verifique a internet.', true); return; }
+    if (!rpDados) return;
+    const c = rpDados.culto;
+    const aoa = [];
+    aoa.push(['Presença por culto']);
+    aoa.push(['Culto', dataBR(c.data) + (c.descricao ? ' · ' + c.descricao : '')]);
+    aoa.push(['Presentes', rpDados.nPres, 'de', rpDados.nTotal]);
+    aoa.push([]);
+    aoa.push(['Departamento', 'Voluntário', 'Situação']);
+    rpDados.grupos.forEach(function (g) {
+      g.vols.forEach(function (v) { aoa.push([g.nome, v.nome, v.presente ? 'Presente' : 'Falta']); });
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{ wch: 22 }, { wch: 34 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Presenca');
+    XLSX.writeFile(wb, 'presenca-' + (c.data || 'culto') + '.xlsx');
+    msg('rp-msg', '✓ Excel gerado.'); setTimeout(function () { msg('rp-msg', ''); }, 4000);
+  });
 
   document.getElementById('rp-pdf').addEventListener('click', function () {
     if (!window.jspdf || !window.jspdf.jsPDF) { msg('rp-msg', 'Gerador de PDF não carregou. Verifique a internet.', true); return; }

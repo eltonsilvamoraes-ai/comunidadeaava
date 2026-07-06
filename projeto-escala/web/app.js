@@ -27,6 +27,7 @@
     'tela-presenca': ['Mapa de presença', 'Quem esteve no culto (mesmo sem escala)'],
     'tela-lideres': ['Líderes', 'Autorize acessos e defina as equipes'],
     'tela-dashboard': ['Relatórios', 'Comparecimento: escalados × check-ins'],
+    'tela-rel-presenca': ['Presença por culto', 'Presentes e faltas de cada culto'],
     'tela-dados-igreja': ['Dados da igreja', 'Informações do cadastro'],
     'tela-planos': ['Meus planos', 'Seu plano atual']
   };
@@ -66,6 +67,7 @@
       if (destino === 'tela-escala') abrirEscala();
       if (destino === 'tela-checkin') abrirCheckin();
       if (destino === 'tela-presenca') abrirPresenca();
+      if (destino === 'tela-rel-presenca') abrirRelPresenca();
       if (destino === 'tela-dashboard') abrirDashboard();
       if (destino === 'tela-dados-igreja') abrirDadosIgreja();
     });
@@ -1088,6 +1090,119 @@
         (foraDeEscala ? ' · ' + foraDeEscala + ' fora da escala' : '') + '.');
     } catch (e) { msg('pr-msg', 'Falha de conexão.', true); }
     finally { destrava(this, 'Salvar presença'); }
+  });
+
+  /* ============================================================ */
+  /* RELATÓRIO — PRESENÇA POR CULTO (presente/falta, por departamento) */
+  /* ============================================================ */
+  let rpCultos = {};   // id -> {data, horario, descricao}
+  let rpDados = null;  // { culto, grupos:[{nome, vols:[{nome,presente}]}], nPres, nTotal }
+
+  async function abrirRelPresenca() {
+    msg('rp-msg', '');
+    rpDados = null;
+    document.getElementById('rp-resumo').innerHTML = '';
+    document.getElementById('rp-conteudo').innerHTML = '<p class="muted">Escolha um culto para ver o relatório.</p>';
+    document.getElementById('rp-pdf').hidden = true;
+    const sel = document.getElementById('rp-culto');
+    sel.innerHTML = '<option value="">Carregando…</option>';
+    const culRes = await sb.from('cultos').select('id, data, horario, descricao').order('data');
+    rpCultos = {}; (culRes.data || []).forEach(function (c) { rpCultos[c.id] = c; });
+    sel.innerHTML = '<option value="">Selecione um culto…</option>' + (culRes.data || []).map(function (c) {
+      return '<option value="' + c.id + '">' + esc(dataBR(c.data) + (c.horario ? ' ' + c.horario : '') +
+             (c.descricao ? ' · ' + c.descricao : '')) + '</option>';
+    }).join('');
+  }
+  document.getElementById('rp-culto').addEventListener('change', carregarRelPresenca);
+
+  async function carregarRelPresenca() {
+    const culId = document.getElementById('rp-culto').value;
+    const resumo = document.getElementById('rp-resumo');
+    const cont = document.getElementById('rp-conteudo');
+    msg('rp-msg', '');
+    rpDados = null; document.getElementById('rp-pdf').hidden = true;
+    if (!culId) { resumo.innerHTML = ''; cont.innerHTML = '<p class="muted">Escolha um culto para ver o relatório.</p>'; return; }
+    resumo.innerHTML = ''; cont.innerHTML = '<p class="muted">Carregando…</p>';
+    // voluntários visíveis (admin = todos; líder = só a equipe dele, via RLS) + presenças do culto
+    const volRes = await sb.from('voluntarios')
+      .select('id, nome, status, voluntario_departamento(departamentos(id, nome))').order('nome');
+    if (volRes.error) { cont.innerHTML = '<p class="muted">' + esc(traduzErro(volRes.error)) + '</p>'; return; }
+    const regRes = await sb.from('registros').select('voluntario_id').eq('culto_id', culId);
+    if (regRes.error) { cont.innerHTML = '<p class="muted">' + esc(traduzErro(regRes.error)) + '</p>'; return; }
+    const present = {}; (regRes.data || []).forEach(function (r) { present[r.voluntario_id] = true; });
+
+    const SEM = '__sem__', grupos = {}, vistos = {};
+    let nPres = 0, nTotal = 0;
+    (volRes.data || []).filter(function (v) { return v.status !== 'inativo'; }).forEach(function (v) {
+      if (!vistos[v.id]) { vistos[v.id] = true; nTotal++; if (present[v.id]) nPres++; }
+      const deps = (v.voluntario_departamento || []).map(function (x) { return x.departamentos; }).filter(Boolean);
+      const alvo = deps.length ? deps : [{ id: SEM, nome: 'Sem departamento' }];
+      alvo.forEach(function (d) {
+        const g = grupos[d.id] || (grupos[d.id] = { nome: d.nome, vols: [] });
+        g.vols.push({ nome: v.nome, presente: !!present[v.id] });
+      });
+    });
+    const lista = Object.keys(grupos).map(function (id) { return { id: id, nome: grupos[id].nome, vols: grupos[id].vols }; })
+      .sort(function (a, b) { if (a.id === SEM) return 1; if (b.id === SEM) return -1; return a.nome.localeCompare(b.nome); });
+    lista.forEach(function (g) { g.vols.sort(function (a, b) { return a.nome.localeCompare(b.nome); }); });
+
+    rpDados = { culto: rpCultos[culId] || {}, grupos: lista, nPres: nPres, nTotal: nTotal };
+
+    const pct = nTotal ? Math.round(nPres / nTotal * 100) : 0;
+    resumo.innerHTML = '<div class="kpis">' +
+      '<div class="kpi"><div class="kpi-num">' + nPres + '</div><div class="kpi-lb">Presentes</div></div>' +
+      '<div class="kpi"><div class="kpi-num">' + Math.max(nTotal - nPres, 0) + '</div><div class="kpi-lb">Faltas</div></div>' +
+      '<div class="kpi"><div class="kpi-num">' + pct + '%</div><div class="kpi-lb">Presença</div></div></div>';
+
+    if (!lista.length) { cont.innerHTML = '<p class="muted">Nenhum voluntário para exibir.</p>'; return; }
+    cont.innerHTML = lista.map(function (g) {
+      const pres = g.vols.filter(function (x) { return x.presente; }).length;
+      return '<div class="rel-grupo"><div class="rel-grupo__head"><strong>' + esc(g.nome) + '</strong>' +
+        '<span class="muted">' + pres + '/' + g.vols.length + ' presentes</span></div>' +
+        '<table class="tabela"><tbody>' + g.vols.map(function (v) {
+          return '<tr><td>' + esc(v.nome) + '</td><td style="text-align:right">' +
+            (v.presente ? '<span class="pres">✓ Presente</span>' : '<span class="falta">✗ Falta</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }).join('');
+    document.getElementById('rp-pdf').hidden = false;
+  }
+
+  document.getElementById('rp-pdf').addEventListener('click', function () {
+    if (!window.jspdf || !window.jspdf.jsPDF) { msg('rp-msg', 'Gerador de PDF não carregou. Verifique a internet.', true); return; }
+    if (!rpDados) return;
+    const doc = new window.jspdf.jsPDF('p', 'pt', 'a4');
+    const margin = 40, AMARELO = [255, 196, 0]; let y = margin;
+    const igrejaEl = document.getElementById('sb-igreja');
+    const igreja = (igrejaEl && igrejaEl.textContent && igrejaEl.textContent !== '—') ? igrejaEl.textContent : 'Igreja';
+    const c = rpDados.culto;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+    doc.text(igreja + ' — Presença por culto', margin, y); y += 20;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text('Culto de ' + dataBR(c.data) + (c.descricao ? ' · ' + c.descricao : ''), margin, y); y += 14;
+    doc.setFontSize(9); doc.setTextColor(120);
+    doc.text('Presentes: ' + rpDados.nPres + ' de ' + rpDados.nTotal + '   ·   Gerado em ' + new Date().toLocaleString('pt-BR'), margin, y);
+    y += 18; doc.setTextColor(0);
+    function quebra(min) { if (y > doc.internal.pageSize.getHeight() - (min || 60)) { doc.addPage(); y = margin; } }
+    rpDados.grupos.forEach(function (g) {
+      quebra(90);
+      const pres = g.vols.filter(function (x) { return x.presente; }).length;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(40);
+      doc.text(g.nome + '  (' + pres + '/' + g.vols.length + ')', margin, y); doc.setTextColor(0); doc.setFont('helvetica', 'normal');
+      doc.autoTable({
+        head: [['Voluntário', 'Situação']], body: g.vols.map(function (v) { return [v.nome, v.presente ? 'Presente' : 'Falta']; }),
+        startY: y + 6, margin: { left: margin, right: margin }, styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: AMARELO, textColor: 20 }, theme: 'grid',
+        didParseCell: function (data) {
+          if (data.section === 'body' && data.column.index === 1) {
+            data.cell.styles.textColor = data.cell.raw === 'Presente' ? [46, 158, 91] : [224, 86, 75];
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 14;
+    });
+    doc.save('presenca-' + (c.data || 'culto') + '.pdf');
+    msg('rp-msg', '✓ PDF gerado.'); setTimeout(function () { msg('rp-msg', ''); }, 4000);
   });
 
   /* ============================================================ */

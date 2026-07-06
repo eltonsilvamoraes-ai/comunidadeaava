@@ -118,6 +118,7 @@
         <div class="nav-group" data-grupo>
           <p class="nav-group__title">Relatórios</p>
           <button class="nav-item" type="button" data-go="tela-dashboard"><span class="nav-ic">📊</span>Frequência</button>
+          <button class="nav-item" type="button" data-go="tela-rel-presenca"><span class="nav-ic">🗒️</span>Presença por culto</button>
         </div>
 
         <div class="nav-group" data-grupo>
@@ -374,6 +375,22 @@
             <p class="muted">Voluntários que faltaram a cultos seguidos (para cuidar 💚).</p>
             <div id="dash-alertas" class="lista"></div>
           </div>
+        </section>
+
+        <!-- RELATÓRIO: PRESENÇA POR CULTO (presente / falta, por departamento) -->
+        <section id="tela-rel-presenca" class="screen screen--left">
+          <p class="muted">Escolha um culto para ver quem esteve presente e quem faltou.
+            O líder vê a própria equipe; o administrador vê todos, por departamento.</p>
+          <div class="form-row">
+            <div class="form-col">
+              <label class="label" for="rp-culto">Culto</label>
+              <select id="rp-culto" class="input"></select>
+            </div>
+            <button id="rp-pdf" class="btn btn--ghost btn-inline" type="button" hidden>⬇ PDF</button>
+          </div>
+          <p id="rp-msg" class="msg" role="alert"></p>
+          <div id="rp-resumo"></div>
+          <div id="rp-conteudo"><p class="muted">Escolha um culto para ver o relatório.</p></div>
         </section>
 
         <!-- DADOS DA IGREJA -->

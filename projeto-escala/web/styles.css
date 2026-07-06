@@ -227,6 +227,13 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 .pill--ok{background:#e8f7ee; color:#1c8a4b}
 .pill--pend{background:#fff4e5; color:#b9731b}
 
+/* Relatório de presença por culto */
+.rel-grupo{margin-top:18px}
+.rel-grupo__head{display:flex; justify-content:space-between; align-items:baseline; gap:10px; border-bottom:2px solid var(--borda); padding-bottom:6px}
+.rel-grupo__head strong{font-size:15px; color:var(--preto)}
+.pres{color:var(--ok); font-weight:700; white-space:nowrap}
+.falta{color:var(--erro); font-weight:700; white-space:nowrap}
+
 .bloco{margin-top:20px; border-top:1px solid var(--linha); padding-top:14px}
 .bloco summary{cursor:pointer; font-weight:700; color:var(--cinza); font-size:14px; list-style:none}
 .bloco summary::-webkit-details-marker{display:none}

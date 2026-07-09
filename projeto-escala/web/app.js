@@ -861,10 +861,10 @@
       .select('id, escala_itens(voluntario_id)').eq('culto_id', culId).eq('departamento_id', depId).maybeSingle();
     const marc = {};
     if (escRes.data && escRes.data.escala_itens) escRes.data.escala_itens.forEach(function (i) { marc[i.voluntario_id] = true; });
-    div.innerHTML = vols.map(function (v) {
-      return '<label class="check"><input type="checkbox" value="' + v.id + '"' + (marc[v.id] ? ' checked' : '') + '>' +
-             '<span>' + esc(v.nome) + '</span></label>';
-    }).join('');
+    div.innerHTML = '<div class="pick-list">' + vols.map(function (v) {
+      return '<label class="pick-row"><input type="checkbox" value="' + v.id + '"' + (marc[v.id] ? ' checked' : '') + '>' +
+             '<span class="pick-row__nome">' + esc(v.nome) + '</span></label>';
+    }).join('') + '</div>';
   }
 
   document.getElementById('btn-salvar-escala').addEventListener('click', async function () {
@@ -946,10 +946,10 @@
     itens.sort(function (a, b) { return a.v.nome.localeCompare(b.v.nome); });
     if (!itens.length) { div.innerHTML = '<p class="muted">Ninguém escalado neste culto/departamento.</p>'; return; }
     chkIds = itens.map(function (x) { return x.v.id; });
-    div.innerHTML = itens.map(function (x) {
-      return '<label class="check"><input type="checkbox" value="' + x.v.id + '"' + (x.compareceu ? ' checked' : '') + '>' +
-             '<span>' + esc(x.v.nome) + '</span></label>';
-    }).join('');
+    div.innerHTML = '<div class="pick-list">' + itens.map(function (x) {
+      return '<label class="pick-row"><input type="checkbox" value="' + x.v.id + '"' + (x.compareceu ? ' checked' : '') + '>' +
+             '<span class="pick-row__nome">' + esc(x.v.nome) + '</span></label>';
+    }).join('') + '</div>';
     document.getElementById('chk-todos').hidden = false;
     document.getElementById('chk-limpar').hidden = false;
   }
@@ -1042,11 +1042,11 @@
     // presenças já registradas neste culto
     const regRes = await sb.from('registros').select('voluntario_id').eq('culto_id', culId).in('voluntario_id', prVolIds);
     (regRes.data || []).forEach(function (r) { prPresentes[r.voluntario_id] = true; });
-    div.innerHTML = vols.map(function (v) {
-      const tag = prEscalado[v.id] ? ' <span class="dep-tag">escalado</span>' : '';
-      return '<label class="check"><input type="checkbox" value="' + v.id + '"' + (prPresentes[v.id] ? ' checked' : '') + '>' +
-             '<span>' + esc(v.nome) + tag + '</span></label>';
-    }).join('');
+    div.innerHTML = '<div class="pick-list">' + vols.map(function (v) {
+      const tag = prEscalado[v.id] ? '<span class="pick-row__tag">escalado</span>' : '';
+      return '<label class="pick-row"><input type="checkbox" value="' + v.id + '"' + (prPresentes[v.id] ? ' checked' : '') + '>' +
+             '<span class="pick-row__nome">' + esc(v.nome) + '</span>' + tag + '</label>';
+    }).join('') + '</div>';
     document.getElementById('pr-todos').hidden = false;
     document.getElementById('pr-limpar').hidden = false;
   }
@@ -1329,6 +1329,53 @@
     mostrarAbaDash(abaDash);
   }
 
+  /* --- Gráficos (Chart.js) --- */
+  let chartCulto = null, chartDepto = null;
+  // desenha o valor (%) acima de cada barra — reforço exigido para a cor amarela.
+  const rotuloValor = {
+    id: 'rotuloValor',
+    afterDatasetsDraw: function (chart) {
+      const ctx = chart.ctx;
+      chart.data.datasets.forEach(function (ds, di) {
+        chart.getDatasetMeta(di).data.forEach(function (bar, i) {
+          const v = ds.data[i]; if (v == null) return;
+          ctx.save();
+          ctx.font = '700 11px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+          ctx.fillStyle = '#23252b'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText(v + '%', bar.x, bar.y - 4);
+          ctx.restore();
+        });
+      });
+    }
+  };
+  function barrasPct(canvasId, labels, data, anterior) {
+    if (typeof Chart === 'undefined') return null;
+    const el = document.getElementById(canvasId); if (!el) return null;
+    if (anterior) anterior.destroy();
+    if (!labels.length) return null;
+    return new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: { labels: labels, datasets: [{ data: data, backgroundColor: '#E6A700',
+        hoverBackgroundColor: '#cf9600', borderRadius: 4, borderSkipped: false, maxBarThickness: 46 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function (c) { return c.parsed.y + '% de comparecimento'; } } }
+        },
+        scales: {
+          y: { beginAtZero: true, max: 100, ticks: { callback: function (v) { return v + '%'; }, color: '#8a8f98' }, grid: { color: '#eef0f2' } },
+          x: { ticks: { color: '#8a8f98', maxRotation: 0, autoSkip: true }, grid: { display: false } }
+        }
+      },
+      plugins: [rotuloValor]
+    });
+  }
+  function limparGraficos() {
+    if (chartCulto) { chartCulto.destroy(); chartCulto = null; }
+    if (chartDepto) { chartDepto.destroy(); chartDepto = null; }
+  }
+
   /* --- Aba Geral --- */
   function renderGeral() {
     const d = dadosDash;
@@ -1337,6 +1384,7 @@
       document.getElementById('dash-cultos').innerHTML = '';
       document.getElementById('dash-maior').innerHTML = '';
       document.getElementById('dash-menor').innerHTML = '';
+      limparGraficos();
       return;
     }
     const taxa = d.totalEsc ? Math.round(d.totalComp / d.totalEsc * 1000) / 10 : 0;
@@ -1355,6 +1403,22 @@
     const lista = listaConf(d);
     document.getElementById('dash-maior').innerHTML = rankHtml(lista.slice().sort(function (a, b) { return b.pct - a.pct || b.comp - a.comp || a.nome.localeCompare(b.nome); }).slice(0, 8));
     document.getElementById('dash-menor').innerHTML = rankHtml(lista.slice().sort(function (a, b) { return a.pct - b.pct || a.comp - b.comp || a.nome.localeCompare(b.nome); }).slice(0, 8));
+
+    // Gráfico: comparecimento (%) por culto (só cultos que tiveram escala)
+    const cultosComEsc = d.cultos.filter(function (c) { const a = d.culAgg[c.id] || { esc: 0 }; return a.esc > 0; });
+    chartCulto = barrasPct('chart-culto',
+      cultosComEsc.map(function (c) { return dataBR(c.data).slice(0, 5); }),
+      cultosComEsc.map(function (c) { const a = d.culAgg[c.id]; return Math.round(a.comp / a.esc * 100); }),
+      chartCulto);
+    // Gráfico: comparecimento (%) por departamento
+    const depAgg = {};
+    d.itens.forEach(function (it) { const a = depAgg[it.depId] || (depAgg[it.depId] = { nome: it.depNome, esc: 0, comp: 0 }); a.esc++; if (it.compareceu) a.comp++; });
+    const depArr = Object.keys(depAgg).map(function (id) { return depAgg[id]; })
+      .filter(function (x) { return x.esc > 0; }).sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+    chartDepto = barrasPct('chart-depto',
+      depArr.map(function (x) { return x.nome; }),
+      depArr.map(function (x) { return Math.round(x.comp / x.esc * 100); }),
+      chartDepto);
   }
   function listaConf(d) {
     return Object.keys(d.volAgg).map(function (id) {

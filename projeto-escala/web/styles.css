@@ -202,6 +202,20 @@ textarea.input{resize:vertical; font-family:inherit; font-size:14px; line-height
 
 .checks{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px}
 .check{display:flex; align-items:center; gap:7px; padding:9px 13px; border:1.5px solid var(--borda); border-radius:999px; font-size:14px; cursor:pointer; user-select:none}
+
+/* Lista selecionável em LINHAS (voluntários: escala / check-in / presença) */
+.pick-list{margin-top:6px; border:1px solid var(--borda); border-radius:12px; overflow:hidden}
+.pick-row{display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; border-bottom:1px solid var(--linha)}
+.pick-row:last-child{border-bottom:0}
+.pick-row:hover{background:#faf9f3}
+.pick-row input{width:18px; height:18px; margin:0; accent-color:var(--amarelo-escuro); flex-shrink:0}
+.pick-row__nome{flex:1; font-size:15px; color:var(--texto)}
+.pick-row input:checked + .pick-row__nome{font-weight:700; color:var(--preto)}
+.pick-row__tag{font-size:12px; color:var(--cinza); background:var(--campo); padding:3px 9px; border-radius:999px; white-space:nowrap}
+
+/* Cartão de gráfico */
+.grafico-cartao{margin-top:14px}
+.chart-wrap{position:relative; height:260px; margin-top:6px}
 .check input{margin:0; accent-color:var(--amarelo-escuro)}
 .check:hover{border-color:var(--amarelo)}
 

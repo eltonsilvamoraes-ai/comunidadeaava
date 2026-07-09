@@ -348,6 +348,14 @@
           <!-- Geral -->
           <div id="painel-geral" class="painel">
             <div id="dash-kpis" class="kpis"></div>
+            <div class="grafico-cartao">
+              <p class="label">Comparecimento por culto</p>
+              <div class="chart-wrap"><canvas id="chart-culto"></canvas></div>
+            </div>
+            <div class="grafico-cartao">
+              <p class="label">Comparecimento por departamento</p>
+              <div class="chart-wrap"><canvas id="chart-depto"></canvas></div>
+            </div>
             <p class="label">Participação por culto</p>
             <div id="dash-cultos" class="lista"></div>
             <div class="dash-cols">
@@ -431,6 +439,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

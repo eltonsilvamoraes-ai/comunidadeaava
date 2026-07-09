@@ -1,4 +1,4 @@
-/* Projeto Escala — Cadastro de Líder (signup + cadastrar_lider, fica pendente até o Admin autorizar) */
+/* Diakun — Cadastro de Líder (signup + cadastrar_lider, fica pendente até o Admin autorizar) */
 (function () {
   'use strict';
 

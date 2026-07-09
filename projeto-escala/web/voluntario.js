@@ -1,4 +1,4 @@
-/* Projeto Escala — Área do Voluntário (login + minhas escalas + PDF + trocar senha) */
+/* Diakun — Área do Voluntário (login + minhas escalas + PDF + trocar senha) */
 (function () {
   'use strict';
 

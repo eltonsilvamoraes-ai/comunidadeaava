@@ -1,4 +1,4 @@
-/* Projeto Escala — frontend (Fase 1 auth + Fase 2 voluntários/CSV) */
+/* Diakun — frontend (Fase 1 auth + Fase 2 voluntários/CSV) */
 (function () {
   'use strict';
 
@@ -170,15 +170,23 @@
     const volC = await sb.from('voluntarios').select('id', { count: 'exact', head: true });
     const depC = await sb.from('departamentos').select('id', { count: 'exact', head: true });
     const culC = await sb.from('cultos').select('id', { count: 'exact', head: true }).gte('data', ini).lte('data', fim);
-    let cards = cardKpi('🧑‍🤝‍🧑', volC.count || 0, 'Voluntários') +
-                cardKpi('🏷️', depC.count || 0, 'Departamentos') +
-                cardKpi('📅', culC.count || 0, 'Cultos neste mês');
+    let cards = cardKpi(ICO.users, volC.count || 0, 'Voluntários') +
+                cardKpi(ICO.tag, depC.count || 0, 'Departamentos') +
+                cardKpi(ICO.calendar, culC.count || 0, 'Cultos neste mês');
     if (papelAtual === 'admin') {
       const ldC = await sb.from('usuarios').select('id', { count: 'exact', head: true }).eq('papel', 'lider');
-      cards += cardKpi('⭐', ldC.count || 0, 'Líderes');
+      cards += cardKpi(ICO.star, ldC.count || 0, 'Líderes');
     }
     div.innerHTML = cards;
   }
+  // Ícones SVG (linha) dos KPIs — mesma linguagem do menu.
+  function svgIc(p) { return '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a07e00" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; }
+  const ICO = {
+    users: svgIc('<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 19a5.5 5.5 0 0 0-3-4.9"/>'),
+    tag: svgIc('<path d="M3.5 12.5 11 5h6v6l-7.5 7.5a1.5 1.5 0 0 1-2.1 0l-3.9-3.9a1.5 1.5 0 0 1 0-2.1Z"/><circle cx="14" cy="8" r="1.1"/>'),
+    calendar: svgIc('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M8 3v4"/><path d="M16 3v4"/>'),
+    star: svgIc('<path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9Z"/>')
+  };
   function cardKpi(ic, num, lb) {
     return '<div class="kpi-card"><div class="kpi-card__ic">' + ic + '</div>' +
            '<div class="kpi-card__num">' + num + '</div>' +

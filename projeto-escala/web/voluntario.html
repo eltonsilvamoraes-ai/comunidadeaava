@@ -57,11 +57,28 @@
     <!-- ÁREA PESSOAL -->
     <section id="v-home" class="screen screen--left">
       <p id="v-saud" class="destaque"></p>
-      <div class="form-row" style="justify-content:space-between; align-items:center">
-        <p class="label" style="margin:0">Minhas escalas</p>
-        <button id="v-btn-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
+
+      <div class="abas" id="v-abas">
+        <button class="aba is-on" type="button" data-vaba="escalas">Minhas escalas</button>
+        <button class="aba" type="button" data-vaba="relatorio">Meu relatório</button>
       </div>
-      <div id="v-escalas"></div>
+
+      <!-- Aba: Minhas escalas -->
+      <div id="v-aba-escalas">
+        <div class="form-row" style="justify-content:space-between; align-items:center">
+          <p class="label" style="margin:0">Próximas escalas</p>
+          <button id="v-btn-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
+        </div>
+        <div id="v-escalas"></div>
+      </div>
+
+      <!-- Aba: Meu relatório -->
+      <div id="v-aba-relatorio" hidden>
+        <p class="label">Meu comparecimento</p>
+        <div id="v-kpis" class="kpis"></div>
+        <p class="label" style="margin-top:18px">Histórico</p>
+        <div id="v-hist"></div>
+      </div>
 
       <details class="bloco">
         <summary>Trocar minha senha</summary>

@@ -121,8 +121,46 @@
                  '<td>' + esc(e.descricao || '–') + '</td><td>' + esc(e.departamento || '–') + '</td></tr>';
         }).join('') + '</tbody></table>';
     }
+    carregarRelatorio();   // carrega os "Meus números" em paralelo
     irPara('v-home');
   }
+
+  /* ----- Abas da área pessoal ----- */
+  document.querySelectorAll('#v-abas .aba').forEach(function (a) {
+    a.addEventListener('click', function () {
+      document.querySelectorAll('#v-abas .aba').forEach(function (x) { x.classList.remove('is-on'); });
+      a.classList.add('is-on');
+      const aba = a.getAttribute('data-vaba');
+      document.getElementById('v-aba-escalas').hidden = aba !== 'escalas';
+      document.getElementById('v-aba-relatorio').hidden = aba !== 'relatorio';
+    });
+  });
+
+  /* ----- Meu relatório (comparecimento próprio) ----- */
+  async function carregarRelatorio() {
+    const kdiv = document.getElementById('v-kpis'), hdiv = document.getElementById('v-hist');
+    kdiv.innerHTML = '<p class="muted">Carregando…</p>'; hdiv.innerHTML = '';
+    const { data, error } = await sb.rpc('meu_relatorio_eu');
+    if (error || !data || !data.ok) {
+      kdiv.innerHTML = '<p class="muted">' + esc((error && error.message) || (data && data.erro) || 'Não consegui carregar seu relatório.') + '</p>';
+      return;
+    }
+    kdiv.innerHTML =
+      kpi(data.pct + '%', 'Comparecimento') + kpi(data.compareceu, 'Presenças') +
+      kpi(data.faltas, 'Faltas') + kpi(data.escalado, 'Escalas');
+    const h = data.historico || [];
+    if (!h.length) {
+      hdiv.innerHTML = '<p class="muted">Você ainda não tem escalas passadas registradas.</p>';
+      return;
+    }
+    hdiv.innerHTML = '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Departamento</th><th>Situação</th></tr></thead><tbody>' +
+      h.map(function (r) {
+        return '<tr><td>' + dataBR(r.data) + '</td><td>' + esc(r.descricao || '–') + '</td>' +
+               '<td>' + esc(r.departamento || '–') + '</td><td>' +
+               (r.compareceu ? '<span class="pres">✓ Presente</span>' : '<span class="falta">✗ Falta</span>') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  function kpi(num, lb) { return '<div class="kpi"><div class="kpi-num">' + num + '</div><div class="kpi-lb">' + lb + '</div></div>'; }
 
   /* ----- Baixar PDF da minha escala ----- */
   document.getElementById('v-btn-pdf').addEventListener('click', function () {

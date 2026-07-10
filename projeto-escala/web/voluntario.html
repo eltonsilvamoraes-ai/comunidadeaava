@@ -3,113 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diakun — Área do Voluntário</title>
+  <title>Diakun — Cadastro de Voluntário</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="shell">
 
-  <!-- ============ ENTRAR / CRIAR ACESSO (cartão) ============ -->
-  <div class="shell" id="v-auth-view">
     <aside class="brand-side" aria-hidden="true">
       <div class="brand-side__in">
         <h2 class="brand-side__nome">Diakun</h2>
-        <p class="brand-side__txt">Veja onde você vai servir e acompanhe a sua jornada de serviço.</p>
+        <p class="brand-side__txt">Crie seu acesso com o código que a sua igreja te deu (matrícula ou CPF).</p>
       </div>
     </aside>
 
     <main class="card" role="main">
       <header class="brand">
-        <h1 class="brand__nome">Área do Voluntário</h1>
-        <p class="brand__sub">Entre para ver sua escala</p>
+        <h1 class="brand__nome">Cadastro de Voluntário</h1>
+        <p class="brand__sub">Crie seu acesso</p>
       </header>
 
       <section id="v-load" class="screen is-active"><p class="muted">Carregando…</p></section>
 
-      <section id="v-auth" class="screen">
-        <div class="abas">
-          <button class="aba is-on" type="button" data-aba="entrar">Entrar</button>
-          <button class="aba" type="button" data-aba="criar">Criar acesso</button>
-        </div>
-
-        <div id="v-painel-entrar" class="painel">
-          <label class="label" for="v-login-email">E-mail</label>
-          <input id="v-login-email" class="input" type="email" autocomplete="email" />
-          <label class="label" for="v-login-senha">Senha</label>
-          <input id="v-login-senha" class="input" type="password" autocomplete="current-password" />
-          <button id="v-btn-login" class="btn" type="button">Entrar</button>
-        </div>
-
-        <div id="v-painel-criar" class="painel" hidden>
-          <p class="muted">Use o link enviado pela sua igreja. Informe seu código, e-mail e crie uma senha.</p>
-          <label class="label" for="v-cad-cod">Seu código (matrícula ou CPF)</label>
-          <input id="v-cad-cod" class="input" type="text" inputmode="numeric" />
-          <label class="label" for="v-cad-email">E-mail</label>
-          <input id="v-cad-email" class="input" type="email" autocomplete="email" />
-          <label class="label" for="v-cad-senha">Crie uma senha (mín. 6)</label>
-          <input id="v-cad-senha" class="input" type="password" autocomplete="new-password" />
-          <button id="v-btn-cad" class="btn" type="button">Criar acesso</button>
-        </div>
-
-        <p id="v-auth-msg" class="msg" role="alert"></p>
+      <!-- FORMULÁRIO -->
+      <section id="v-form" class="screen screen--left">
+        <p class="muted">Informe o <strong>código</strong> que a secretaria da igreja cadastrou para você,
+          um e-mail e uma senha. Depois é só entrar pela página principal.</p>
+        <label class="label" for="v-cod">Seu código (matrícula ou CPF)</label>
+        <input id="v-cod" class="input" type="text" inputmode="numeric" />
+        <label class="label" for="v-email">E-mail</label>
+        <input id="v-email" class="input" type="email" autocomplete="email" />
+        <label class="label" for="v-senha">Crie uma senha (mín. 6)</label>
+        <input id="v-senha" class="input" type="password" autocomplete="new-password" />
+        <button id="v-btn" class="btn" type="button">Criar acesso</button>
+        <p id="v-msg" class="msg" role="alert"></p>
+        <a class="voltar" href="index.html">Já tenho acesso — entrar</a>
       </section>
-    </main>
-  </div>
 
-  <!-- ============ ÁREA PESSOAL (página logada) ============ -->
-  <div class="vol-app" id="v-app" hidden>
-    <header class="vol-top">
-      <div class="vol-top__brand">
-        <div class="vol-top__logo">D</div>
-        <span class="vol-top__nome">Diakun</span>
-      </div>
-      <div class="vol-top__dir">
-        <span class="vol-top__igreja" id="v-igreja"></span>
-        <a id="v-sair" class="vol-top__sair" href="#">Sair</a>
-      </div>
-    </header>
-
-    <main class="vol-body">
-      <section id="v-home" class="screen screen--left">
-        <p id="v-saud" class="vol-saud"></p>
-
-        <div class="abas" id="v-abas">
-          <button class="aba is-on" type="button" data-vaba="escalas">Minhas escalas</button>
-          <button class="aba" type="button" data-vaba="relatorio">Meu relatório</button>
-        </div>
-
-        <div class="vol-card">
-          <!-- Aba: Minhas escalas -->
-          <div id="v-aba-escalas">
-            <div class="form-row" style="justify-content:space-between; align-items:center">
-              <p class="label" style="margin:0">Próximas escalas</p>
-              <button id="v-btn-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
-            </div>
-            <div id="v-escalas"></div>
-          </div>
-
-          <!-- Aba: Meu relatório -->
-          <div id="v-aba-relatorio" hidden>
-            <p class="label" style="margin-top:0">Meu comparecimento</p>
-            <div id="v-kpis" class="kpis"></div>
-            <p class="label" style="margin-top:20px">Histórico</p>
-            <div id="v-hist"></div>
-          </div>
-        </div>
-
-        <details class="bloco vol-card" style="margin-top:16px">
-          <summary>Trocar minha senha</summary>
-          <label class="label" for="v-nova-senha">Nova senha (mín. 6)</label>
-          <input id="v-nova-senha" class="input" type="password" autocomplete="new-password" />
-          <button id="v-btn-senha" class="btn btn--ghost" type="button">Salvar nova senha</button>
-          <p id="v-senha-msg" class="msg"></p>
-        </details>
+      <!-- SUCESSO -->
+      <section id="v-ok" class="screen">
+        <h2 class="titulo">Acesso criado! ✅</h2>
+        <p class="muted">Seu login já está vinculado à sua ficha. A partir de agora você entra sempre pela
+          <strong>página principal</strong> com seu e-mail e senha — não precisa mais deste link.</p>
+        <a class="btn" href="index.html" style="text-align:center; text-decoration:none">Ir para o Diakun</a>
       </section>
     </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js"></script>
   <script src="voluntario.js"></script>
 </body>

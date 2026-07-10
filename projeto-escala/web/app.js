@@ -29,7 +29,9 @@
     'tela-dashboard': ['Relatórios', 'Comparecimento: escalados × check-ins'],
     'tela-rel-presenca': ['Presença por culto', 'Presentes e faltas de cada culto'],
     'tela-dados-igreja': ['Dados da igreja', 'Informações do cadastro'],
-    'tela-planos': ['Meus planos', 'Seu plano atual']
+    'tela-planos': ['Meus planos', 'Seu plano atual'],
+    'tela-minhas-escalas': ['Minhas escalas', 'Onde você vai servir'],
+    'tela-meu-relatorio': ['Meu relatório', 'Seu comparecimento']
   };
   function irPara(id) {
     const ehLogin = !!TELAS_LOGIN[id];
@@ -70,6 +72,8 @@
       if (destino === 'tela-rel-presenca') abrirRelPresenca();
       if (destino === 'tela-dashboard') abrirDashboard();
       if (destino === 'tela-dados-igreja') abrirDadosIgreja();
+      if (destino === 'tela-minhas-escalas') abrirMinhasEscalas();
+      if (destino === 'tela-meu-relatorio') abrirMeuRelatorio();
     });
   });
 
@@ -112,43 +116,57 @@
     //    sem o filtro a consulta volta mais de uma linha.
     const { data: auth } = await sb.auth.getUser();
     const uid = auth && auth.user ? auth.user.id : null;
-    const { data: u, error: ue } = await sb.from('usuarios').select('papel, igreja_id').eq('id', uid).maybeSingle();
+    const { data: u, error: ue } = await sb.from('usuarios').select('papel, igreja_id, ativo').eq('id', uid).maybeSingle();
     if (ue) { irPara('tela-auth'); msg('auth-msg', traduzErro(ue), true); return; }
     if (!u) {
       // conta logada sem registro de usuário -> ainda não tem igreja (fluxo admin novo)
       igrejaId = null; irPara('tela-igreja'); return;
     }
     papelAtual = u.papel;
-    // 2) Este painel é só para ADMIN e LÍDER. Voluntário/kiosk são barrados.
-    if (papelAtual !== 'admin' && papelAtual !== 'lider') {
+    // 2) Acesso pendente (ex.: líder aguardando autorização do admin).
+    if (u.ativo === false) {
       await sb.auth.signOut();
       irPara('tela-auth');
-      msg('auth-msg', 'Esta área é da liderança. Use a Área do Voluntário (link da sua igreja).', true);
+      msg('auth-msg', 'Seu acesso está aguardando autorização do administrador da igreja.', true);
       return;
     }
-    // 3) Dados da igreja + adapta a tela ao papel.
+    // 3) Papéis conhecidos entram; qualquer outro é barrado.
+    if (['admin', 'lider', 'voluntario'].indexOf(papelAtual) < 0) {
+      await sb.auth.signOut();
+      irPara('tela-auth');
+      msg('auth-msg', 'Seu perfil não tem acesso a esta área. Fale com o administrador.', true);
+      return;
+    }
+    // 4) Dados da igreja + adapta a tela ao papel.
     const { data: igreja } = await sb.from('igrejas').select('id, nome').maybeSingle();
     igrejaId = igreja ? igreja.id : u.igreja_id;
     document.getElementById('sb-igreja').textContent = igreja ? igreja.nome : '—';
-    document.getElementById('home-presenca').href = 'voluntario.html?igreja=' + igrejaId;
+    const hp = document.getElementById('home-presenca'); if (hp) hp.href = 'voluntario.html?igreja=' + igrejaId;
     await adaptarPainel(papelAtual);
-    abrirHome();
-    irPara('tela-home');
+    // 5) Tela inicial conforme o papel.
+    if (papelAtual === 'voluntario') { abrirMinhasEscalas(); irPara('tela-minhas-escalas'); }
+    else { abrirHome(); irPara('tela-home'); }
   }
 
   // Mostra/esconde itens do menu conforme o papel e ajusta o rodapé da barra.
   async function adaptarPainel(papel) {
-    const ehAdmin = papel === 'admin';
-    document.querySelectorAll('[data-role="admin"]').forEach(function (el) { el.hidden = !ehAdmin; });
-    // esconde grupos do menu que ficaram sem itens visíveis (ex.: líder)
+    // itens do menu por papel (data-roles="admin lider" etc.)
+    document.querySelectorAll('.nav-item[data-roles]').forEach(function (el) {
+      el.hidden = el.getAttribute('data-roles').split(' ').indexOf(papel) < 0;
+    });
+    // elementos admin-only fora do menu (ex.: box do link de cadastro)
+    document.querySelectorAll('[data-role="admin"]').forEach(function (el) { el.hidden = papel !== 'admin'; });
+    // esconde grupos do menu que ficaram sem itens visíveis
     document.querySelectorAll('.sidebar .nav-group[data-grupo]').forEach(function (g) {
       const algum = Array.prototype.slice.call(g.querySelectorAll('.nav-item'))
         .some(function (it) { return !it.hidden; });
       g.hidden = !algum;
     });
     const sub = document.getElementById('sb-papel');
-    if (ehAdmin) {
+    if (papel === 'admin') {
       sub.textContent = 'Administrador';
+    } else if (papel === 'voluntario') {
+      sub.textContent = 'Voluntário';
     } else {
       // líder: lista os departamentos que ele gerencia (a RLS já devolve só os dele)
       const { data: deps } = await sb.from('departamentos').select('nome').order('nome');
@@ -191,6 +209,83 @@
     return '<div class="kpi-card"><div class="kpi-card__ic">' + ic + '</div>' +
            '<div class="kpi-card__num">' + num + '</div>' +
            '<div class="kpi-card__lb">' + esc(lb) + '</div></div>';
+  }
+
+  /* ============================================================ */
+  /* VOLUNTÁRIO — minhas escalas + meu relatório                  */
+  /* ============================================================ */
+  let minhaEscalaCache = null;
+
+  async function abrirMinhasEscalas() {
+    const div = document.getElementById('me-escalas');
+    div.innerHTML = '<p class="muted">Carregando…</p>';
+    const { data, error } = await sb.rpc('minhas_escalas_eu');
+    if (error || !data || !data.ok) {
+      div.innerHTML = '<p class="muted">' + esc((error && error.message) || (data && data.erro) || 'Não consegui carregar suas escalas.') + '</p>';
+      return;
+    }
+    minhaEscalaCache = data;
+    const es = data.escalas || [];
+    if (!es.length) { div.innerHTML = '<p class="muted">Você não tem escalas futuras no momento.</p>'; return; }
+    div.innerHTML = '<table class="tabela"><thead><tr><th>Data</th><th>Dia</th><th>Culto</th><th>Departamento</th></tr></thead><tbody>' +
+      es.map(function (e) {
+        return '<tr><td>' + dataBR(e.data) + '</td><td>' + diaSemana(e.data) + '</td>' +
+               '<td>' + esc(e.descricao || '–') + '</td><td>' + esc(e.departamento || '–') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  document.getElementById('me-pdf').addEventListener('click', function () {
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert('Gerador de PDF não carregou. Verifique a internet.'); return; }
+    if (!minhaEscalaCache) return;
+    const doc = new window.jspdf.jsPDF('p', 'pt', 'a4');
+    const margin = 40; let y = margin;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+    doc.text(minhaEscalaCache.igreja || 'Minha escala', margin, y); y += 20;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text('Escala de ' + (minhaEscalaCache.nome || ''), margin, y); y += 16;
+    const linhas = (minhaEscalaCache.escalas || []).map(function (e) { return [dataBR(e.data), diaSemana(e.data), e.descricao || '-', e.departamento || '-']; });
+    doc.autoTable({ head: [['Data', 'Dia', 'Culto', 'Departamento']], body: linhas.length ? linhas : [['—', '', 'Sem escalas futuras', '']],
+      startY: y, margin: { left: margin, right: margin }, styles: { fontSize: 10, cellPadding: 5 }, headStyles: { fillColor: [255, 196, 0], textColor: 20 }, theme: 'grid' });
+    doc.save('minha-escala.pdf');
+  });
+
+  async function abrirMeuRelatorio() {
+    const k = document.getElementById('mr-kpis'), h = document.getElementById('mr-hist');
+    k.innerHTML = '<p class="muted">Carregando…</p>'; h.innerHTML = '';
+    const { data, error } = await sb.rpc('meu_relatorio_eu');
+    if (error || !data || !data.ok) {
+      k.innerHTML = '<p class="muted">' + esc((error && error.message) || (data && data.erro) || 'Não consegui carregar seu relatório.') + '</p>';
+      return;
+    }
+    k.innerHTML = kpiBox(data.pct + '%', 'Comparecimento') + kpiBox(data.compareceu, 'Presenças') +
+                  kpiBox(data.faltas, 'Faltas') + kpiBox(data.escalado, 'Escalas');
+    const hist = data.historico || [];
+    if (!hist.length) { h.innerHTML = '<p class="muted">Você ainda não tem escalas passadas registradas.</p>'; return; }
+    h.innerHTML = '<table class="tabela"><thead><tr><th>Data</th><th>Culto</th><th>Departamento</th><th>Situação</th></tr></thead><tbody>' +
+      hist.map(function (r) {
+        return '<tr><td>' + dataBR(r.data) + '</td><td>' + esc(r.descricao || '–') + '</td>' +
+               '<td>' + esc(r.departamento || '–') + '</td><td>' +
+               (r.compareceu ? '<span class="pres">✓ Presente</span>' : '<span class="falta">✗ Falta</span>') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  document.getElementById('mr-btn-senha').addEventListener('click', async function () {
+    const nova = val('mr-nova-senha'); msg('mr-senha-msg', '');
+    if (nova.length < 6) { msg('mr-senha-msg', 'A senha precisa ter ao menos 6 caracteres.', true); return; }
+    trava(this, 'Salvando…');
+    try {
+      const { error } = await sb.auth.updateUser({ password: nova });
+      if (error) { msg('mr-senha-msg', traduzErro(error), true); return; }
+      document.getElementById('mr-nova-senha').value = '';
+      msg('mr-senha-msg', '✓ Senha alterada.');
+    } catch (e) { msg('mr-senha-msg', 'Falha de conexão.', true); }
+    finally { destrava(this, 'Salvar nova senha'); }
+  });
+
+  function diaSemana(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return '–';
+    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    return dias[new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()];
   }
 
   /* ============================================================ */

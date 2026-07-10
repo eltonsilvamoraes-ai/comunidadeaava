@@ -89,43 +89,49 @@
       </div>
 
       <nav class="sidebar__nav">
-        <div class="nav-group">
+        <div class="nav-group" data-grupo>
+          <p class="nav-group__title">Minha área</p>
+          <button class="nav-item" type="button" data-go="tela-minhas-escalas" data-roles="voluntario"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>Minhas escalas</button>
+          <button class="nav-item" type="button" data-go="tela-meu-relatorio" data-roles="voluntario"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6"/><path d="M12 20V6"/><path d="M19 20v-9"/><path d="M3 20h18"/></svg>Meu relatório</button>
+        </div>
+
+        <div class="nav-group" data-grupo>
           <p class="nav-group__title">Início</p>
-          <button class="nav-item" type="button" data-go="tela-home"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>Painel</button>
+          <button class="nav-item" type="button" data-go="tela-home" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/></svg>Painel</button>
         </div>
 
         <div class="nav-group" data-grupo>
           <p class="nav-group__title">Cadastro</p>
-          <button class="nav-item" type="button" data-go="tela-voluntarios"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 19a5.5 5.5 0 0 0-3-4.9"/></svg>Voluntários</button>
-          <button class="nav-item" type="button" data-go="tela-departamentos" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12.5 11 5h6v6l-7.5 7.5a1.5 1.5 0 0 1-2.1 0l-3.9-3.9a1.5 1.5 0 0 1 0-2.1Z"/><circle cx="14" cy="8" r="1.1"/></svg>Departamentos</button>
-          <button class="nav-item" type="button" data-go="tela-importar" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="m8 11 4 4 4-4"/><path d="M4 19h16"/></svg>Importar voluntários</button>
+          <button class="nav-item" type="button" data-go="tela-voluntarios" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 19a5.5 5.5 0 0 0-3-4.9"/></svg>Voluntários</button>
+          <button class="nav-item" type="button" data-go="tela-departamentos" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12.5 11 5h6v6l-7.5 7.5a1.5 1.5 0 0 1-2.1 0l-3.9-3.9a1.5 1.5 0 0 1 0-2.1Z"/><circle cx="14" cy="8" r="1.1"/></svg>Departamentos</button>
+          <button class="nav-item" type="button" data-go="tela-importar" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="m8 11 4 4 4-4"/><path d="M4 19h16"/></svg>Importar voluntários</button>
         </div>
 
         <div class="nav-group" data-grupo>
           <p class="nav-group__title">Agenda</p>
-          <button class="nav-item" type="button" data-go="tela-cultos-fixos" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a5 5 0 0 1 5-5h7"/><path d="m14 1 3 2-3 2"/><path d="M20 16a5 5 0 0 1-5 5H8"/><path d="m10 23-3-2 3-2"/></svg>Cultos fixos</button>
-          <button class="nav-item" type="button" data-go="tela-cultos" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>Cultos do mês</button>
-          <button class="nav-item" type="button" data-go="tela-escala"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>Montar escala</button>
-          <button class="nav-item" type="button" data-go="tela-checkin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Check-in</button>
-          <button class="nav-item" type="button" data-go="tela-presenca"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.2-6.5-10a6.5 6.5 0 0 1 13 0c0 4.8-6.5 10-6.5 10Z"/><circle cx="12" cy="11" r="2.3"/></svg>Mapa de presença</button>
+          <button class="nav-item" type="button" data-go="tela-cultos-fixos" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a5 5 0 0 1 5-5h7"/><path d="m14 1 3 2-3 2"/><path d="M20 16a5 5 0 0 1-5 5H8"/><path d="m10 23-3-2 3-2"/></svg>Cultos fixos</button>
+          <button class="nav-item" type="button" data-go="tela-cultos" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M8 3v4"/><path d="M16 3v4"/></svg>Cultos do mês</button>
+          <button class="nav-item" type="button" data-go="tela-escala" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>Montar escala</button>
+          <button class="nav-item" type="button" data-go="tela-checkin" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Check-in</button>
+          <button class="nav-item" type="button" data-go="tela-presenca" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.2-6.5-10a6.5 6.5 0 0 1 13 0c0 4.8-6.5 10-6.5 10Z"/><circle cx="12" cy="11" r="2.3"/></svg>Mapa de presença</button>
         </div>
 
         <div class="nav-group" data-grupo>
           <p class="nav-group__title">Equipe</p>
-          <button class="nav-item" type="button" data-go="tela-lideres" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9Z"/></svg>Líderes</button>
+          <button class="nav-item" type="button" data-go="tela-lideres" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8-4.2-4.1 5.9-.9Z"/></svg>Líderes</button>
         </div>
 
         <div class="nav-group" data-grupo>
           <p class="nav-group__title">Relatórios</p>
-          <button class="nav-item" type="button" data-go="tela-dashboard"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6"/><path d="M12 20V6"/><path d="M19 20v-9"/><path d="M3 20h18"/></svg>Frequência</button>
-          <button class="nav-item" type="button" data-go="tela-rel-presenca"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>Presença por culto</button>
+          <button class="nav-item" type="button" data-go="tela-dashboard" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-6"/><path d="M12 20V6"/><path d="M19 20v-9"/><path d="M3 20h18"/></svg>Frequência</button>
+          <button class="nav-item" type="button" data-go="tela-rel-presenca" data-roles="admin lider"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>Presença por culto</button>
         </div>
 
         <div class="nav-group" data-grupo>
           <p class="nav-group__title">Configurações</p>
-          <button class="nav-item" type="button" data-go="tela-dados-igreja" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V9l6-3.5L18 9v12"/><path d="M4 21h16"/><path d="M12 2.5v3"/><path d="M9.5 13h5"/><path d="M9.5 17h5"/></svg>Dados da igreja</button>
-          <button class="nav-item" type="button" data-go="tela-planos" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>Meus planos</button>
-          <a id="home-presenca" class="nav-item" target="_blank" rel="noopener" href="#" data-role="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>Área do voluntário</a>
+          <button class="nav-item" type="button" data-go="tela-dados-igreja" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V9l6-3.5L18 9v12"/><path d="M4 21h16"/><path d="M12 2.5v3"/><path d="M9.5 13h5"/><path d="M9.5 17h5"/></svg>Dados da igreja</button>
+          <button class="nav-item" type="button" data-go="tela-planos" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h3"/></svg>Meus planos</button>
+          <a id="home-presenca" class="nav-item" target="_blank" rel="noopener" href="#" data-roles="admin"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>Área do voluntário</a>
         </div>
       </nav>
 
@@ -156,6 +162,30 @@
           <div class="painel-vazio">
             <p class="muted">Use o menu ao lado para gerenciar voluntários, montar escalas e ver os relatórios.</p>
           </div>
+        </section>
+
+        <!-- VOLUNTÁRIO: MINHAS ESCALAS -->
+        <section id="tela-minhas-escalas" class="screen screen--left">
+          <div class="form-row" style="justify-content:space-between; align-items:center">
+            <p class="label" style="margin:0">Próximas escalas</p>
+            <button id="me-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
+          </div>
+          <div id="me-escalas"></div>
+        </section>
+
+        <!-- VOLUNTÁRIO: MEU RELATÓRIO -->
+        <section id="tela-meu-relatorio" class="screen screen--left">
+          <p class="label" style="margin-top:0">Meu comparecimento</p>
+          <div id="mr-kpis" class="kpis"></div>
+          <p class="label" style="margin-top:20px">Histórico</p>
+          <div id="mr-hist"></div>
+          <details class="bloco" style="margin-top:22px; border-top:1px solid var(--linha); padding-top:16px">
+            <summary>Trocar minha senha</summary>
+            <label class="label" for="mr-nova-senha">Nova senha (mín. 6)</label>
+            <input id="mr-nova-senha" class="input" type="password" autocomplete="new-password" />
+            <button id="mr-btn-senha" class="btn btn--ghost" type="button">Salvar nova senha</button>
+            <p id="mr-senha-msg" class="msg"></p>
+          </details>
         </section>
 
         <!-- LÍDERES -->

@@ -7,91 +7,104 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="shell">
 
+  <!-- ============ ENTRAR / CRIAR ACESSO (cartão) ============ -->
+  <div class="shell" id="v-auth-view">
     <aside class="brand-side" aria-hidden="true">
       <div class="brand-side__in">
-        <h2 class="brand-side__nome">Área do Voluntário</h2>
+        <h2 class="brand-side__nome">Diakun</h2>
         <p class="brand-side__txt">Veja onde você vai servir e acompanhe a sua jornada de serviço.</p>
       </div>
     </aside>
 
-  <main class="card" role="main">
+    <main class="card" role="main">
+      <header class="brand">
+        <h1 class="brand__nome">Área do Voluntário</h1>
+        <p class="brand__sub">Entre para ver sua escala</p>
+      </header>
 
-    <header class="brand">
-      <h1 class="brand__nome">Área do Voluntário</h1>
-      <p class="brand__sub">Veja onde você vai servir</p>
+      <section id="v-load" class="screen is-active"><p class="muted">Carregando…</p></section>
+
+      <section id="v-auth" class="screen">
+        <div class="abas">
+          <button class="aba is-on" type="button" data-aba="entrar">Entrar</button>
+          <button class="aba" type="button" data-aba="criar">Criar acesso</button>
+        </div>
+
+        <div id="v-painel-entrar" class="painel">
+          <label class="label" for="v-login-email">E-mail</label>
+          <input id="v-login-email" class="input" type="email" autocomplete="email" />
+          <label class="label" for="v-login-senha">Senha</label>
+          <input id="v-login-senha" class="input" type="password" autocomplete="current-password" />
+          <button id="v-btn-login" class="btn" type="button">Entrar</button>
+        </div>
+
+        <div id="v-painel-criar" class="painel" hidden>
+          <p class="muted">Use o link enviado pela sua igreja. Informe seu código, e-mail e crie uma senha.</p>
+          <label class="label" for="v-cad-cod">Seu código (matrícula ou CPF)</label>
+          <input id="v-cad-cod" class="input" type="text" inputmode="numeric" />
+          <label class="label" for="v-cad-email">E-mail</label>
+          <input id="v-cad-email" class="input" type="email" autocomplete="email" />
+          <label class="label" for="v-cad-senha">Crie uma senha (mín. 6)</label>
+          <input id="v-cad-senha" class="input" type="password" autocomplete="new-password" />
+          <button id="v-btn-cad" class="btn" type="button">Criar acesso</button>
+        </div>
+
+        <p id="v-auth-msg" class="msg" role="alert"></p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ ÁREA PESSOAL (página logada) ============ -->
+  <div class="vol-app" id="v-app" hidden>
+    <header class="vol-top">
+      <div class="vol-top__brand">
+        <div class="vol-top__logo">D</div>
+        <span class="vol-top__nome">Diakun</span>
+      </div>
+      <div class="vol-top__dir">
+        <span class="vol-top__igreja" id="v-igreja"></span>
+        <a id="v-sair" class="vol-top__sair" href="#">Sair</a>
+      </div>
     </header>
 
-    <section id="v-load" class="screen is-active"><p class="muted">Carregando…</p></section>
+    <main class="vol-body">
+      <section id="v-home" class="screen screen--left">
+        <p id="v-saud" class="vol-saud"></p>
 
-    <!-- ENTRAR / CRIAR ACESSO -->
-    <section id="v-auth" class="screen">
-      <div class="abas">
-        <button class="aba is-on" type="button" data-aba="entrar">Entrar</button>
-        <button class="aba" type="button" data-aba="criar">Criar acesso</button>
-      </div>
-
-      <div id="v-painel-entrar" class="painel">
-        <label class="label" for="v-login-email">E-mail</label>
-        <input id="v-login-email" class="input" type="email" autocomplete="email" />
-        <label class="label" for="v-login-senha">Senha</label>
-        <input id="v-login-senha" class="input" type="password" autocomplete="current-password" />
-        <button id="v-btn-login" class="btn" type="button">Entrar</button>
-      </div>
-
-      <div id="v-painel-criar" class="painel" hidden>
-        <p class="muted">Use o link enviado pela sua igreja. Informe seu código, e-mail e crie uma senha.</p>
-        <label class="label" for="v-cad-cod">Seu código (matrícula ou CPF)</label>
-        <input id="v-cad-cod" class="input" type="text" inputmode="numeric" />
-        <label class="label" for="v-cad-email">E-mail</label>
-        <input id="v-cad-email" class="input" type="email" autocomplete="email" />
-        <label class="label" for="v-cad-senha">Crie uma senha (mín. 6)</label>
-        <input id="v-cad-senha" class="input" type="password" autocomplete="new-password" />
-        <button id="v-btn-cad" class="btn" type="button">Criar acesso</button>
-      </div>
-
-      <p id="v-auth-msg" class="msg" role="alert"></p>
-    </section>
-
-    <!-- ÁREA PESSOAL -->
-    <section id="v-home" class="screen screen--left">
-      <p id="v-saud" class="destaque"></p>
-
-      <div class="abas" id="v-abas">
-        <button class="aba is-on" type="button" data-vaba="escalas">Minhas escalas</button>
-        <button class="aba" type="button" data-vaba="relatorio">Meu relatório</button>
-      </div>
-
-      <!-- Aba: Minhas escalas -->
-      <div id="v-aba-escalas">
-        <div class="form-row" style="justify-content:space-between; align-items:center">
-          <p class="label" style="margin:0">Próximas escalas</p>
-          <button id="v-btn-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
+        <div class="abas" id="v-abas">
+          <button class="aba is-on" type="button" data-vaba="escalas">Minhas escalas</button>
+          <button class="aba" type="button" data-vaba="relatorio">Meu relatório</button>
         </div>
-        <div id="v-escalas"></div>
-      </div>
 
-      <!-- Aba: Meu relatório -->
-      <div id="v-aba-relatorio" hidden>
-        <p class="label">Meu comparecimento</p>
-        <div id="v-kpis" class="kpis"></div>
-        <p class="label" style="margin-top:18px">Histórico</p>
-        <div id="v-hist"></div>
-      </div>
+        <div class="vol-card">
+          <!-- Aba: Minhas escalas -->
+          <div id="v-aba-escalas">
+            <div class="form-row" style="justify-content:space-between; align-items:center">
+              <p class="label" style="margin:0">Próximas escalas</p>
+              <button id="v-btn-pdf" class="btn btn--ghost btn-inline" type="button">⬇ PDF</button>
+            </div>
+            <div id="v-escalas"></div>
+          </div>
 
-      <details class="bloco">
-        <summary>Trocar minha senha</summary>
-        <label class="label" for="v-nova-senha">Nova senha (mín. 6)</label>
-        <input id="v-nova-senha" class="input" type="password" autocomplete="new-password" />
-        <button id="v-btn-senha" class="btn btn--ghost" type="button">Salvar nova senha</button>
-        <p id="v-senha-msg" class="msg"></p>
-      </details>
+          <!-- Aba: Meu relatório -->
+          <div id="v-aba-relatorio" hidden>
+            <p class="label" style="margin-top:0">Meu comparecimento</p>
+            <div id="v-kpis" class="kpis"></div>
+            <p class="label" style="margin-top:20px">Histórico</p>
+            <div id="v-hist"></div>
+          </div>
+        </div>
 
-      <a id="v-sair" class="voltar" href="#">sair</a>
-    </section>
-
-  </main>
+        <details class="bloco vol-card" style="margin-top:16px">
+          <summary>Trocar minha senha</summary>
+          <label class="label" for="v-nova-senha">Nova senha (mín. 6)</label>
+          <input id="v-nova-senha" class="input" type="password" autocomplete="new-password" />
+          <button id="v-btn-senha" class="btn btn--ghost" type="button">Salvar nova senha</button>
+          <p id="v-senha-msg" class="msg"></p>
+        </details>
+      </section>
+    </main>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -231,8 +231,25 @@ input[type="file"].input{padding:9px 12px; font-size:14px}
 .pres{color:var(--ok); font-weight:700; white-space:nowrap}
 .falta{color:var(--erro); font-weight:700; white-space:nowrap}
 
+/* ===================================================================== */
+/* ÁREA DO VOLUNTÁRIO (página logada, com barra superior)                 */
+/* ===================================================================== */
+.vol-app{min-height:100vh; background:var(--fundo)}
+.vol-top{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 22px; background:var(--surface); border-bottom:1px solid var(--borda); position:sticky; top:0; z-index:5}
+.vol-top__brand{display:flex; align-items:center; gap:10px}
+.vol-top__logo{width:34px; height:34px; border-radius:9px; background:var(--amarelo); color:var(--preto); font-weight:900; display:flex; align-items:center; justify-content:center; font-size:17px; letter-spacing:-1px}
+.vol-top__nome{font-weight:800; font-size:16px; color:var(--preto); letter-spacing:-.2px}
+.vol-top__dir{display:flex; align-items:center; gap:16px}
+.vol-top__igreja{font-size:13px; color:var(--tinta-3); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.vol-top__sair{font-size:13px; font-weight:700; color:var(--tinta-2); text-decoration:none}
+.vol-top__sair:hover{color:var(--amarelo-escuro)}
+.vol-body{max-width:680px; margin:0 auto; padding:24px 18px 48px; width:100%}
+.vol-saud{font-size:22px; font-weight:800; color:var(--preto); margin:0 0 16px; letter-spacing:-.3px}
+.vol-card{background:var(--surface); border:1px solid var(--borda); border-radius:var(--raio); box-shadow:var(--sombra-sm); padding:22px}
+.vol-card summary{list-style:none}
+
 /* Bloco "trocar senha" */
-.bloco{margin-top:22px; border-top:1px solid var(--linha); padding-top:16px}
+.bloco{margin-top:0; border-top:0; padding-top:0}
 .bloco summary{cursor:pointer; font-weight:700; color:var(--tinta-2); font-size:14px; list-style:none}
 .bloco summary::-webkit-details-marker{display:none}
 .bloco[open] summary{margin-bottom:10px}

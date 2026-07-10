@@ -186,6 +186,16 @@
 
         <!-- VOLUNTÁRIOS -->
         <section id="tela-voluntarios" class="screen screen--left">
+          <div class="aviso" data-role="admin">
+            <strong>Link de cadastro de voluntários</strong>
+            <p class="muted" style="margin:4px 0 8px">Envie para o voluntário criar o acesso com o código dele (matrícula ou CPF).</p>
+            <div class="form-row">
+              <input id="vol-link" class="input" type="text" readonly />
+              <button id="btn-copiar-vol" class="btn btn--ghost btn-inline" type="button">Copiar</button>
+            </div>
+            <p id="vol-link-msg" class="msg" role="alert"></p>
+          </div>
+
           <label class="label" for="vol-nome">Nome completo</label>
           <input id="vol-nome" class="input" type="text" />
           <div class="form-row">

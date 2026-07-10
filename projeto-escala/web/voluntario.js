@@ -9,8 +9,12 @@
 
   function irPara(id) {
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('is-active'); });
-    document.getElementById(id).classList.add('is-active');
+    const el = document.getElementById(id); if (el) el.classList.add('is-active');
+    const logado = id === 'v-home';
+    document.getElementById('v-auth-view').hidden = logado;
+    document.getElementById('v-app').hidden = !logado;
     document.body.classList.toggle('modo-login', id === 'v-load' || id === 'v-auth');
+    document.body.classList.toggle('modo-app', logado);
   }
   function msg(id, t, erro) { const el = document.getElementById(id); el.textContent = t || ''; el.className = 'msg' + (erro ? ' erro' : (t ? ' ok' : '')); }
   function val(id) { return (document.getElementById(id).value || '').trim(); }
@@ -110,6 +114,7 @@
     }
     ultimaEscala = data;
     document.getElementById('v-saud').textContent = 'Graça e Paz, ' + (data.nome || '') + '! 🙏';
+    document.getElementById('v-igreja').textContent = data.igreja || '';
     const esc_ = data.escalas || [];
     const div = document.getElementById('v-escalas');
     if (!esc_.length) {

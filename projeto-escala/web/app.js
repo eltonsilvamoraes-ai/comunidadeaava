@@ -449,12 +449,25 @@
   /* ============================================================ */
   async function abrirVoluntarios() {
     limparFormVol();
+    msg('vol-link-msg', '');
+    // link copiável de cadastro do voluntário (carrega a igreja).
+    const base = location.href.split('?')[0].split('#')[0].replace(/[^/]*$/, '');
+    document.getElementById('vol-link').value = base + 'voluntario.html?igreja=' + igrejaId;
     // carrega departamentos (para os checkboxes) e a lista.
     const { data } = await sb.from('departamentos').select('id, nome').order('nome');
     deptosCache = data || [];
     renderChecksDeptos([]);
     carregarVoluntarios();
   }
+
+  document.getElementById('btn-copiar-vol').addEventListener('click', function () {
+    const inp = document.getElementById('vol-link');
+    inp.select(); inp.setSelectionRange(0, 99999);
+    function ok() { msg('vol-link-msg', '✓ Link copiado.'); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(inp.value).then(ok, function () { try { document.execCommand('copy'); ok(); } catch (e) {} });
+    } else { try { document.execCommand('copy'); ok(); } catch (e) {} }
+  });
 
   function renderChecksDeptos(marcados) {
     const div = document.getElementById('vol-deptos');

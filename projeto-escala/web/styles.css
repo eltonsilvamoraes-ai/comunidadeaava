@@ -262,15 +262,22 @@ input[type="file"].input{padding:9px 12px; font-size:14px}
   .dash-cols{display:flex; gap:24px}
 }
 @media (max-width:860px){
-  .sidebar{position:fixed; left:0; top:0; bottom:0; height:100vh; transform:translateX(-100%); transition:transform .22s ease; z-index:40; box-shadow:0 0 60px rgba(0,0,0,.4)}
+  /* A página inteira rola de forma natural — nada preso em 100vh (que no
+     celular fica atrás das barras do navegador e esconde o rodapé/botões). */
+  .app{display:block; min-height:100dvh}
+  .content{height:auto; min-height:auto; overflow:visible}
+  .topbar{position:sticky; top:0; z-index:6; background:var(--fundo); padding:14px 16px 10px; gap:12px}
+  .topbar__titulo{font-size:20px}
+  .topbar__menu{display:flex}
+  .content__body{padding:6px 16px 40px}
+  .content__body .screen.is-active{padding:18px 16px 24px}
+
+  /* Menu = gaveta com altura dinâmica (respeita as barras do navegador). */
+  .sidebar{position:fixed; left:0; top:0; bottom:0; height:100dvh; transform:translateX(-100%); transition:transform .22s ease; z-index:40; box-shadow:0 0 60px rgba(0,0,0,.4)}
   body.nav-aberto .sidebar{transform:none}
+  body.nav-aberto{overflow:hidden}   /* trava o fundo enquanto a gaveta está aberta */
   .nav-backdrop{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:30; opacity:0; pointer-events:none; transition:opacity .2s ease}
   body.nav-aberto .nav-backdrop{opacity:1; pointer-events:auto}
-  .topbar__menu{display:flex}
-  .topbar{padding:16px 16px 8px; gap:12px}
-  .topbar__titulo{font-size:20px}
-  .content__body{padding:6px 16px 32px}
-  .content__body .screen.is-active{padding:18px 16px 22px}
 }
 @media (max-width:520px){
   body{padding:14px}

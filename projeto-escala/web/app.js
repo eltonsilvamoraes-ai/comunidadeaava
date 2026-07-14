@@ -329,15 +329,26 @@
   });
 
   document.getElementById('btn-cadastro').addEventListener('click', async function () {
-    const email = val('cad-email'), senha = val('cad-senha');
+    const igreja = val('cad-igreja'), cnpj = val('cad-cnpj').replace(/\D/g, ''),
+          endereco = val('cad-endereco'), cidade = val('cad-cidade'), estado = val('cad-estado').toUpperCase(),
+          numvol = val('cad-numvol'), email = val('cad-email'), senha = val('cad-senha');
     msg('auth-msg', '');
-    if (!email || !senha) { msg('auth-msg', 'Preencha e-mail e senha.', true); return; }
+    if (!igreja || !cnpj || !email || !senha) { msg('auth-msg', 'Preencha nome da igreja, CNPJ, e-mail e senha.', true); return; }
+    if (cnpj.length !== 14 && cnpj.length !== 11) { msg('auth-msg', 'CNPJ deve ter 14 dígitos (ou CPF com 11).', true); return; }
+    if (senha.length < 6) { msg('auth-msg', 'A senha precisa ter ao menos 6 caracteres.', true); return; }
     trava(this, 'Criando…');
     try {
       const { data, error } = await sb.auth.signUp({ email: email, password: senha });
       if (error) { msg('auth-msg', traduzErro(error), true); return; }
-      if (data.session) await rotearLogado();
-      else msg('auth-msg', 'Conta criada! Confirme pelo link no seu e-mail e depois entre.');
+      if (!data.session) { msg('auth-msg', 'Conta criada! Confirme pelo link no seu e-mail e depois entre.'); return; }
+      // cria a igreja já com os dados do formulário
+      const cr = await sb.rpc('criar_igreja', {
+        p_cnpj: cnpj, p_nome_igreja: igreja, p_nome_admin: igreja,
+        p_endereco: endereco || null, p_cidade: cidade || null,
+        p_estado: estado || null, p_num_voluntarios: numvol ? Number(numvol) : null
+      });
+      if (cr.error) { msg('auth-msg', traduzErro(cr.error), true); return; }
+      await rotearLogado();
     } catch (e) { msg('auth-msg', 'Falha de conexão.', true); }
     finally { destrava(this, 'Criar conta'); }
   });
@@ -373,7 +384,8 @@
     if (e) e.preventDefault();
     sb.auth.signOut().then(function () {
       igrejaId = null; deptosCache = [];
-      ['login-email','login-senha','cad-email','cad-senha','ig-nome','ig-cnpj','ig-admin']
+      ['login-email','login-senha','cad-email','cad-senha','cad-igreja','cad-cnpj','cad-endereco',
+       'cad-cidade','cad-estado','cad-numvol','ig-nome','ig-cnpj','ig-admin']
         .forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
       msg('auth-msg', ''); irPara('tela-auth');
     });

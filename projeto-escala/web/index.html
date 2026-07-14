@@ -44,6 +44,24 @@
           <button id="btn-login" class="btn" type="button">Entrar</button>
         </div>
         <div id="painel-cadastro" class="painel" hidden>
+          <label class="label" for="cad-igreja">Nome da igreja</label>
+          <input id="cad-igreja" class="input" type="text" />
+          <label class="label" for="cad-cnpj">CNPJ</label>
+          <input id="cad-cnpj" class="input" type="text" inputmode="numeric" placeholder="somente números" />
+          <label class="label" for="cad-endereco">Endereço</label>
+          <input id="cad-endereco" class="input" type="text" placeholder="rua, nº, bairro" />
+          <div class="form-row">
+            <div class="form-col">
+              <label class="label" for="cad-cidade">Cidade</label>
+              <input id="cad-cidade" class="input" type="text" />
+            </div>
+            <div class="form-col" style="max-width:96px">
+              <label class="label" for="cad-estado">Estado</label>
+              <input id="cad-estado" class="input" type="text" maxlength="2" placeholder="UF" style="text-transform:uppercase" />
+            </div>
+          </div>
+          <label class="label" for="cad-numvol">Número de voluntários (aprox.)</label>
+          <input id="cad-numvol" class="input" type="number" min="0" inputmode="numeric" />
           <label class="label" for="cad-email">E-mail</label>
           <input id="cad-email" class="input" type="email" autocomplete="email" />
           <label class="label" for="cad-senha">Senha (mín. 6)</label>
@@ -147,7 +165,7 @@
     <!-- CONTEÚDO -->
     <main class="content" role="main">
       <header class="topbar">
-        <button class="topbar__menu" id="btn-menu" type="button" aria-label="Abrir menu">☰</button>
+        <button class="topbar__menu" id="btn-menu" type="button" aria-label="Abrir menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
         <div class="topbar__head">
           <h1 class="topbar__titulo" id="content-titulo">Painel</h1>
           <p class="topbar__sub" id="content-sub"></p>

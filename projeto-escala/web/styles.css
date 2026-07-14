@@ -75,7 +75,8 @@ body.modo-app{display:block; padding:0; align-items:stretch}
 
 .content{flex:1; min-width:0; display:flex; flex-direction:column; height:100vh; overflow-y:auto; background:var(--fundo)}
 .topbar{display:flex; align-items:center; gap:14px; padding:26px 32px 14px}
-.topbar__menu{display:none; border:1px solid var(--borda); background:var(--surface); border-radius:10px; width:42px; height:42px; font-size:18px; cursor:pointer; flex-shrink:0}
+.topbar__menu{display:none; align-items:center; justify-content:center; border:1px solid var(--borda); background:var(--surface); color:var(--tinta); border-radius:10px; width:40px; height:40px; padding:0; cursor:pointer; flex-shrink:0}
+.topbar__menu:active{background:var(--surface-2)}
 .topbar__titulo{font-size:24px; font-weight:800; color:var(--preto); margin:0; letter-spacing:-.5px}
 .topbar__sub{font-size:13.5px; color:var(--tinta-3); margin:3px 0 0}
 .content__body{padding:6px 32px 44px; max-width:1080px; width:100%}
@@ -265,8 +266,8 @@ input[type="file"].input{padding:9px 12px; font-size:14px}
   body.nav-aberto .sidebar{transform:none}
   .nav-backdrop{display:block; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:30; opacity:0; pointer-events:none; transition:opacity .2s ease}
   body.nav-aberto .nav-backdrop{opacity:1; pointer-events:auto}
-  .topbar__menu{display:block}
-  .topbar{padding:16px 16px 8px}
+  .topbar__menu{display:flex}
+  .topbar{padding:16px 16px 8px; gap:12px}
   .topbar__titulo{font-size:20px}
   .content__body{padding:6px 16px 32px}
   .content__body .screen.is-active{padding:18px 16px 22px}

@@ -287,8 +287,7 @@
 
         <!-- CULTOS FIXOS DA IGREJA -->
         <section id="tela-cultos-fixos" class="screen screen--left">
-          <p class="muted">Defina os cultos que se repetem toda semana. São usados para
-            gerar os cultos do mês automaticamente.</p>
+          <p class="muted">Usados para gerar automaticamente os cultos do mês.</p>
           <div class="form-row">
             <div class="form-col">
               <label class="label" for="cf-dia">Dia</label>
@@ -327,10 +326,17 @@
 
           <label class="label">Adicionar culto avulso</label>
           <div class="form-row">
-            <div class="form-col"><input id="cul-data" class="input" type="date" /></div>
-            <div class="form-col"><input id="cul-hora" class="input" type="time" /></div>
+            <div class="form-col">
+              <label class="label" for="cul-data">Data</label>
+              <input id="cul-data" class="input" type="date" />
+            </div>
+            <div class="form-col">
+              <label class="label" for="cul-hora">Hora</label>
+              <input id="cul-hora" class="input" type="time" />
+            </div>
           </div>
-          <input id="cul-desc" class="input" type="text" placeholder="Descrição (ex.: Encontro especial)" />
+          <label class="label" for="cul-desc">Descrição</label>
+          <input id="cul-desc" class="input" type="text" placeholder="ex.: Encontro especial" />
           <button id="btn-add-culto" class="btn btn--ghost" type="button">Adicionar avulso</button>
           <p id="cul-msg" class="msg" role="alert"></p>
 
